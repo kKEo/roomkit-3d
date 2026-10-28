@@ -1,0 +1,16 @@
+[book]
+title = "Scene Rooms — Content guide"
+description = "Build a walkable 3D room and fill it with your own content, using only JSON and Markdown files."
+language = "en"
+src = "."
+
+[build]
+build-dir = "../../../site/user"
+create-missing = false
+
+[output.html]
+site-url = "/scene-rooms/user/"
+
+# mdBook publishes README.md as index.html but does not rewrite links to README.md; keep those links GitBook-correct and redirect here.
+[output.html.redirect]
+"/README.html" = "index.html"

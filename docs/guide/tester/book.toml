@@ -1,0 +1,20 @@
+[book]
+title = "Scene Rooms — Tester guide"
+description = "How changes to Scene Rooms are checked: build and config checks, merge gates, adding tests and exploring by hand."
+language = "en"
+src = "."
+
+[build]
+build-dir = "../../../site/tester"
+create-missing = false
+
+[output.html]
+site-url = "/scene-rooms/tester/"
+
+# mdBook publishes README.md as index.html but does not rewrite links to README.md; keep those links GitBook-correct and redirect here.
+[output.html.redirect]
+"/README.html" = "index.html"
+"/running/README.html" = "index.html"
+"/writing/README.html" = "index.html"
+"/exploring/README.html" = "index.html"
+"/appendix/README.html" = "index.html"

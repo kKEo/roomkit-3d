@@ -1,0 +1,22 @@
+[book]
+title = "Scene Rooms — Operator guide"
+description = "How Scene Rooms works inside, how to build and deploy it, the complete configuration reference and how to extend it."
+language = "en"
+src = "."
+
+[build]
+build-dir = "../../../site/operator"
+create-missing = false
+
+[output.html]
+site-url = "/scene-rooms/operator/"
+
+# mdBook publishes README.md as index.html but does not rewrite links to README.md; keep those links GitBook-correct and redirect here.
+[output.html.redirect]
+"/README.html" = "index.html"
+"/internals/README.html" = "index.html"
+"/deploy/README.html" = "index.html"
+"/reference/README.html" = "index.html"
+"/extending/README.html" = "index.html"
+"/operations/README.html" = "index.html"
+"/appendix/README.html" = "index.html"
