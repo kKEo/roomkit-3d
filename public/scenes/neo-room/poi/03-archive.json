@@ -1,0 +1,9 @@
+{
+  "id": "archive",
+  "label": "Archive",
+  "kicker": "wardrobe",
+  "objects": [
+    { "type": "wardrobe", "position": [-14.4, 0, -10], "rotation": [0, 90, 0] }
+  ],
+  "content": { "markdown": "content/archive.md" }
+}

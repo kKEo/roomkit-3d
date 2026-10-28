@@ -1,0 +1,4 @@
+{
+  "default": "neo-room",
+  "scenes": ["neo-room", "gallery"]
+}

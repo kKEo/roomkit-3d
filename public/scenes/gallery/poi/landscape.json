@@ -1,0 +1,10 @@
+{
+  "id": "landscape",
+  "label": "Landscape",
+  "kicker": "east wall",
+  "objects": [
+    { "type": "pictureFrame", "position": [10, 3, 2], "rotation": [0, -90, 0],
+      "props": { "width": 3.6, "height": 2.4, "image": "media/landscape.svg", "exhibit": "octahedron" } }
+  ],
+  "content": { "markdown": "content/landscape.md" }
+}

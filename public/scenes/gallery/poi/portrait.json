@@ -1,0 +1,10 @@
+{
+  "id": "portrait",
+  "label": "Portrait",
+  "kicker": "west wall",
+  "objects": [
+    { "type": "pictureFrame", "position": [-10, 3, 2], "rotation": [0, 90, 0],
+      "props": { "width": 2.2, "height": 2.9, "image": "media/portrait.svg" } }
+  ],
+  "content": { "markdown": "content/portrait.md" }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "about",
+  "label": "About",
+  "kicker": "main screen",
+  "screenLabel": "about // lorem",
+  "objects": [
+    { "type": "cinemaScreen", "position": [0, 0, -15], "props": { "source": "rain" } }
+  ],
+  "content": { "markdown": "content/about.md" }
+}

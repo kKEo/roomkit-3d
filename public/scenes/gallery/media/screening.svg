@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#0d0800"/>
+  <g fill="none" stroke="#ffb000" stroke-width="3" opacity=".35">
+    <circle cx="800" cy="450" r="120"/><circle cx="800" cy="450" r="220"/><circle cx="800" cy="450" r="320"/><circle cx="800" cy="450" r="420"/>
+  </g>
+  <text x="800" y="475" text-anchor="middle" font-family="monospace" font-size="72" fill="#ffe0a0">NOW SHOWING</text>
+</svg>

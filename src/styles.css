@@ -1,0 +1,156 @@
+/* Colours and fonts are overwritten at runtime from scene.theme (see ui/theme.js). */
+:root {
+  --bg: #000;
+  --surface: rgba(0, 16, 7, .74);
+  --line: rgba(0, 255, 102, .28);
+  --line-strong: #00ff66;
+  --text: #bff7cf;
+  --text-dim: #5fa877;
+  --accent: #00ff66;
+  --accent-ink: #001a0a;
+  --glow: 0 0 14px rgba(0, 255, 102, .35);
+  --display: "VT323", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --body: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit }
+html, body, #root { height: 100%; margin: 0 }
+body { background: var(--bg); color: var(--text); overflow: hidden; font-family: var(--body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased }
+button, input, textarea, select { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 11; background: var(--bg) }
+
+#stage { position: fixed; inset: 0; touch-action: none }
+.fx { position: fixed; inset: 0; pointer-events: none; z-index: 2;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.22) 2px 3px),
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.75) 100%) }
+.no-scanlines .fx { background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.75) 100%) }
+.no-vignette .fx { background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.22) 2px 3px) }
+.no-scanlines.no-vignette .fx { display: none }
+
+/* ——— Header ——— */
+.top { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; gap: 18px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.85), rgba(0,0,0,0)) }
+.brand { font-family: var(--display); font-size: 30px; line-height: 1; letter-spacing: .02em; color: var(--accent); text-shadow: var(--glow); background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap }
+.brand .dim { color: var(--text-dim) }
+nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto }
+nav button { background: none; border: 1px solid transparent; padding: 6px 10px; cursor: pointer; color: var(--text-dim); font-size: 13px; display: flex; gap: 8px; align-items: baseline; transition: color .2s, border-color .2s }
+nav button b { font-weight: 400; color: var(--line-strong); opacity: .55 }
+nav button:hover { color: var(--text) }
+nav button[aria-current="true"] { color: var(--accent); border-color: var(--line); box-shadow: inset 0 -2px 0 var(--accent) }
+nav button[aria-current="true"] b { opacity: 1 }
+.iconbtn { background: none; border: 1px solid var(--line); width: 34px; height: 34px; cursor: pointer; color: var(--text-dim); display: grid; place-items: center; flex: none }
+.iconbtn:hover, .iconbtn[aria-pressed="true"], .iconbtn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent) }
+
+/* ——— Content panel ——— */
+.panel { position: fixed; z-index: 6; right: 22px; top: calc(78px + env(safe-area-inset-top, 0px)); bottom: calc(64px + env(safe-area-inset-bottom, 0px)); width: min(440px, 38vw);
+  pointer-events: none; opacity: 0; transform: translateX(24px); transition: opacity .45s ease, transform .6s cubic-bezier(.2,.8,.2,1) }
+.panel.on { opacity: 1; transform: none; pointer-events: auto }
+.panel.collapsed { opacity: 0 !important; transform: translateX(40px) !important; pointer-events: none !important }
+.panel-inner { position: relative; height: 100%; max-height: 100%; overflow: auto; padding: 26px 26px 22px; background: var(--surface); border: 1px solid var(--line);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); scrollbar-width: thin; scrollbar-color: var(--line) transparent; will-change: transform }
+.panel-inner::before, .panel-inner::after { content: ""; position: absolute; width: 22px; height: 22px; border: 2px solid var(--accent); pointer-events: none }
+.panel-inner::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0 }
+.panel-inner::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0 }
+.kicker { color: var(--text-dim); font-size: 12.5px; margin: 0 0 6px; display: flex; gap: 10px; align-items: center }
+.kicker::after { content: ""; flex: 1; height: 1px; background: var(--line) }
+.panel h1 { font-family: var(--display); font-weight: 400; font-size: clamp(40px, 4.4vw, 58px); line-height: .95; margin: 0 0 16px; color: var(--accent); text-shadow: var(--glow); letter-spacing: .01em; min-height: 1em }
+.panel h1 + p { font-size: 16px; color: var(--text); margin: 0 0 18px }
+.panel p { margin: 0 0 14px; color: var(--text-dim); max-width: 62ch }
+.panel h2 { font-family: var(--body); font-weight: 600; font-size: 14px; color: var(--text); margin: 22px 0 8px }
+.panel a { color: var(--accent) }
+.panel strong { color: var(--text) }
+.panel ul:not([class]), .panel ol:not([class]) { color: var(--text-dim); padding-left: 1.2em; margin: 0 0 14px }
+.panel code { color: var(--text); background: rgba(0,0,0,.5); padding: 0 4px }
+.panel pre { background: rgba(0,0,0,.6); border: 1px solid var(--line); padding: 10px; overflow: auto; font-size: 12.5px }
+.panel img { max-width: 100%; border: 1px solid var(--line) }
+.panel table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 0 0 14px }
+.panel th, .panel td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left }
+.block-error { color: #ff6b6b !important; border-color: #ff6b6b !important; white-space: pre-wrap }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 20px 0 }
+.stats div { padding: 12px 10px 10px; border-right: 1px solid var(--line) }
+.stats div:last-child { border-right: 0 }
+.stats strong { display: block; font-family: var(--display); font-weight: 400; font-size: 38px; line-height: 1; color: var(--accent) }
+.stats span { font-size: 12px; color: var(--text-dim) }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); margin: 18px 0 }
+.cards article { background: rgba(0,0,0,.82); padding: 14px 14px 12px }
+.cards h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--text) }
+.cards p { font-size: 12.5px; margin: 0 }
+.cards small { display: block; margin-top: 8px; color: var(--accent); font-size: 11.5px }
+.list { list-style: none; padding: 0; margin: 18px 0; border-top: 1px solid var(--line) }
+.list li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line) }
+.list li i { font-style: normal; color: var(--accent); font-family: var(--display); font-size: 22px; line-height: 1 }
+.list strong { display: block; color: var(--text); font-weight: 600; font-size: 14px }
+.list span { color: var(--text-dim); font-size: 13px }
+.timeline { list-style: none; padding: 0 0 0 18px; margin: 18px 0; border-left: 1px solid var(--line) }
+.timeline li { position: relative; padding: 0 0 14px }
+.timeline li::before { content: ""; position: absolute; left: -23px; top: 7px; width: 9px; height: 9px; background: var(--bg); border: 2px solid var(--accent) }
+.timeline b { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--accent); display: block; line-height: 1 }
+.timeline span { color: var(--text-dim); font-size: 13px }
+.field { display: block; margin: 0 0 12px }
+.field span { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 4px }
+.field input, .field textarea { width: 100%; background: rgba(0,0,0,.6); border: 1px solid var(--line); padding: 9px 10px; color: var(--text); resize: vertical }
+.field input:focus, .field textarea:focus { border-color: var(--accent); outline: none; box-shadow: var(--glow) }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; padding: 10px 16px; font-weight: 600; cursor: pointer }
+.btn:hover { filter: brightness(1.1); box-shadow: var(--glow) }
+.btn.ghost { background: none; color: var(--text); border: 1px solid var(--line); font-weight: 400 }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent) }
+.status { min-height: 1.4em; font-size: 13px; color: var(--accent); margin-top: 8px }
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line) }
+
+/* ——— Marker labels (projected from 3D in ui/Labels.jsx) ——— */
+.mlabel { position: fixed; left: 0; top: 0; z-index: 5; transform: translate(-50%, -100%); background: rgba(0,0,0,.7); border: 1px solid var(--line); color: var(--text);
+  font-size: 12px; padding: 3px 8px 3px 6px; cursor: pointer; white-space: nowrap; display: flex; gap: 6px; align-items: center; transition: opacity .3s, border-color .2s, color .2s }
+.mlabel b { font-weight: 400; color: var(--accent) }
+.mlabel:hover { border-color: var(--accent); color: var(--accent) }
+.mlabel.here, .mlabel.off, .mlabel.hidden { opacity: 0; pointer-events: none }
+
+/* ——— Minimap, hint, progress ——— */
+#minimap { position: fixed; z-index: 6; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; border: 1px solid var(--line); background: rgba(0,0,0,.55) }
+.hint { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: var(--text-dim); background: rgba(0,0,0,.55); padding: 5px 12px; border: 1px solid var(--line); white-space: nowrap }
+.hint kbd { font-family: var(--body); color: var(--accent); border: 1px solid var(--line); padding: 0 5px; margin: 0 2px }
+#progress { position: fixed; z-index: 12; left: 0; right: 0; top: env(safe-area-inset-top, 0px); height: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); box-shadow: var(--glow); opacity: 0; transition: opacity .3s }
+#progress.on { opacity: 1 }
+
+/* ——— Camera settings ——— */
+.settings { position: fixed; z-index: 12; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); width: 270px; background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 14px 16px; font-size: 13px }
+.settings h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--accent) }
+.settings label { display: block; margin: 0 0 12px; color: var(--text-dim) }
+.settings select, .settings input[type=range] { width: 100%; margin-top: 4px; accent-color: var(--accent) }
+.settings select { background: #000; border: 1px solid var(--line); padding: 5px }
+.settings canvas { display: block; width: 100%; height: 90px; border: 1px solid var(--line); margin-top: 6px; background: #000 }
+.settings output { color: var(--text) }
+
+/* ——— Loader ——— */
+#loader { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; place-items: center; font-family: var(--display); font-size: 30px; color: var(--accent); text-shadow: var(--glow); transition: opacity .8s }
+#loader.done { opacity: 0; pointer-events: none }
+#loader .cur { display: inline-block; width: .55em; height: 1em; background: var(--accent); vertical-align: -.12em; margin-left: 4px; animation: blink 1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+.err { font-family: var(--body); font-size: 14px; max-width: min(720px, 92vw); color: var(--text); text-shadow: none; padding: 0 16px }
+.err h2 { font-family: var(--display); font-weight: 400; font-size: 32px; color: #ff6b6b; margin: 0 0 12px }
+.err ul { margin: 0; padding-left: 1.2em; line-height: 1.5 }
+.err li { margin-bottom: 6px; word-break: break-word }
+
+@media (max-width: 760px) {
+  .top { padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 8px; gap: 8px 10px; flex-wrap: wrap }
+  .top .brand { margin-right: auto }
+  nav { order: 3; width: 100%; margin-left: 0; justify-content: space-between; flex-wrap: nowrap }
+  .brand { font-size: 24px }
+  nav button { padding: 6px 7px }
+  nav button .t { display: none }
+  .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); height: 46vh; transform: translateY(30px) }
+  .panel.collapsed { transform: translateY(60px) !important }
+  .panel-inner { padding: 20px 18px 16px }
+  .panel h1 { font-size: 40px }
+  #minimap, .hint { display: none }
+  .settings { right: 10px; left: 10px; width: auto }
+  .cards { grid-template-columns: 1fr }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel { transition: opacity .2s }
+  #loader .cur { animation: none }
+}

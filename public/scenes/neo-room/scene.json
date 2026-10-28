@@ -1,0 +1,25 @@
+{
+  "title": "Neo Room — 3D scene",
+  "brand": "Neo/Room",
+  "room": {
+    "width": 30,
+    "height": 9,
+    "depth": 30,
+    "pillars": [[-9, 5], [9, 5], [-9, -5], [9, -5]],
+    "lights": [[0, 8.4, 0], [-10, 7, 7], [10, 7, -8]]
+  },
+  "camera": {
+    "intro": { "position": [0, 6.5, 27], "target": [0, 3, 0], "duration": 3200 }
+  },
+  "decor": [
+    { "type": "door", "position": [8.5, 0, -15] }
+  ],
+  "poi": [
+    "poi/01-start.json",
+    "poi/02-projects.json",
+    "poi/03-archive.json",
+    "poi/04-about.json",
+    "poi/05-services.json",
+    "poi/06-contact.json"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "projects",
+  "label": "Projects",
+  "kicker": "west wall",
+  "screenLabel": "projects // lorem",
+  "objects": [
+    { "type": "pictureFrame", "position": [-15, 3.2, 5],   "rotation": [0, 90, 0], "props": { "exhibit": "torusKnot" } },
+    { "type": "pictureFrame", "position": [-15, 3.2, 1.5], "rotation": [0, 90, 0], "props": { "exhibit": "dodecahedron" } },
+    { "type": "pictureFrame", "position": [-15, 3.2, -2],  "rotation": [0, 90, 0], "props": { "exhibit": "cone" } },
+    { "type": "bench", "position": [-11.6, 0, 1.5], "rotation": [0, 90, 0] }
+  ],
+  "camera": { "position": [-5, 3, 4.5], "target": [-14, 3, 1.5] },
+  "marker": { "position": [-13.4, 4.9, 1.5] },
+  "content": { "markdown": "content/projects.md" }
+}

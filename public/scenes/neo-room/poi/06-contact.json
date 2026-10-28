@@ -1,0 +1,10 @@
+{
+  "id": "contact",
+  "label": "Contact",
+  "kicker": "terminal",
+  "screenLabel": "hello@lorem",
+  "objects": [
+    { "type": "desk", "position": [11.5, 0, -11.5], "rotation": [0, -45, 0] }
+  ],
+  "content": { "markdown": "content/contact.md" }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "start",
+  "label": "Start",
+  "kicker": "entrance",
+  "objects": [
+    { "type": "pedestal", "position": [0, 0, 0], "props": { "shape": "icosahedron" } }
+  ],
+  "content": { "markdown": "content/start.md" }
+}

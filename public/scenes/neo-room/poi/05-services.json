@@ -1,0 +1,21 @@
+{
+  "id": "services",
+  "label": "Services",
+  "kicker": "server room",
+  "objects": [
+    { "type": "serverRack", "position": [13.9, 0, 0], "rotation": [0, -90, 0], "props": { "count": 4 } }
+  ],
+  "content": {
+    "blocks": [
+      { "type": "heading", "text": "Services" },
+      { "type": "markdown", "text": "Nullam id dolor id nibh ultricies vehicula ut id elit. Maecenas faucibus mollis interdum." },
+      { "type": "list", "data": [
+        { "title": "Lorem design", "text": "Donec id elit non mi porta gravida at eget metus." },
+        { "title": "Ipsum development", "text": "Cum sociis natoque penatibus et magnis dis parturient montes." },
+        { "title": "Dolor strategy", "text": "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor." },
+        { "title": "Sit amet support", "text": "Praesent commodo cursus magna, vel scelerisque nisl consectetur et." }
+      ] },
+      { "type": "markdown", "text": "Cras justo odio, dapibus ac facilisis in, egestas eget quam. This panel is defined with inline `blocks` instead of a Markdown file." }
+    ]
+  }
+}

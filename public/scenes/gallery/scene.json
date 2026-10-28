@@ -1,0 +1,38 @@
+{
+  "title": "Amber Gallery",
+  "brand": "Amber/Gallery",
+  "room": {
+    "width": 20,
+    "height": 7,
+    "depth": 24,
+    "grid": { "floor": 2, "ceiling": 0 },
+    "wallPanels": 4,
+    "skirting": [0.3],
+    "pillars": [],
+    "lights": [[0, 6.6, 0], [0, 5.4, -7]]
+  },
+  "theme": {
+    "accent": "#ffb000",
+    "accentInk": "#1a1000",
+    "highlight": "#ffe0a0",
+    "text": "#ffe9c2",
+    "textDim": "#b08a50",
+    "surface": "rgba(20,12,0,.78)",
+    "fog": [12, 38],
+    "scanlines": false,
+    "glyphs": "01<>/\\|=+*#"
+  },
+  "camera": {
+    "intro": { "position": [0, 4.5, 22], "target": [0, 2.5, 0], "duration": 2600 }
+  },
+  "effects": { "ease": "sine", "particles": 260 },
+  "ui": {
+    "loading": "Opening the gallery",
+    "hint": "[←][→] — walk, [1]–[{total}] rooms, or click a marker"
+  },
+  "decor": [
+    { "type": "bench", "position": [0, 0, 1], "props": { "width": 3.5, "height": 0.55, "depth": 0.9 } },
+    { "type": "door", "position": [0, 0, 12], "rotation": [0, 180, 0] }
+  ],
+  "poi": ["poi/portrait.json", "poi/landscape.json", "poi/screening.json"]
+}

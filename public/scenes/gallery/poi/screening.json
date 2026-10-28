@@ -1,0 +1,10 @@
+{
+  "id": "screening",
+  "label": "Screening",
+  "kicker": "north wall",
+  "objects": [
+    { "type": "cinemaScreen", "position": [0, 0, -12],
+      "props": { "width": 8, "height": 4.5, "elevation": 3.4, "source": "image", "src": "media/screening.svg", "speakers": false } }
+  ],
+  "content": { "markdown": "content/screening.md" }
+}
