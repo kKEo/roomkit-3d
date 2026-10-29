@@ -13,6 +13,18 @@ When `nav` changes, `CameraRig` builds a transit from the camera's current base 
 - **Warp.** The FOV gets `sin(π t) × settings.warp` extra degrees, and the camera rolls by up to 0.045 rad towards the turn direction (no roll when warp is 0).
 - **Panel.** At `t > 0.8`, `showPanel(i)` opens the panel. That is also when prefabs receive `active = true`, which is why the wardrobe doors start opening as the panel slides in.
 
+## Zooming into a screen
+
+Clicking a screen of the current POI calls `zoomTo(rec)` in the store. `rec` holds the screen's world centre, normal, up vector and size, read from the mesh's `matrixWorld`, plus its config. `CameraRig` watches `nav` and `zoom` together:
+
+| Change | Flight |
+| --- | --- |
+| `nav` changed | the POI flight above (it also clears `zoom`) |
+| `zoom` set | straight line to `center + normal × d`, looking at `center`; `d = max(h/2 ÷ tan(fov/2), w/2 ÷ (tan(fov/2) × aspect)) ÷ 0.82`, so the screen fills about 82 % of the view. 900 ms (300 ms with reduced motion), no warp, no roll, no panel |
+| `zoom` cleared, `nav` unchanged | straight line back to the current POI's camera, 1000 ms (300 ms) |
+
+When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, parallax, the idle bob and the panel view offset ease to zero (at `6 × dt`), so the camera holds still and the DOM overlay stays pinned. `exitZoom()` comes from `Esc`, the overlay's Back button, a click on empty space (`onPointerMissed` on the canvas) or the terminal's `exit`.
+
 ## Every frame
 
 - **Parallax.** The smoothed mouse (`runtime.ms`, eased at `3 × dt`) offsets the camera along its right and up vectors by `1.1 × P` and `0.6 × P`, and the look target by `0.12 × P`, where `P = settings.parallax`. On touch devices a slow sine drift replaces the mouse. The panel moves the opposite way by up to 7 × 5 px.
@@ -32,3 +44,7 @@ When `nav` changes, `CameraRig` builds a transit from the camera's current base 
 | click on a diamond | `goTo(i)` | R3F click with drag under 8 px |
 | click on a label, nav button or pager | `goTo(i)` | DOM buttons |
 | `hashchange` | `goTo(id)` | `goTo` itself uses `history.replaceState`, so it does not loop |
+| `Esc` | `exitZoom()`, else close settings | handled before the input check, so it also works while typing in an overlay |
+| click on a screen | `goTo(poi)`, or `zoomTo` if the POI is current | R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
+
+While zoomed, every key except `Esc` is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom.

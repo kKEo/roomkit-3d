@@ -26,7 +26,7 @@ export function Labels() {
         const [x, y, z] = p.marker.position;
         // same bob as the 3D marker, plus clearance above it
         v.set(x, y + Math.sin(runtime.time * 1.4 + i) * 0.08 + 0.45, z).project(cam);
-        const visible = v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05;
+        const visible = !useStore.getState().zoom && v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05;
         el.classList.toggle('hidden', !visible);
         if (visible) el.style.transform = `translate(${((v.x + 1) / 2) * w}px, ${((1 - v.y) / 2) * h}px) translate(-50%,-100%)`;
       });

@@ -6,6 +6,15 @@ import { objectMatrix } from './math.js';
  * config leaves them out. Prefabs face local +Z; `focus` and `markerOffset`
  * are in the prefab's local space.
  */
+/** Default overview: in front of the room, a little above the ceiling (the shell is invisible from outside), looking in and down. */
+export function overviewCamera({ width, height, depth }) {
+  const size = Math.max(width, depth);
+  return {
+    position: [0, height + size * 0.08, depth / 2 + size * 0.22],
+    target: [0, height * 0.12, -depth * 0.12],
+  };
+}
+
 export function autoPlacement(obj, prefabDefaults) {
   const m = objectMatrix(obj);
   const focus = new THREE.Vector3(...prefabDefaults.focus).applyMatrix4(m);

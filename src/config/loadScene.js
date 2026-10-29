@@ -1,7 +1,7 @@
 import { SCENE_DEFAULTS, deepMerge } from './defaults.js';
 import { sceneSchema, poiSchema, parseOrThrow, ConfigError } from './schema.js';
 import { PREFABS } from '../prefabs/registry.js';
-import { autoPlacement } from '../lib/autoCamera.js';
+import { autoPlacement, overviewCamera } from '../lib/autoCamera.js';
 
 const SCENES_BASE = new URL(`${import.meta.env.BASE_URL}scenes/`, location.href);
 
@@ -22,7 +22,13 @@ const isRelative = v => typeof v === 'string' && !/^([a-z]+:|\/)/i.test(v);
 function normalizeObject(obj, base) {
   const prefab = PREFABS[obj.type];
   const props = { ...prefab.props, ...obj.props };
-  for (const key of prefab.media || []) if (isRelative(props[key])) props[key] = new URL(props[key], base).href;
+  for (const key of prefab.media || []) {
+    // "list[].prop" resolves that prop in every item of an array prop
+    const [list, sub] = key.split('[].');
+    if (sub) {
+      if (Array.isArray(props[list])) props[list] = props[list].map(it => (it && isRelative(it[sub]) ? { ...it, [sub]: new URL(it[sub], base).href } : it));
+    } else if (isRelative(props[key])) props[key] = new URL(props[key], base).href;
+  }
   return { ...obj, props };
 }
 
@@ -59,6 +65,7 @@ export async function loadScene() {
   const raw = await fetchFile(new URL('scene.json', base), `${name}/scene.json`, 'json');
   const scene = parseOrThrow(sceneSchema, deepMerge(SCENE_DEFAULTS, raw), `${name}/scene.json`);
   scene.name = name;
+  scene.camera.overview ??= overviewCamera(scene.room);
   scene.decor = scene.decor.map(o => normalizeObject(o, base));
 
   const results = await Promise.allSettled(scene.poi.map(f => loadPoi(f, base, name)));

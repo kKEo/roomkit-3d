@@ -21,7 +21,7 @@ The scenes base URL is `new URL(import.meta.env.BASE_URL + 'scenes/', location.h
 All files in `scene.poi` are fetched in parallel with `Promise.allSettled`, so one broken file does not hide problems in the others. For each:
 
 1. **Validate** with `poiSchema`. `objects[].position`, `rotation` and `scale` get defaults: `[0,0,0]`, `[0,0,0]`, `1`.
-2. **Normalise objects.** Merge the prefab's default `props` from `registry.js` under the given ones. Resolve media props (`image`, `src`) against the scene folder unless they are absolute (`https:`, `data:`, a leading `/`).
+2. **Normalise objects.** Merge the prefab's default `props` from `registry.js` under the given ones. Resolve media props (`image`, `src`, and `src` inside each `controlDesk` screen via the `screens[].src` form) against the scene folder unless they are absolute (`https:`, `data:`, a leading `/`).
 3. **Place automatically** if `camera` or `marker` is missing: `autoPlacement()` in `src/lib/autoCamera.js` takes the first object's transform and its prefab's `placement(props)` hints. `focus` and `markerOffset` are in prefab-local space; the camera stands `cameraDistance` in front of `focus` along the object's local +Z (flattened to the floor plane), at height `cameraHeight` (or `focus.y + 0.3`).
 4. **Load content.** `{ markdown: path }` is fetched and replaced by `{ blocks: [{ type: 'markdown', text }] }`, so the panel only ever deals with blocks.
 

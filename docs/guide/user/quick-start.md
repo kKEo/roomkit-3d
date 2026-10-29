@@ -16,21 +16,21 @@ You should see the green room fly in and stop at **01 Start**.
 
 ## 1. Describe the point of interest
 
-Create the file `public/scenes/neo-room/poi/07-hello.json` with this content:
+Create the file `public/scenes/neo-room/poi/08-hello.json` with this content:
 
 ```json
 {
   "id": "hello",
   "label": "Hello",
-  "kicker": "east wall",
+  "kicker": "near wall",
   "objects": [
-    { "type": "pictureFrame", "position": [15, 3.2, 8], "rotation": [0, -90, 0] }
+    { "type": "pictureFrame", "position": [-7, 3.2, 15], "rotation": [0, 180, 0] }
   ],
   "content": { "markdown": "content/hello.md" }
 }
 ```
 
-This says: put a picture frame on the east wall (`15` is the wall's position, `3.2` the height of the frame's centre), turn it to face into the room, and show the text from `content/hello.md` when a visitor arrives. The camera position is worked out for you.
+This says: put a picture frame on the near wall, the one behind you when you first enter (`15` is that wall's depth, `-7` puts the frame left of centre, `3.2` is the height of its centre). Turn it round (`180`) to face into the room, and show the text from `content/hello.md` when a visitor arrives. The camera position is worked out for you.
 
 ## 2. Write the text
 
@@ -56,13 +56,14 @@ Open `public/scenes/neo-room/scene.json`, find the `"poi"` list at the bottom, a
     "poi/04-about.json",
     "poi/05-services.json",
     "poi/06-contact.json",
-    "poi/07-hello.json"
+    "poi/07-control.json",
+    "poi/08-hello.json"
   ]
 ```
 
 ## 4. See it
 
-Reload the page and press `7`, or click **07 Hello** in the top bar. The camera flies to the east wall and your panel slides in.
+Reload the page and press `8`, or click **08 Hello** in the top bar. The camera turns to the near wall and your panel slides in.
 
 > **Tip.** If the page shows a red **Could not load the scene** message instead, it names the file and the line that is wrong. See [FAQ and troubleshooting](faq.md).
 

@@ -6,7 +6,7 @@ import { reducedMotion } from '../lib/env.js';
 
 /** Wall-mounted frame (origin = wall surface at the frame centre) with optional image and floating exhibit. */
 export function PictureFrame({ props }) {
-  const { width: w, height: h, image, exhibit, caption } = props;
+  const { width: w, height: h, image, exhibit, caption, zoom } = props;
   const ex = useRef();
   const seed = useRef(Math.random() * 6);
 
@@ -21,7 +21,7 @@ export function PictureFrame({ props }) {
     <group>
       <Solid args={[w, h, 0.14]} position={[0, 0, 0.08]} fill="fine" />
       <Segs points={[-iw / 2, -ih / 2, z, iw / 2, -ih / 2, z, -iw / 2, ih / 2, z, iw / 2, ih / 2, z, -iw / 2, -ih / 2, z, -iw / 2, ih / 2, z, iw / 2, -ih / 2, z, iw / 2, ih / 2, z]} />
-      {image && <ScreenSurface source="image" src={image} w={iw - 0.04} h={ih - 0.04} position={[0, 0, z + 0.005]} />}
+      {image && <ScreenSurface source="image" src={image} zoom={zoom} w={iw - 0.04} h={ih - 0.04} position={[0, 0, z + 0.005]} />}
       {caption && (
         <Segs points={[-w / 2 + 0.25, -h / 2 - 0.35, 0.03, 0.2, -h / 2 - 0.35, 0.03, -w / 2 + 0.25, -h / 2 - 0.55, 0.03, -0.6, -h / 2 - 0.55, 0.03]} />
       )}

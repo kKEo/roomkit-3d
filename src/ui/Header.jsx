@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     <header className="top">
-      <button className="brand" aria-label={`${scene.brand} — ${ui.home}`} onClick={() => goTo(0)}><Brand text={scene.brand} /></button>
+      <button className="brand" aria-label={`${scene.brand} — ${ui.home}`} onClick={() => goTo(-1)}><Brand text={scene.brand} /></button>
       <nav aria-label={ui.navLabel}>
         {pois.map((p, i) => (
           <button key={p.id} aria-current={i === current} onClick={() => goTo(i)}>

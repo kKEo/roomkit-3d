@@ -12,9 +12,10 @@ A desk with monitor, keyboard and chair. Origin: floor centre. The seated user f
 
 | Prop | Default | Notes |
 | --- | --- | --- |
-| `screen` | `"rain"` | `"rain"`, `"image"` or `"video"` on the monitor |
+| `screen` | `"rain"` | `"rain"`, `"image"` or `"video"` on the monitor (for `text` and `graph` screens use `controlDesk`) |
 | `src` | `null` | media file for `screen`; resolved against the scene folder |
 | `chair` | `true` | |
+| `zoom` | `true` | `false` makes the monitor not clickable (see [Zoomable screens](#zoomable-screens)) |
 
 Placement: focus `[0, 1.6, 0]`, distance `6`, cam y `2.9`, marker `[0, 2.8, 0]`.
 
@@ -44,6 +45,61 @@ Plinth with a floating, rotating solid and orbit rings. Origin: floor centre.
 | `rings` | `true` | |
 
 Placement: focus `[0, h − 0.1, 0]`, distance `12.5`, cam y `3.4`, marker `[0, h + 1.9, 0]`.
+
+### controlDesk
+
+A curved control-centre console made of desk segments on an arc, with sloped panels of blinking buttons, keyboards and knobs, operator chairs inside the curve, and a wall of screens on posts behind it. Origin: **floor at the middle of the desk**; operators sit on the +Z side, and the arc's centre is at local `[0, 0, radius]`.
+
+| Prop | Default | Notes |
+| --- | --- | --- |
+| `radius` | `4` | arc radius of the desk |
+| `arc` | `70` | degrees the desk spans |
+| `segments` | `3` | desk segments; each gets its own console |
+| `chairs` | `2` | chairs, spaced evenly around the middle of the arc |
+| `screens` | six `{}` | one entry per screen, filled **left to right, top row first**; see below |
+| `columns` | `3` | screens per row; rows = `ceil(screens / columns)` |
+| `screenWidth` | `1.6` | every screen |
+| `screenHeight` | `0.95` | every screen; the bottom row starts at 1.65 m |
+
+Each entry of `screens` configures that screen alone:
+
+| Key | Used by | Notes |
+| --- | --- | --- |
+| `source` | all | `"rain"` (default), `"image"`, `"video"`, `"text"`, `"graph"`, or the interactive `"terminal"`, `"dashboard"`, `"form"`; anything else falls back to rain with a console warning |
+| `src` | `image`, `video` | file path, resolved against the scene folder |
+| `label` | `rain` | caption in the middle of this screen's **own** rain; without `label` and `color` the screen shows the shared rain with the POI's `screenLabel` |
+| `title` | `text`, `graph` | text in the title bar |
+| `lines` | `text` | array of strings, typed out at about 45 characters per second, then repeated after 5 s (shown at once with reduced motion); about 7 lines fit |
+| `graph` | `graph` | `"wave"` (scrolling signal, default), `"bars"` (16 live levels) or `"radar"` (sweep with fading contacts); the title bar shows a live readout |
+| `color` | all canvas-drawn sources | CSS colour for this screen only (and its zoomed-in overlay); default `theme.accent` |
+| `prompt` | `terminal` | text before the input, default `"> "` |
+| `lines` | `terminal` | banner shown until the first command |
+| `commands` | `terminal` | `{ "name": "one line" \| ["several", "lines"] }`; names are matched lower-case. Built in: `help`, `clear`, `goto <n\|id>`, `exit` |
+| `rows` | `dashboard` | array of flat records |
+| `columns` | `dashboard` | fields to show, in order; default the keys of the first row |
+| `filters` | `dashboard` | fields that get a chip group (All + each distinct value) |
+| `value` | `dashboard` | numeric field drawn as a bar, scaled to the largest value in `rows` |
+| `form` | `form` | `{ fields, submit, action }`, the same shape as the panel's `form` block |
+| `zoom` | all | `false` makes this screen not clickable |
+
+```json
+"screens": [
+  { "source": "graph", "graph": "wave", "title": "NETWORK" },
+  { "source": "text", "title": "STATUS", "lines": ["> core ..... OK", "> uplink ... OK"] },
+  { "source": "graph", "graph": "radar", "title": "PERIMETER" },
+  { "source": "image", "src": "media/floorplan.svg" },
+  { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
+  { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#ffb000" }
+]
+```
+
+Placement (`top` = upper edge of the screen wall): focus `[0, (1.65 + top) / 2, −0.85]`, distance `9.5`, cam y `3.2`, marker `[0, top + 0.55, −0.85]`. Leave about `radius + 1` metres behind the origin for the screens and posts, and about `radius` metres in front for the chairs.
+
+#### Zoomable screens
+
+Every `ScreenSurface` inside a POI's objects is clickable unless its `zoom` is `false`. Screens in `decor` are not: `PoiObjects` (`src/scene/Experience.jsx`) provides the POI index through `PoiContext`, and decor has none. The first click on a screen of another POI calls `goTo` for that POI; a click on a screen of the current POI zooms into it (see [Navigation and the camera](../internals/camera.md#zooming-into-a-screen)).
+
+The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI index and the screen's `id` (the control desk passes `scr0`, `scr1`, …). The state lives until the page reloads; it is not saved anywhere.
 
 ### serverRack
 
@@ -83,6 +139,7 @@ A frame, 0.14 m deep, with an inner mat, a caption and optional image and exhibi
 | `image` | `null` | shown inside the mat, cropped to cover |
 | `exhibit` | `null` | a shape floating and rotating 1.3 m in front of the frame |
 | `caption` | `true` | two short "text" lines under the frame |
+| `zoom` | `true` | `false` makes the image not clickable |
 
 Placement: focus `[0, 0, 1.3]`, distance `7`, cam y `—`, marker `[0, h/2 + 0.7, 0.6]`.
 
@@ -97,6 +154,7 @@ A screen in a frame, with an optional stage and speakers. Origin: **wall surface
 | `elevation` | `4.3` | height of the screen's centre |
 | `source` | `"rain"` | `"rain"`, `"image"` or `"video"` |
 | `src` | `null` | media file for `source` |
+| `zoom` | `true` | `false` makes the screen not clickable |
 | `stage` | `true` | 2.6 m deep floor stage |
 | `speakers` | `true` | at `±(w/2 + 1.4)` |
 

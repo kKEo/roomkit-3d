@@ -24,7 +24,7 @@ This page explains every line of a point-of-interest file: where the object stan
 | --- | --- | --- |
 | `id` | Short name used in links (`#projects`). Letters, digits, `-` and `_` only; unique in the scene. | yes |
 | `label` | Name shown in the top bar, on the floating label and on the next/previous buttons. | yes |
-| `kicker` | Small line above the panel title, after the stop number, e.g. "02 of 06 · west wall". | no |
+| `kicker` | Small line above the panel title, after the stop number, e.g. "02 of 07 · west wall". | no |
 | `screenLabel` | Words shown on the green "rain" screens while the visitor is here. Defaults to the label. | no |
 | `objects` | One or more things to place in the room. See below. | yes |
 | `camera` | Where the camera stops and what it looks at. Worked out for you if left out. | no |

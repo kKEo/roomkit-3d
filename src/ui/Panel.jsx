@@ -32,6 +32,7 @@ export function Panel() {
   const shown = useStore(s => s.shown);
   const collapsed = useStore(s => s.panelCollapsed);
   const pois = useStore(s => s.pois);
+  const zoomed = useStore(s => !!s.zoom);
   const last = useRef(-1);
   const inner = useRef(null);
   if (shown >= 0) last.current = shown;
@@ -52,7 +53,7 @@ export function Panel() {
   }, []);
 
   return (
-    <aside id="panel" className={`panel${shown >= 0 ? ' on' : ''}${collapsed ? ' collapsed' : ''}`} aria-live="polite">
+    <aside id="panel" className={`panel${shown >= 0 && !zoomed ? ' on' : ''}${collapsed ? ' collapsed' : ''}`} aria-live="polite">
       <div className="panel-inner" ref={inner}>
         {index >= 0 && <PanelContent key={pois[index].id} index={index} />}
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useStore } from '../state/store.js';
-import { WorldContext } from './core.jsx';
+import { WorldContext, PoiContext } from './core.jsx';
 import { createMaterials } from './materials/hatch.js';
 import { createRain } from './rain.js';
 import { Room } from './Room.jsx';
@@ -28,7 +28,11 @@ function Ticker({ world }) {
 function PoiObjects({ poi, index }) {
   const active = useStore(s => s.shown === index);
   const hovered = useStore(s => s.hover === index);
-  return poi.objects.map((o, i) => <PlacedObject key={i} object={o} active={active} hovered={hovered} />);
+  return (
+    <PoiContext.Provider value={index}>
+      {poi.objects.map((o, i) => <PlacedObject key={i} object={o} active={active} hovered={hovered} />)}
+    </PoiContext.Provider>
+  );
 }
 
 export function Experience() {

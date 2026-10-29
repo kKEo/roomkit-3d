@@ -40,7 +40,7 @@ function Marker({ poi, index }) {
 
 export function Markers() {
   const pois = useStore(s => s.pois);
-  const visible = useStore(s => s.markersVisible);
+  const visible = useStore(s => s.markersVisible && !s.zoom);
   if (!visible) return null;
   return pois.map((p, i) => <Marker key={p.id} poi={p} index={i} />);
 }

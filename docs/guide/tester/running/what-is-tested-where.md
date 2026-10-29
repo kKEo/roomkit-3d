@@ -7,8 +7,9 @@ This page maps each area of the product to the check that covers it today and na
 | Config schema and defaults | `src/config/schema.js`, `defaults.js` | loading every scene (step 2) | nothing tests that **bad** config is rejected with the right message |
 | Loader: fetch, merge, URLs, errors | `src/config/loadScene.js` | step 2 (happy path) | missing file, HTML fallback, duplicate ids and media URL resolution are untested |
 | Auto-placement | `src/lib/autoCamera.js` | looking at POIs without `camera` (`neo-room` archive, all of `gallery`) | no numeric test of position and rotation maths |
-| Prefabs | `src/prefabs/*.jsx` | the prefabs used in the example scenes, by eye | `primitive` with every shape, prop edge cases (`count: 1`, `chair: false`) |
-| Media screens | `src/prefabs/media.jsx` | images in `gallery` | **video is untested**; no example scene uses one |
+| Prefabs | `src/prefabs/*.jsx` | the prefabs used in the example scenes, by eye | `primitive` with every shape, prop edge cases (`count: 1`, `chair: false`, a `controlDesk` with 1 or 9 screens) |
+| Screens | `src/prefabs/media.jsx`, `src/scene/screens.js` | images in `gallery`; every other source (`text`, all three `graph` styles, own rain with colour, image, `terminal`, `dashboard`, `form`) on the `neo-room` control desk | **video is untested**; no example scene uses one. Unknown `source` fallback is untested |
+| Screen zoom and overlays | `src/ui/ScreenOverlay.jsx`, `src/ui/screens/`, `src/scene/screenState.js` | explore ([Zoomed-in screens](../exploring/exploratory.md#zoomed-in-screens)) | overlay alignment under 760 px and on touch devices has not been checked; terminal command parsing and dashboard filtering have no unit tests |
 | Camera and transitions | `src/scene/CameraRig.jsx` | explore | everything; motion is checked only by eye |
 | Input | `src/ui/useInput.js` | explore | everything |
 | Panel and blocks | `src/ui/Panel.jsx`, `Markdown.jsx`, `blocks/` | step 3 | form `action` POST path |

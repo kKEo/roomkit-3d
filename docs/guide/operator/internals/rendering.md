@@ -41,7 +41,32 @@ Fat lines keep a constant pixel width. `LineSegments2.onBeforeRender` sets the m
 
 ## Screens and media
 
-`createRain(theme)` draws Matrix rain on a 512 × 288 canvas every 55 ms. A boxed caption shows the current POI's `screenLabel` (or its lowercased `label`). One `CanvasTexture` is shared by every screen in the scene. `ScreenSurface` (`src/prefabs/media.jsx`) shows that texture, or an image or video texture once it has loaded. Media are scaled to "cover" the plane. Videos are created muted, looping and inline with `crossOrigin = 'anonymous'`; images use three's `TextureLoader`, which defaults to `anonymous` too.
+`createRain(theme)` draws Matrix rain on a 512 × 288 canvas every 55 ms. A boxed caption shows the current POI's `screenLabel` (or its lowercased `label`). One `CanvasTexture` is shared by every screen in the scene.
+
+`ScreenSurface` (`src/prefabs/media.jsx`) is the one screen component every prefab uses. It picks its texture in this order:
+
+1. an image or video texture once loaded (`source: "image" | "video"`);
+2. a screen-owned canvas from `src/scene/screens.js`: `createTextScreen` (`"text"`), `createGraphScreen` (`"graph"`: wave, bars or radar), or `createOwnRain` (`"rain"` with a `label` or `color`). Each owns a 512 × 288 `CanvasTexture`, redrawn about 20 times a second in `useFrame` and disposed on unmount;
+3. otherwise the shared rain.
+
+The interactive sources draw a preview from their shared state: `createTerminalScreen` (log tail, prompt and the text being typed), `createDashboardScreen` (one bar per filtered row; active filters and `n/total` in the title bar) and `createFormScreen` (field boxes and the submit button, drawn once).
+
+Canvas screens cost one texture upload per redraw, so a wall of six adds six small uploads about 20 times a second. That is fine on desktop GPUs; keep walls modest on low-end phones. Media are scaled to "cover" the plane. Videos are created muted, looping and inline with `crossOrigin = 'anonymous'`; images use three's `TextureLoader`, which defaults to `anonymous` too.
+
+## The zoomed-in screen overlay
+
+`ScreenOverlay` (`src/ui/ScreenOverlay.jsx`) renders while `zoom` is set. Every animation frame it projects the screen's four world corners through the camera and sets its `left`, `top`, `width` and `height` to their bounding box. Because the camera faces the screen along its normal, that box is the screen. It also sets `--su` (box height ÷ 26, at least 11 px) as the font size, so text scales with the screen. It fades in when `runtime.zoomReady` turns true and focuses the first input.
+
+| `source` | Overlay component |
+| --- | --- |
+| `terminal` | `src/ui/screens/Terminal.jsx`: log, input, ↑/↓ history |
+| `dashboard` | `src/ui/screens/Dashboard.jsx`: search, chip groups, table with value bars |
+| `form` | the panel's `Form` block (`src/ui/blocks/index.jsx`) |
+| anything else | no body, only the Back button over the close-up |
+
+The overlay component and the canvas drawer share one plain object per screen (`getSession(key)` in `src/scene/screenState.js`). The component writes to it in effects; the drawer reads it on every redraw. That is why the 3D screen shows the filters and typed lines after the visitor steps back.
+
+The DOM overlay is the reason this works: real inputs get focus, IME, autofill, scrolling and screen-reader support for free. Drawing widgets into the canvas and raycasting UVs would mean rebuilding all of that. The limit is that the overlay is flat and axis-aligned, so it only works for a head-on view; it is hidden during flights and the canvas preview shows instead.
 
 ## Overlays and effects
 

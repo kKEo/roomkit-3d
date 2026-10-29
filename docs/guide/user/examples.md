@@ -4,11 +4,12 @@ This page describes the two example scenes that ship with Scene Rooms and some i
 
 ## The examples
 
-**Neo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with six stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, and a desk with a contact form. Look here to see:
+**Neo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with seven stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, a desk with a contact form, and a control centre with a wall of nine screens. Look here to see:
 
 - one stop with several objects and a hand-placed camera (`poi/02-projects.json`);
 - a stop with no camera at all, placed automatically (`poi/03-archive.json`);
-- a panel written inside the point-of-interest file instead of Markdown (`poi/05-services.json`).
+- a panel written inside the point-of-interest file instead of Markdown (`poi/05-services.json`);
+- a control desk where every screen shows something different: graphs, typed text, a picture, its own rain, and a console, a filterable table and a form you can use up close (`poi/07-control.json`).
 
 **Amber Gallery** (`public/scenes/gallery/`). A smaller amber room with two framed pictures and a cinema screen showing a poster. Open it with `?scene=gallery`. Look here to see:
 

@@ -66,6 +66,7 @@ export const sceneSchema = z.object({
     fov: z.number(),
     fovPortrait: z.number(),
     intro: z.object({ position: vec3, target: vec3, duration: z.number().positive() }),
+    overview: z.object({ position: vec3, target: vec3 }).optional(),
   }),
   effects: z.object({
     ease: z.enum(EASE_NAMES),

@@ -25,6 +25,25 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | `H`, then navigate, then `H` | the panel stays hidden across stops, and the view re-centres; it comes back on the current stop |
 | Submit the form with no `action` | the prototype message appears; no network request |
 | Wardrobe stop | doors swing open as the panel appears, and close when you leave |
+| Control stop (`neo-room` 07) | nine different screens: a moving wave, status lines typing out with a blinking cursor, a radar sweep lighting up contacts, the floor-plan picture, rain captioned "uplink // secure", a console, a node table, a report form, amber bars; buttons blink on the consoles |
+
+## Zoomed-in screens
+
+| Try | Expect |
+| --- | --- |
+| Hover any screen of the current stop | pointer cursor; the screen brightens slightly |
+| Click a screen of another stop (e.g. the cinema screen from stop 01) | the camera flies to that stop; a second click zooms in |
+| Click a screen of the current stop | a straight, short flight; the screen fills most of the view; panel, diamonds and labels disappear; the hint says `Esc` goes back |
+| Console: `help`, `status`, `foo`, `↑` | command list; status lines; `command not found: foo`; `↑` recalls the last command |
+| Console: `goto 1` | leaves the screen and flies to stop 01 |
+| Node table: click a chip, type in the filter | rows and the count change; after `Esc` the 3D screen shows the filtered bars and the filters in its title bar |
+| Report form: submit | the prototype message appears |
+| `Esc` while the cursor is in an input | leaves the screen (it does not just clear the field) |
+| `→`, the wheel, `H` while zoomed | nothing happens |
+| **← Back**, and a click on the wall outside the screen | both fly back to the stop; the panel returns |
+| Click the next screen at the edge of the view | the zoom switches to it |
+| Resize the window while zoomed | the overlay stays on the screen's edges |
+| Desk monitor, cinema screen, a framed picture | they zoom too, with only the Back button over them |
 
 ## Markers and labels
 

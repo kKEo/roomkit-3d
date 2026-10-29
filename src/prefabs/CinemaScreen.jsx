@@ -4,12 +4,12 @@ import { circlePts } from '../lib/math.js';
 
 /** Big wall screen (origin = wall surface at floor level, facing +Z) with stage and speakers. */
 export function CinemaScreen({ props }) {
-  const { width: w, height: h, elevation, source, src, stage, speakers } = props;
+  const { width: w, height: h, elevation, source, src, stage, speakers, zoom } = props;
   const sx = w / 2 + 1.4;
   return (
     <group>
       <Solid args={[w + 0.5, h + 0.5, 0.22]} position={[0, elevation, 0.11]} fill="fine" />
-      <ScreenSurface source={source} src={src} w={w} h={h} position={[0, elevation, 0.23]} />
+      <ScreenSurface source={source} src={src} zoom={zoom} w={w} h={h} position={[0, elevation, 0.23]} />
       {stage && <Solid args={[w + 2.5, 0.25, 2.6]} position={[0, 0.125, 1.4]} />}
       {speakers && [-sx, sx].map(x => (
         <group key={x}>

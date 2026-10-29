@@ -7,7 +7,8 @@ import { fmt } from '../lib/text.js';
 export function Hint() {
   const ui = useStore(s => s.scene.ui);
   const total = useStore(s => s.pois.length);
-  const parts = fmt(ui.hint, { total }).split(/(\[[^\]]+\])/);
+  const zoomed = useStore(s => !!s.zoom);
+  const parts = fmt(zoomed ? ui.zoomHint : ui.hint, { total }).split(/(\[[^\]]+\])/);
   return (
     <div className="hint">
       {parts.map((p, i) => (/^\[.+\]$/.test(p) ? <kbd key={i}>{p.slice(1, -1)}</kbd> : p))}

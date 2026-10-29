@@ -8,6 +8,7 @@ import { Panel } from './ui/Panel.jsx';
 import { Minimap } from './ui/Minimap.jsx';
 import { Labels } from './ui/Labels.jsx';
 import { SettingsPanel } from './ui/SettingsPanel.jsx';
+import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
 import { Hint, Loader, Progress } from './ui/Overlays.jsx';
 import { useInput, poiIndexFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
@@ -51,6 +52,7 @@ export function App() {
             gl={{ antialias: true, powerPreference: 'high-performance' }}
             camera={{ fov: scene.camera.fov, near: 0.05, far, position: scene.camera.intro.position }}
             aria-label={fmt(scene.ui.canvasLabel, { total })}
+            onPointerMissed={() => useStore.getState().exitZoom()}
           >
             <Experience />
           </Canvas>
@@ -61,6 +63,7 @@ export function App() {
         <>
           <Progress />
           <Labels />
+          <ScreenOverlay />
           <Header />
           <Panel />
           <SettingsPanel />

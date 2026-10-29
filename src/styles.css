@@ -109,6 +109,37 @@ nav button[aria-current="true"] b { opacity: 1 }
 .mlabel:hover { border-color: var(--accent); color: var(--accent) }
 .mlabel.here, .mlabel.off, .mlabel.hidden { opacity: 0; pointer-events: none }
 
+/* ——— Zoomed-in screen overlay (font scales with the screen via --su) ——— */
+.screen-ui { position: fixed; left: 0; top: 0; z-index: 7; display: flex; flex-direction: column; font-size: var(--su, 14px); line-height: 1.35; opacity: 0; pointer-events: none; transition: opacity .25s }
+.screen-ui.on { opacity: 1 }
+.screen-ui.on .zback, .screen-ui.on.live { pointer-events: auto }
+.screen-ui.live { background: var(--bg); border: 1px solid var(--accent); box-shadow: var(--glow) }
+.screen-ui > .zback { position: absolute; top: .5em; right: .5em }
+.zback { background: rgba(0,0,0,.75); border: 1px solid var(--accent); color: var(--accent); padding: .15em .6em; font-size: .85em; cursor: pointer; white-space: nowrap }
+.zback kbd { font-family: inherit; opacity: .7; margin-left: .3em }
+.screen-title { display: flex; justify-content: space-between; align-items: center; gap: 1em; background: var(--accent); color: var(--bg); font-weight: 600; padding: .25em .25em .25em .7em }
+.screen-title .zback { background: var(--bg); padding: .05em .6em }
+.screen-body { flex: 1; min-height: 0; overflow: auto; padding: .6em .8em; color: var(--accent) }
+.screen-body input, .screen-body textarea { font-size: 1em }
+.screen-body .field span { font-size: .85em }
+.screen-body .btn, .screen-body .status { font-size: 1em }
+.term { display: flex; flex-direction: column; height: 100% }
+.term-log { flex: 1; overflow: auto; white-space: pre-wrap; word-break: break-word }
+.term label { display: flex; gap: .4em }
+.term input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--accent); padding: 0; caret-color: var(--accent) }
+.dash-bar { display: flex; gap: 1em; align-items: center; margin-bottom: .5em }
+.dash-bar input { flex: 1; min-width: 0; background: rgba(0,0,0,.6); border: 1px solid var(--line); color: var(--text); padding: .2em .5em }
+.dash-bar input:focus { border-color: var(--accent); outline: none }
+.chips { display: flex; flex-wrap: wrap; gap: .3em; align-items: center; margin-bottom: .4em }
+.chips b { font-weight: 400; color: var(--text-dim); min-width: 5em }
+.chips button { background: none; border: 1px solid var(--line); color: var(--text); padding: 0 .6em; cursor: pointer }
+.chips button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent) }
+.dash table { width: 100%; border-collapse: collapse; margin-top: .4em }
+.dash th { text-align: left; font-weight: 400; color: var(--text-dim); border-bottom: 1px solid var(--line); padding: .15em .4em }
+.dash td { position: relative; padding: .15em .4em; color: var(--text); border-bottom: 1px solid rgba(255,255,255,.05) }
+.dash td span { position: relative }
+.dash-val { position: absolute; left: 0; top: 15%; bottom: 15%; background: var(--accent); opacity: .3 }
+
 /* ——— Minimap, hint, progress ——— */
 #minimap { position: fixed; z-index: 6; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; border: 1px solid var(--line); background: rgba(0,0,0,.55) }
 .hint { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: var(--text-dim); background: rgba(0,0,0,.55); padding: 5px 12px; border: 1px solid var(--line); white-space: nowrap }

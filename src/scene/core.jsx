@@ -7,6 +7,9 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 export const WorldContext = createContext(null);
 export const useWorld = () => useContext(WorldContext);
 
+/** Index of the POI an object belongs to; -1 for decor. */
+export const PoiContext = createContext(-1);
+
 const GEOMETRIES = {
   box: THREE.BoxGeometry,
   cylinder: THREE.CylinderGeometry,

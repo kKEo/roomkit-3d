@@ -3,6 +3,7 @@ import { PictureFrame } from './PictureFrame.jsx';
 import { Wardrobe } from './Wardrobe.jsx';
 import { CinemaScreen } from './CinemaScreen.jsx';
 import { Desk } from './Desk.jsx';
+import { ControlDesk } from './ControlDesk.jsx';
 import { ServerRack } from './ServerRack.jsx';
 import { Door, Bench, Primitive } from './simple.jsx';
 import { toRad } from '../lib/math.js';
@@ -13,6 +14,7 @@ const COMPONENTS = {
   wardrobe: Wardrobe,
   cinemaScreen: CinemaScreen,
   desk: Desk,
+  controlDesk: ControlDesk,
   serverRack: ServerRack,
   door: Door,
   bench: Bench,

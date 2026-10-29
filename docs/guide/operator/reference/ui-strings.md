@@ -22,6 +22,15 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `formSent` | `Message sent. Thank you!` | form POST succeeded |
 | `formFailed` | `Sending failed — please try again.` | form POST failed |
 | `canvasLabel` | `3D room with {total} areas` | accessible name of the canvas |
+| `zoomHint` | `[Esc] back to the room — click another screen to switch` | bottom hint while zoomed into a screen |
+| `zoomBack` | `Back` | Back button on a zoomed-in screen |
+| `zoomScreen` | `Screen` | accessible name of an overlay whose screen has no `title` |
+| `termHelp` | `commands: {commands}` | terminal `help` |
+| `termUnknown` | `command not found: {cmd}` | terminal, unknown command |
+| `termNoArea` | `no such area: {arg} (try a number or an id)` | terminal `goto` with a bad argument |
+| `filterAll` | `All` | first chip of each dashboard filter |
+| `filterSearch` | `Filter…` | dashboard search placeholder and label |
+| `filterCount` | `{n} of {total}` | dashboard row count |
 
 > **Note.** The loading screen can only use a scene's own `loading` text once that scene has loaded, in the 650 ms pause before the fly-in. While the files are still downloading it shows the default, because the app does not yet know which strings to use. `loadError` is never taken from the scene: a scene is stored only when it loads without errors, so the error screen always uses the default. Change it in `src/config/defaults.js` if you need another language there.
 
