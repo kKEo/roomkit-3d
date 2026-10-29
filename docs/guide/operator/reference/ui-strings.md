@@ -7,9 +7,9 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `loading` | `Initializing room` | loading screen (see the note below) |
 | `loadError` | `Could not load the scene` | heading above the error list |
 | `kicker` | `{n} of {total}` | above the panel title; `{n}` and `{total}` are zero-padded |
-| `hint` | `[←][→] or mouse wheel — move, [1]–[{total}] areas, click a marker in the room` | bottom hint; `[x]` renders as a key cap |
+| `hint` | `[←][→] or mouse wheel — move, [1]–[{total}] areas, [0] whole room, click a marker in the room` | bottom hint; `[x]` renders as a key cap |
 | `goTo` | `Go to {label}` | accessible name of marker labels |
-| `home` | `go to start` | accessible name of the logo, after the brand |
+| `home` | `view the whole room (0)` | accessible name of the logo, after the brand |
 | `navLabel` | `Areas of the room` | accessible name of the top navigation |
 | `hidePanel` / `showPanel` | `Hide content panel (H)` / `Show content panel (H)` | panel button |
 | `hideMarkers` / `showMarkers` | `Hide floating markers (M)` / `Show floating markers (M)` | marker button |

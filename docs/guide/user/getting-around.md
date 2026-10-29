@@ -4,11 +4,13 @@ This page is what your visitors can do, and the addresses you can share to send 
 
 ## Moving between points of interest
 
+The room opens with a view of all of it from above. From there, `→` goes to stop 1 and `←` to the last stop.
+
 | To… | Do this |
 | --- | --- |
 | Go to the next or previous stop | Press `→` / `←` (or `↓` / `↑`), scroll the mouse wheel, or swipe left or right on a phone |
 | Jump to a stop | Press its number key `1`–`9`, click it in the top bar, or click its label or floating diamond in the room |
-| Go back to the first stop | Click the logo in the top-left corner |
+| See the whole room | Press `0` or click the logo in the top-left corner. The camera rises above the room and looks into it from the front, like a model with the roof off |
 | Hide or show the text panel | Press `H` or click the panel button in the top bar |
 | Hide or show the floating diamonds | Press `M` or click the diamond button in the top bar |
 | Change how the camera moves | Click the curve button in the top bar and pick a transition curve, parallax and warp amount |
@@ -38,7 +40,7 @@ Every stop has an address. Add `#` and the stop's `id` to the site address:
 
 | Address | Opens |
 | --- | --- |
-| `https://your-site/` | the default room at its first stop |
+| `https://your-site/` | the default room, seen whole from above |
 | `https://your-site/#contact` | the default room, at the stop whose `id` is `contact` |
 | `https://your-site/?scene=gallery` | the room called `gallery` |
 | `https://your-site/?scene=gallery#screening` | the `gallery` room, at its `screening` stop |

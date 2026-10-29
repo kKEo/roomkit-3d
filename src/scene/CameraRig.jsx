@@ -25,7 +25,7 @@ function posAt(tr, e, out) {
  * Zooming into a screen flies straight to a head-on view of it and holds the camera still.
  */
 export function CameraRig() {
-  const { camera } = useThree();
+  const { camera, scene: world } = useThree();
   const getThree = useThree(s => s.get);
   const scene = useStore(s => s.scene);
   const nav = useStore(s => s.nav);
@@ -34,7 +34,7 @@ export function CameraRig() {
   if (!base.current) base.current = { pos: new V3(...scene.camera.intro.position), tgt: new V3(...scene.camera.intro.target) };
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
-  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
+  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
   function startTransit(p1, t1, { dur, arc = true, index = null, zoomed = false }) {
@@ -135,6 +135,13 @@ export function CameraRig() {
     tmp.vo.x += (tx - tmp.vo.x) * k; tmp.vo.y += (ty - tmp.vo.y) * k;
     camera.setViewOffset(w, h, tmp.vo.x, tmp.vo.y, w, h);
     camera.updateProjectionMatrix();
+
+    // outside the room (intro, overview) push the fog back, so the far side doesn't fade out
+    if (world.fog) {
+      const [n, f] = scene.theme.fog;
+      const out = Math.max(0, camera.position.distanceTo(tmp.centre.set(0, scene.room.height / 2, 0)) - Math.max(scene.room.width, scene.room.depth) / 2);
+      world.fog.near = n + out; world.fog.far = f + out;
+    }
 
     runtime.camera = camera;
     runtime.time = time;

@@ -9,7 +9,7 @@ This page maps the source tree to the runtime data flow, so you know which file 
 1. `src/main.jsx` turns off three.js colour management (see [Rendering](rendering.md)) and mounts `<App>`.
 2. `src/App.jsx` calls `loadScene()`. On success it applies the theme (`src/ui/theme.js`) and puts `scene` and `pois` in the store. On failure it stores the `ConfigError`, and the loader shows its lines.
 3. With the status `ready`, `App` mounts the `<Canvas>` with `<Experience>` and the DOM overlays.
-4. After 650 ms (100 ms with reduced motion) it hides the loader and calls `goTo(<hash POI or 0>, camera.intro.duration)`, which flies the camera in from `camera.intro.position`.
+4. After 650 ms (100 ms with reduced motion) it hides the loader and calls `goTo(<hash POI or −1>, camera.intro.duration)`, which flies the camera in from `camera.intro.position`, either to that POI or, with no hash, to the whole-room view (`camera.overview`).
 
 ## Source map
 

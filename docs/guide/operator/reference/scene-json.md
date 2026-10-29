@@ -67,6 +67,8 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `intro.position` | `[x, y, z]` | `[0, 6.5, 27]` | where the fly-in starts; outside the default room, so it flies through the wall |
 | `intro.target` | `[x, y, z]` | `[0, 3, 0]` | where it looks at the start |
 | `intro.duration` | number > 0 | `3200` | ms for the first flight |
+| `overview.position` | `[x, y, z]` | computed | the whole-room view: where the app opens (with no `#poi` in the address), and where `0` and the logo go. Default `[0, height + 0.22·size, depth/2 + 0.28·size]`, with `size = max(width, depth)`: outside the front wall and above the ceiling, so the room shows like a model with the roof off |
+| `overview.target` | `[x, y, z]` | computed | default `[0, 0, −0.06·depth]`; give both keys or neither |
 
 ## effects
 

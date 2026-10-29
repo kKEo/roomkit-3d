@@ -6,12 +6,15 @@ import { objectMatrix } from './math.js';
  * config leaves them out. Prefabs face local +Z; `focus` and `markerOffset`
  * are in the prefab's local space.
  */
-/** Default overview: in front of the room, a little above the ceiling (the shell is invisible from outside), looking in and down. */
+/**
+ * Default overview: outside the front wall and above the ceiling, looking in and down.
+ * The shell only draws its inner faces, so from here the whole room shows like a cut-away model.
+ */
 export function overviewCamera({ width, height, depth }) {
   const size = Math.max(width, depth);
   return {
-    position: [0, height + size * 0.08, depth / 2 + size * 0.22],
-    target: [0, height * 0.12, -depth * 0.12],
+    position: [0, height + size * 0.22, depth / 2 + size * 0.28],
+    target: [0, 0, -depth * 0.06],
   };
 }
 

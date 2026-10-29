@@ -53,7 +53,7 @@ Add a `theme` to change colours. Any colour you leave out stays green:
 You can also replace the interface words, for example the loading text and the hint at the bottom:
 
 ```json
-"ui": { "loading": "Opening the office", "hint": "[←][→] — walk, [1]–[{total}] rooms" }
+"ui": { "loading": "Opening the office", "hint": "[←][→] — walk, [1]–[{total}] rooms, [0] whole office" }
 ```
 
 In the hint, `[x]` is drawn as a key and `{total}` becomes the number of points of interest. The [Interface strings](../operator/reference/ui-strings.md) page lists every word you can replace.

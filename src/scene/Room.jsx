@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { Solid, Segs, useGeometry, Outline, useWorld } from './core.jsx';
 
 /** Room shell, floor/ceiling grids, wall panelling, pillars and light fixtures — all from scene.room. */
@@ -7,6 +8,9 @@ export function Room() {
   const { width: RW, height: RH, depth: RD } = room;
   const HX = RW / 2, HZ = RD / 2;
   const shell = useGeometry('box', [RW, RH, RD]);
+  // the ceiling's grid and lamps would cover the view from above (overview), so hide them up there
+  const ceilingParts = useRef(null);
+  useFrame(({ camera }) => { if (ceilingParts.current) ceilingParts.current.visible = camera.position.y < RH; });
 
   const { floor, ceiling, walls } = useMemo(() => {
     const grid = (step, y) => {
@@ -33,7 +37,21 @@ export function Room() {
         <Outline geometry={shell} line="thick" />
       </mesh>
       {floor.length > 0 && <Segs points={floor} line="faint" />}
-      {ceiling.length > 0 && <Segs points={ceiling} line="faint" />}
+      <group ref={ceilingParts}>
+        {ceiling.length > 0 && <Segs points={ceiling} line="faint" />}
+        {room.lights.map(([x, y, z], i) =>
+          y >= RH - 0.8 ? (
+            // flush ceiling panel
+            <Solid key={i} args={[2.2, 0.14, 2.2]} position={[x, RH - 0.07, z]} line="mid" fill="fine" />
+          ) : (
+            // pendant bar on two wires
+            <group key={i}>
+              <Segs points={[x - 0.5, RH, z, x - 0.5, y + 0.1, z, x + 0.5, RH, z, x + 0.5, y + 0.1, z]} />
+              <Solid args={[1.4, 0.16, 0.45]} position={[x, y, z]} line="mid" fill="fine" />
+            </group>
+          ),
+        )}
+      </group>
       {walls.length > 0 && <Segs points={walls} line="faint" />}
 
       {room.pillars.map(([x, z], i) => (
@@ -43,19 +61,6 @@ export function Room() {
           <Solid args={[1.5, 0.3, 1.5]} position={[0, RH - 0.15, 0]} />
         </group>
       ))}
-
-      {room.lights.map(([x, y, z], i) =>
-        y >= RH - 0.8 ? (
-          // flush ceiling panel
-          <Solid key={i} args={[2.2, 0.14, 2.2]} position={[x, RH - 0.07, z]} line="mid" fill="fine" />
-        ) : (
-          // pendant bar on two wires
-          <group key={i}>
-            <Segs points={[x - 0.5, RH, z, x - 0.5, y + 0.1, z, x + 0.5, RH, z, x + 0.5, y + 0.1, z]} />
-            <Solid args={[1.4, 0.16, 0.45]} position={[x, y, z]} line="mid" fill="fine" />
-          </group>
-        ),
-      )}
     </group>
   );
 }

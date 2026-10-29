@@ -6,8 +6,10 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 
 | Try | Expect |
 | --- | --- |
-| Load `/` | loader with blinking cursor, then the camera flies in through the wall to stop 01 and its panel opens |
-| Load `/#contact` | the fly-in lands directly at the contact stop |
+| Load `/` | loader with blinking cursor, then the camera rises to the whole-room view: every stop visible from above, no ceiling grid or lamps in the way, the far wall not faded; no panel, no hash |
+| From any stop, `0`, then the logo | both fly back to the whole-room view, the panel closes and the hash is cleared |
+| From the whole-room view, `→` and `←` | `→` goes to stop 01, `←` to the last stop |
+| Load `/#contact`, and `/#nonsense` | the first lands directly at the contact stop; the second opens the whole-room view |
 | `→` repeatedly, past the last stop | wraps to 01; the top-bar highlight, hash and minimap dot follow |
 | Number keys, including one higher than the number of stops | valid keys jump; the higher key does nothing |
 | Mouse wheel: one notch, then a hard flick | each moves exactly one stop; further scrolling is ignored for 0.9 s (long trackpad momentum may move once more after that) |
