@@ -23,9 +23,31 @@
           { "source": "graph", "graph": "radar", "title": "PERIMETER" },
           { "source": "image", "src": "media/floorplan.svg" },
           { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
-          { "source": "graph", "graph": "radar", "title": "PERIMETER" },
-          { "source": "image", "src": "media/floorplan.svg" },
-          { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
+          { "source": "terminal", "title": "CONSOLE", "lines": [
+            "operator console v0.9",
+            "type help and press Enter"
+          ], "commands": {
+            "status": ["core ......... OK", "render ....... OK", "uplink ....... OK", "backup ....... 87%"],
+            "whoami": "visitor",
+            "uptime": "up 42 days, 1 user, load 0.42",
+            "ping": "pong"
+          } },
+          { "source": "dashboard", "title": "NODES", "filters": ["region", "status"], "value": "load", "rows": [
+            { "node": "zion-01", "region": "south", "status": "online", "load": 42 },
+            { "node": "zion-02", "region": "south", "status": "online", "load": 77 },
+            { "node": "neb-07", "region": "east", "status": "degraded", "load": 91 },
+            { "node": "neb-08", "region": "east", "status": "online", "load": 18 },
+            { "node": "mega-3", "region": "north", "status": "offline", "load": 0 },
+            { "node": "mega-4", "region": "north", "status": "online", "load": 63 },
+            { "node": "osiris", "region": "west", "status": "degraded", "load": 55 }
+          ] },
+          { "source": "form", "title": "REPORT", "form": {
+            "fields": [
+              { "name": "subject", "label": "Subject", "required": true },
+              { "name": "details", "label": "What happened?", "type": "textarea", "rows": 3 }
+            ],
+            "submit": "File report"
+          } },
           { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#ffb000" }
         ]
       }
