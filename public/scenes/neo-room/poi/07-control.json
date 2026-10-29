@@ -1,0 +1,35 @@
+{
+  "id": "control",
+  "label": "Control",
+  "kicker": "operations room",
+  "screenLabel": "control // online",
+  "objects": [
+    {
+      "type": "controlDesk",
+      "position": [12, 0, 9],
+      "rotation": [0, -90, 0],
+      "props": {
+        "columns": 4,
+        "screens": [
+          { "source": "graph", "graph": "wave", "title": "NETWORK" },
+          { "source": "text", "title": "STATUS", "lines": [
+            "> core ......... OK",
+            "> render ....... OK",
+            "> uplink ....... OK",
+            "> backup ....... 87%",
+            "> visitors ..... 1",
+            "> all systems nominal"
+          ] },
+          { "source": "graph", "graph": "radar", "title": "PERIMETER" },
+          { "source": "image", "src": "media/floorplan.svg" },
+          { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
+          { "source": "graph", "graph": "radar", "title": "PERIMETER" },
+          { "source": "image", "src": "media/floorplan.svg" },
+          { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
+          { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#ffb000" }
+        ]
+      }
+    }
+  ],
+  "content": { "markdown": "content/control.md" }
+}
