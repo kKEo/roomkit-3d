@@ -2,7 +2,7 @@
 
 This guide is for whoever checks a change to Scene Rooms before it ships: a reviewer, a QA engineer or the author before opening a pull request. It assumes you can run npm commands and use a browser's developer tools.
 
-> **Note.** Scene Rooms has unit tests (`make test`) for its configuration layer, including every shipped scene, and a linter (`make lint`), but **no CI yet** and no component or end-to-end tests. Motion, layout and input are still checked by hand. Don't assume a check exists unless a page names the command.
+> **Note.** Scene Rooms has unit tests (`make test`) for its configuration layer, including every shipped scene, a linter (`make lint`) and a GitHub Actions workflow that runs both plus the build and the docs build (see [Gates and CI](running/gates.md)), but no component or end-to-end tests. Motion, layout and input are still checked by hand. Don't assume a check exists unless a page names the command.
 
 | Part | Read it when you need to… |
 | --- | --- |
