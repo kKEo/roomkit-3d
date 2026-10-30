@@ -3,6 +3,9 @@ import { reducedMotion } from '../lib/env.js';
 import { resetSessions } from '../scene/screenState.js';
 import { runAction } from '../actions/registry.js';
 
+const setHash = id => {
+  try { history.replaceState(null, '', location.pathname + location.search + (id == null ? '' : '#' + id)); } catch { /* sandboxed or not a browser */ }
+};
 const setCursor = c => { if (typeof document !== 'undefined') document.body.style.cursor = c; };
 
 /**
@@ -28,6 +31,7 @@ export const useStore = create((set, get) => ({
   settings: { ease: 'quint', parallax: 0.8, warp: 12 },
   nav: null,       // { id (null = overview), duration, nonce } — consumed by CameraRig
   zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
+  free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
 
   /** Index of a POI id in `pois`, or -1. */
   indexOf: id => get().pois.findIndex(p => p.id === id),
@@ -49,7 +53,7 @@ export const useStore = create((set, get) => ({
     const keep = id => (!fresh && pois.some(p => p.id === id) ? id : null);
     set({
       status: 'ready', error: null, scene, pois,
-      current: keep(prev.current), shown: keep(prev.shown), hover: null, zoom: null,
+      current: keep(prev.current), shown: keep(prev.shown), hover: null, zoom: null, free: !fresh && prev.free,
       nav: fresh ? null : prev.nav,
       markersVisible: fresh ? scene.effects.markers : prev.markersVisible,
       settings: fresh ? {
@@ -67,8 +71,14 @@ export const useStore = create((set, get) => ({
     if (!pois.length) return;
     const id = get().resolve(target);
     if (id === current && (id == null ? nav : shown === id)) { if (get().zoom) get().exitZoom(); return; }
-    set({ current: id, shown: null, started: true, zoom: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
-    try { history.replaceState(null, '', location.pathname + location.search + (id == null ? '' : '#' + id)); } catch { /* sandboxed or not a browser */ }
+    set({ current: id, shown: null, started: true, zoom: null, free: false, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
+    setHash(id);
+  },
+  /** Take the camera by hand: leaves the current POI (and any flight to it) where the camera is now. */
+  freeFly: () => {
+    if (get().free || get().zoom) return;
+    set({ free: true, current: null, shown: null, nav: null, started: true });
+    setHash(null);
   },
   home: () => get().goTo(null),
   next: () => get().goTo(get().indexOf(get().current) + 1),
@@ -105,6 +115,7 @@ export const runtime = {
   progress: 0,
   transiting: false,
   zoomReady: false,             // camera has arrived in front of the zoomed screen
+  fly: { keys: new Set(), slow: false, look: { x: 0, y: 0 }, dolly: 0 }, // free-fly input: held key codes, Shift, pending look (px) and wheel delta
 };
 
 /** The canvas rectangle the overlays project into; the whole window until the first frame. */

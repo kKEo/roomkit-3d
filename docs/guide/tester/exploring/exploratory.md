@@ -19,6 +19,20 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Type in the contact form, including the letters H, M and digits | text is entered; panel, markers and stops do not change |
 | Change the hash by hand in the address bar | the camera flies to that stop |
 
+## Free fly
+
+| Try | Expect |
+| --- | --- |
+| At a stop, hold `W` | the panel closes, the hash and the top-bar highlight clear, the hint lists the fly keys; the camera glides forward and eases to a stop on release |
+| `A`, `S`, `D`, `Q`, `E`, then with `Shift` | left, back, right, down, up; a third of the speed with `Shift`; never below the floor |
+| Middle-drag on the canvas, also out past its edge | the view turns with the mouse (down looks down) and stops short of straight up or down; no autoscroll, no stop change |
+| Wheel while flying | slides forward / back smoothly instead of changing stops |
+| `W` during a flight between stops | the flight stops where it is; no panel opens |
+| Then `0`, `2`, a diamond, a nav button | each flies there from the current spot and ends free fly; the hint and hash come back |
+| Hold `W`, switch to another window, come back | the camera is not still flying |
+| Zoomed into a screen: `W`, middle-drag | nothing happens; typing `w` in the console just types |
+| Type in the contact form, including W, A, S, D | text is entered; the camera does not move |
+
 ## Panel and content
 
 | Try | Expect |

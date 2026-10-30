@@ -8,6 +8,40 @@ import { DEG } from '../lib/math.js';
 
 const V3 = THREE.Vector3;
 const UP = new V3(0, 1, 0);
+const LOOK = 0.004;     // free fly: radians per pixel of middle-drag
+const PITCH = 1.45;     // free fly: how far up / down the gaze may tilt (short of straight up, where yaw breaks down)
+const DOLLY = 0.005;    // free fly: metres per unit of wheel delta
+
+/**
+ * Free fly: yaw / pitch the gaze by the pending middle-drag, accelerate towards the held WASD / QE
+ * direction and slide along the gaze by the pending wheel delta. Moves the base pose `b` in place.
+ */
+function steer(b, vel, speed, dt, tmp) {
+  const { fly } = runtime;
+  const f = tmp.fwd.subVectors(b.tgt, b.pos);
+  const reach = Math.max(1, f.length());
+  f.normalize();
+  const yaw = Math.atan2(f.x, f.z) - fly.look.x * LOOK;
+  const pitch = Math.min(PITCH, Math.max(-PITCH, Math.asin(f.y) - fly.look.y * LOOK));
+  fly.look.x = fly.look.y = 0;
+  f.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  const r = tmp.right.crossVectors(f, UP).normalize();
+  const k = fly.keys, wish = tmp.look.set(0, 0, 0);
+  if (k.has('KeyW')) wish.add(f);
+  if (k.has('KeyS')) wish.sub(f);
+  if (k.has('KeyD')) wish.add(r);
+  if (k.has('KeyA')) wish.sub(r);
+  if (k.has('KeyE')) wish.add(UP);
+  if (k.has('KeyQ')) wish.sub(UP);
+  if (wish.lengthSq()) wish.normalize().multiplyScalar(speed / (fly.slow ? 3 : 1));
+  vel.lerp(wish, Math.min(1, dt * 8));
+  b.pos.addScaledVector(vel, dt);
+  const step = fly.dolly * Math.min(1, dt * 10);
+  fly.dolly -= step;
+  b.pos.addScaledVector(f, -step * DOLLY);
+  b.pos.y = Math.max(0.2, b.pos.y); // stay above the floor
+  b.tgt.copy(b.pos).addScaledVector(f, reach);
+}
 
 function posAt(tr, e, out) {
   if (!tr.curve) return out.copy(tr.p1);
@@ -23,6 +57,7 @@ function posAt(tr, e, out) {
  * eased position, look-ahead target, FOV "warp" and slight roll mid-flight,
  * mouse parallax and a view offset that keeps the subject clear of the panel.
  * Zooming into a screen flies straight to a head-on view of it and holds the camera still.
+ * In free fly (`free` in the store) the visitor steers the camera instead; see `steer`.
  */
 export function CameraRig() {
   const { camera, scene: world } = useThree();
@@ -40,6 +75,7 @@ export function CameraRig() {
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
   const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
+  const vel = useRef(new V3()).current; // free-fly velocity
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
   function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false }) {
@@ -114,12 +150,19 @@ export function CameraRig() {
       if (t >= 1) { transit.current = null; runtime.transiting = false; runtime.zoomReady = tr.zoomed; }
     }
 
+    if (st.free) {
+      // taking the camera by hand drops a flight where it is
+      if (transit.current) { transit.current = null; runtime.transiting = false; warpFov = roll = 0; }
+      const { width, depth } = scene.room;
+      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp);
+    } else vel.set(0, 0, 0);
+
     // parallax: mouse, or a slow autonomous drift on touch devices
     const { mouse, ms } = runtime;
     if (runtime.touch) { mouse.x = Math.sin(time * 0.25) * 0.5; mouse.y = Math.cos(time * 0.19) * 0.3; }
     const k = Math.min(1, dt * 3);
-    // zoomed in: hold the camera still so the DOM overlay stays pinned to the screen
-    tmp.still += ((st.zoom ? 1 : 0) - tmp.still) * Math.min(1, dt * 6);
+    // zoomed in: hold the camera still so the DOM overlay stays pinned to the screen; flying: no sway under the pilot's hand
+    tmp.still += ((st.zoom || st.free ? 1 : 0) - tmp.still) * Math.min(1, dt * 6);
     const calm = 1 - tmp.still;
     ms.x += (mouse.x - ms.x) * k; ms.y += (mouse.y - ms.y) * k;
     tmp.fwd.subVectors(b.tgt, b.pos).normalize();

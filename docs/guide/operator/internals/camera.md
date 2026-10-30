@@ -25,6 +25,17 @@ Clicking a screen of the current POI calls `zoomTo(rec)` in the store. `rec` hol
 
 When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, parallax, the idle bob and the panel view offset ease to zero (at `6 × dt`), so the camera holds still and the DOM overlay stays pinned. `exitZoom()` comes from `Esc`, the overlay's Back button, a click on empty space (`onPointerMissed` on the canvas) or the terminal's `exit`.
 
+## Free fly
+
+`freeFly()` in the store sets `free`, and clears `current`, `shown`, `nav` and the hash, so the panel closes and every POI, including the one just left, is a new destination. Any `goTo` clears `free` again, and the flight starts from wherever the camera is. While `free` is set, `CameraRig` drops any running transit and calls `steer()` every frame on the base pose:
+
+- **Look.** The pending middle-drag (`runtime.fly.look`, in pixels) turns the gaze by 0.004 rad per pixel: yaw around world up, pitch clamped to ±1.45 rad. The look target stays at its previous distance from the camera (at least 1 m).
+- **Move.** The held keys (`runtime.fly.keys`, as `KeyboardEvent.code`) add up to a direction: `W`/`S` along the gaze, `A`/`D` along its right vector, `Q`/`E` along world up. Speed is `max(6, max(width, depth) ÷ 2)` m/s, a third of that with `Shift`; the velocity eases towards it at `8 × dt`, so starting and stopping are smooth.
+- **Wheel.** The pending wheel delta (`runtime.fly.dolly`) slides the camera along the gaze by 5 mm per unit, consumed at `10 × dt`.
+- **Floor.** The camera stays at least 20 cm above the floor; nothing else stops it.
+
+Parallax and the idle bob ease to zero exactly as when zoomed, so the camera only moves when the visitor moves it. `freeFly()` is ignored while zoomed.
+
 ## Every frame
 
 - **Parallax.** The smoothed mouse (`runtime.ms`, eased at `3 × dt`) offsets the camera along its right and up vectors by `1.1 × P` and `0.6 × P`, and the look target by `0.12 × P`, where `P = settings.parallax`. On touch devices a slow sine drift replaces the mouse. The panel moves the opposite way by up to 7 × 5 px.
@@ -42,8 +53,10 @@ When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, paralla
 | `1`–`9` | `goTo(n − 1)` | only up to the number of POIs |
 | `0`, click on the logo | `home()` = `goTo(null)` | the whole-room view; from there `→` goes to POI 1 and `←` to the last |
 | `H` / `M` | toggle panel / toggle markers | |
-| wheel | next / previous | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and settings |
-| horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical |
+| `W` `A` `S` `D` `Q` `E` (by `code`), `Shift` | `freeFly()`, then fly | held keys are tracked until `keyup`; a window `blur` releases them all |
+| middle-button drag on the canvas | `freeFly()`, then look | the press is `preventDefault`ed (no autoscroll or paste) and the pointer is captured, so the drag continues off the canvas |
+| wheel | next / previous; while flying, forward / back | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and settings |
+| horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical; primary button or touch only |
 | click on a diamond | `goTo(i)` | R3F click with drag under 8 px |
 | click on a label, nav button or pager | `goTo(i)` | DOM buttons |
 | `hashchange` | `goTo(id)` | `goTo` itself uses `history.replaceState`, so it does not loop |

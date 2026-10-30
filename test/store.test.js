@@ -106,3 +106,41 @@ describe('zoom and markers', () => {
     expect(st().hover).toBe(null);
   });
 });
+
+describe('freeFly', () => {
+  it('leaves the current POI and its flight where the camera is', () => {
+    st().goTo('b'); st().showPanel('b');
+    st().freeFly();
+    expect(st().free).toBe(true);
+    expect(st().current).toBe(null);
+    expect(st().shown).toBe(null);
+    expect(st().nav).toBe(null);
+  });
+
+  it('ends with any navigation, including the overview', () => {
+    st().freeFly();
+    st().home();
+    expect(st().free).toBe(false);
+    expect(st().nav.id).toBe(null);
+    st().freeFly();
+    st().goTo('a');
+    expect(st().free).toBe(false);
+    expect(st().current).toBe('a');
+  });
+
+  it('is ignored while zoomed into a screen', () => {
+    st().goTo('a');
+    st().zoomTo({ key: 'k' });
+    st().freeFly();
+    expect(st().free).toBe(false);
+    expect(st().current).toBe('a');
+  });
+
+  it('survives a reload of the same scene but not a different one', () => {
+    st().freeFly();
+    st().setLoaded(scene(), pois(['a', 'b', 'c']));
+    expect(st().free).toBe(true);
+    st().setLoaded(scene('other'), pois(['a']));
+    expect(st().free).toBe(false);
+  });
+});

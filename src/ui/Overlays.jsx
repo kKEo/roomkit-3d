@@ -8,7 +8,8 @@ export function Hint() {
   const ui = useStore(s => s.scene.ui);
   const total = useStore(s => s.pois.length);
   const zoomed = useStore(s => !!s.zoom);
-  const parts = fmt(zoomed ? ui.zoomHint : ui.hint, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
+  const free = useStore(s => s.free);
+  const parts = fmt(zoomed ? ui.zoomHint : free ? ui.flyHint : ui.hint, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
   return (
     <div className="hint">
       {parts.map((p, i) => (/^\[.+\]$/.test(p) ? <kbd key={i}>{p.slice(1, -1)}</kbd> : p))}
