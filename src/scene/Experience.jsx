@@ -7,6 +7,7 @@ import { createRain } from './rain.js';
 import { Room } from './Room.jsx';
 import { Particles } from './Particles.jsx';
 import { CameraRig } from './CameraRig.jsx';
+import { Telemetry } from './Telemetry.jsx';
 import { Markers } from './Markers.jsx';
 import { PlacedObject } from '../prefabs/index.jsx';
 
@@ -38,6 +39,7 @@ function PoiObjects({ poi }) {
 export function Experience() {
   const scene = useStore(s => s.scene);
   const pois = useStore(s => s.pois);
+  const particles = useStore(s => s.gfx.particles);
   const world = useMemo(() => ({
     name: scene.name,
     mats: createMaterials(scene),
@@ -53,12 +55,13 @@ export function Experience() {
       <color attach="background" args={[background]} />
       <fog attach="fog" args={[background, fog[0], fog[1]]} />
       <Ticker world={world} />
+      <Telemetry />
       <CameraRig />
       <Room />
       {scene.decor.map((o, i) => <PlacedObject key={i} object={o} />)}
       {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
-      <Particles count={scene.effects.particles} />
+      <Particles count={Math.round(scene.effects.particles * particles)} />
     </WorldContext.Provider>
   );
 }

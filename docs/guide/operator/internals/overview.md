@@ -32,14 +32,15 @@ This page maps the source tree to the runtime data flow, so you know which file 
 | `src/scene/Room.jsx`, `Particles.jsx`, `rain.js`, `materials/hatch.js` | Room shell, dust, the Matrix-rain texture, shaders and line materials. |
 | `src/state/store.js` | The zustand store, plus `runtime`, a plain object for per-frame values. |
 | `src/actions/registry.js` | The actions a scene can bind to prefab hotspots (`goTo`, `zoom`, `openUrl`, `togglePanel`, `emit`): schema and `run`. `store.dispatch` runs one. |
-| `src/ui/*` | DOM overlays: header, panel, Markdown and blocks, labels, minimap, settings, progress bar, input. |
+| `src/scene/Telemetry.jsx` | Frame-rate cap and the performance probe behind Options → System and the overlay. |
+| `src/ui/*` | DOM overlays: header, panel, Markdown and blocks, labels, minimap, Options, performance overlay, progress bar, input. |
 
 ## State: store versus runtime
 
 Two kinds of state are kept apart on purpose:
 
-- **The zustand store** (`useStore`) holds what React renders: `scene`, `pois`, `current` (where the camera is or is going), `shown` (whose panel is open), `hover`, `panelCollapsed`, `markersVisible`, `settingsOpen`, `settings` and `nav`. Components subscribe with narrow selectors, such as `useStore(s => s.shown === index)`, so a navigation re-renders only what changes.
-- **`runtime`** holds values that change every frame: the target and smoothed mouse position, the camera object, its position and direction, the transition progress, and the clock. Writing these to the store would re-render React 60 times a second. The canvas writes them in `useFrame`. The DOM overlays (labels, minimap, progress bar, panel parallax) read them in their own `requestAnimationFrame` loops.
+- **The zustand store** (`useStore`) holds what React renders: `scene`, `pois`, `current` (where the camera is or is going), `shown` (whose panel is open), `hover`, `panelCollapsed`, `markersVisible`, `optionsOpen`, `optionsTab`, `settings` (camera), `gfx` (rendering preferences), `free` and `nav`. Components subscribe with narrow selectors, such as `useStore(s => s.shown === index)`, so a navigation re-renders only what changes.
+- **`runtime`** holds values that change every frame: the target and smoothed mouse position, the camera object, its position and direction, the transition progress, the clock, the renderer and, while measured, the rendering figures (`runtime.stats`). Writing these to the store would re-render React 60 times a second. The canvas writes them in `useFrame`. The DOM overlays (labels, minimap, progress bar, panel parallax) read them in their own `requestAnimationFrame` loops.
 
 POIs are referred to **by `id`**, never by their position in the list: `current`, `shown`, `hover`, `nav.id` and `zoom.poi` hold an id, or `null` for the room overview. The list can therefore be reordered or replaced (an editor, a reload of the same scene) without the selection going stale; `setLoaded` keeps `current` and `shown` when the same scene is loaded again and their POIs still exist.
 

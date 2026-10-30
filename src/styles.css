@@ -147,14 +147,35 @@ nav button[aria-current="true"] b { opacity: 1 }
 #progress { position: fixed; z-index: 12; left: 0; right: 0; top: env(safe-area-inset-top, 0px); height: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); box-shadow: var(--glow); opacity: 0; transition: opacity .3s }
 #progress.on { opacity: 1 }
 
-/* ——— Camera settings ——— */
-.settings { position: fixed; z-index: 12; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); width: 270px; background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 14px 16px; font-size: 13px }
-.settings h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--accent) }
-.settings label { display: block; margin: 0 0 12px; color: var(--text-dim) }
-.settings select, .settings input[type=range] { width: 100%; margin-top: 4px; accent-color: var(--accent) }
-.settings select { background: #000; border: 1px solid var(--line); padding: 5px }
-.settings canvas { display: block; width: 100%; height: 90px; border: 1px solid var(--line); margin-top: 6px; background: #000 }
-.settings output { color: var(--text) }
+/* ——— Options (General, Camera, System) and the performance overlay ——— */
+.options { position: fixed; z-index: 12; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); width: 340px; max-height: calc(100vh - 90px - env(safe-area-inset-top, 0px)); overflow: auto; background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 14px 16px; font-size: 13px; scrollbar-width: thin; scrollbar-color: var(--line) transparent }
+.options h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--accent) }
+.options .tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--line) }
+.options .tabs button { background: none; border: 1px solid transparent; border-bottom: none; padding: 5px 10px; cursor: pointer; color: var(--text-dim); margin-bottom: -1px }
+.options .tabs button[aria-selected="true"] { color: var(--accent); border-color: var(--line); background: #000; box-shadow: inset 0 2px 0 var(--accent) }
+.options label { display: block; margin: 0 0 12px; color: var(--text-dim) }
+.options label.check { display: flex; gap: 8px; align-items: center; cursor: pointer }
+.options select, .options input[type=range] { width: 100%; margin-top: 4px; accent-color: var(--accent) }
+.options input[type=checkbox] { accent-color: var(--accent); margin: 0 }
+.options select { background: #000; border: 1px solid var(--line); padding: 5px }
+.options canvas { display: block; width: 100%; height: 90px; border: 1px solid var(--line); margin: 6px 0 12px; background: #000 }
+.options output { color: var(--text) }
+.options button:not([role=tab]) { background: none; border: 1px solid var(--line); color: var(--text); padding: 5px 10px; cursor: pointer }
+.options button:not([role=tab]):hover { border-color: var(--accent); color: var(--accent) }
+.options .note { margin: 0 0 12px; color: var(--text); border-left: 2px solid var(--accent); padding-left: 8px }
+.options .note button { margin-left: 6px }
+.options section { margin: 0 0 12px }
+.options h4 { margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
+.options dl { margin: 0 }
+.options dl div { display: flex; gap: 10px; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(0, 255, 102, .1) }
+.options dt { color: var(--text-dim); flex: none }
+.options dd { margin: 0; color: var(--text); text-align: right; word-break: break-word; font-variant-numeric: tabular-nums }
+.options details { margin: 0 0 12px; color: var(--text-dim) }
+.options summary { cursor: pointer }
+.options details ul { margin: 6px 0 0; padding-left: 1.2em; font-size: 11px; color: var(--text); word-break: break-all }
+.perfhud { position: fixed; z-index: 7; left: calc(20px + var(--view-left, 0px)); top: calc(70px + env(safe-area-inset-top, 0px)); width: 196px; padding: 6px 8px; background: rgba(0,0,0,.7); border: 1px solid var(--line); font-size: 11px; line-height: 1.5; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none }
+.perfhud b { color: var(--accent); font-weight: 600 }
+.perfhud canvas { display: block; width: 100%; margin-top: 4px; border-top: 1px solid var(--line) }
 
 /* ——— Loader ——— */
 #loader { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; place-items: center; font-family: var(--display); font-size: 30px; color: var(--accent); text-shadow: var(--glow); transition: opacity .8s }
@@ -179,7 +200,8 @@ nav button[aria-current="true"] b { opacity: 1 }
   .panel-inner { padding: 20px 18px 16px }
   .panel h1 { font-size: 40px }
   #minimap, .hint { display: none }
-  .settings { right: 10px; left: 10px; width: auto }
+  .options { right: 10px; left: 10px; width: auto }
+  .perfhud { top: calc(96px + env(safe-area-inset-top, 0px)); left: 10px }
   .cards { grid-template-columns: 1fr }
 }
 @media (prefers-reduced-motion: reduce) {

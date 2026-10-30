@@ -21,4 +21,6 @@ A small external check catches most deploy mistakes. For each scene, fetch `scen
 
 ## Performance
 
-Frame cost scales with `effects.particles`, the number of fat-line outlines (every `Solid` has one) and the device pixel ratio, which is capped at 2. Lowering particles is the cheapest fix for slow devices. There is no runtime quality switch yet.
+Frame cost scales with `effects.particles`, the number of fat-line outlines (every `Solid` has one) and the device pixel ratio, which is capped at 2. Lowering particles is the cheapest fix for every visitor at once.
+
+Each visitor can also lower the cost on their own device in **Options → General** (render resolution, frame-rate limit, particles, antialiasing, GPU preference); see [Rendering preferences and telemetry](../internals/rendering.md#rendering-preferences-and-telemetry). When someone reports a slow room, ask them for the **Copy report** text from **Options → System**: it has the frame rate, CPU and GPU time per frame, draw calls, memory, the GPU model and the browser.

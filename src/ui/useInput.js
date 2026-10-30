@@ -18,13 +18,13 @@ export function useInput(stageRef, enabled) {
   useEffect(() => {
     if (!enabled) return;
     const st = () => useStore.getState();
-    const inUi = t => t.closest && t.closest('#panel, .settings, .screen-ui, .editor');
+    const inUi = t => t.closest && t.closest('#panel, .options, .screen-ui, .editor');
 
     const onKey = e => {
       if (e.key === 'Escape') {
         // also from inside the overlay's inputs
         if (st().zoom) { document.activeElement?.blur?.(); st().exitZoom(); }
-        else if (st().settingsOpen) st().toggleSettings();
+        else if (st().optionsOpen) st().toggleOptions();
         return;
       }
       if (st().zoom) return; // zoomed in: only Esc (or the Back button) leaves

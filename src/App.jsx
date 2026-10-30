@@ -1,19 +1,21 @@
 import { Component, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { useStore } from './state/store.js';
+import { useStore, runtime } from './state/store.js';
 import { loadScene } from './config/loadScene.js';
 import { Experience } from './scene/Experience.jsx';
 import { Header } from './ui/Header.jsx';
 import { Panel } from './ui/Panel.jsx';
 import { Minimap } from './ui/Minimap.jsx';
 import { Labels } from './ui/Labels.jsx';
-import { SettingsPanel } from './ui/SettingsPanel.jsx';
+import { Options } from './ui/Options.jsx';
 import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
 import { Hint, Loader, Progress } from './ui/Overlays.jsx';
+import { PerfHud } from './ui/PerfHud.jsx';
 import { useInput, poiIdFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
 import { reducedMotion, hasWebGL2 } from './lib/env.js';
 import { fmt } from './lib/text.js';
+import { dprOf } from './lib/gfx.js';
 
 /** Turns a failed WebGL context (e.g. a blocklisted GPU) into the "unsupported" screen; other errors pass on. */
 class WebGLBoundary extends Component {
@@ -41,6 +43,10 @@ export function Viewer() {
   const [intro, setIntro] = useState(false);
   const introDone = useRef(false);
   const stage = useRef(null);
+  const gfx = useStore(s => s.gfx);
+  // antialias and the GPU preference only take effect in a new WebGL context: keep the ones it was made with
+  const [glAttrs] = useState(() => ({ antialias: gfx.antialias, powerPreference: gfx.power }));
+  useEffect(() => { runtime.glAttrs = { antialias: glAttrs.antialias, power: glAttrs.powerPreference }; }, [glAttrs]);
 
   // fly in from outside the room once the first frames are up
   useEffect(() => {
@@ -65,8 +71,9 @@ export function Viewer() {
             <Canvas
               flat
               linear
-              dpr={[1, 2]}
-              gl={{ antialias: true, powerPreference: 'high-performance' }}
+              dpr={dprOf(gfx)}
+              frameloop={gfx.fps ? 'never' : 'always'}
+              gl={glAttrs}
               camera={{ fov: scene.camera.fov, near: 0.05, far, position: scene.camera.intro.position }}
               aria-label={fmt(scene.ui.canvasLabel, { total })}
               onPointerMissed={() => useStore.getState().exitZoom()}
@@ -84,7 +91,8 @@ export function Viewer() {
           <ScreenOverlay />
           <Header />
           <Panel />
-          <SettingsPanel />
+          <Options />
+          <PerfHud />
           <Minimap />
           <Hint />
         </>

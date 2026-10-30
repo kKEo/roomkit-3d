@@ -17,11 +17,39 @@ The room opens with a view of all of it from above. From there, `→` goes to st
 | See the whole room | Press `0` or click the logo in the top-left corner. The camera rises above the room and looks into it from the front, like a model with the roof off |
 | Hide or show the text panel | Press `H` or click the panel button in the top bar |
 | Hide or show the floating diamonds | Press `M` or click the diamond button in the top bar |
-| Change how the camera moves | Click the curve button in the top bar and pick a transition curve, parallax and warp amount |
+| Change the picture quality, the camera's feel, or see technical details | Click the **Options** button (the sliders) at the right end of the top bar. See [Options](#options) below |
 
-![The camera settings popover open under the curve button: a transition-curve dropdown with its graph, and sliders for parallax and warp](images/settings.png)
+## Options
 
-*The camera settings, opened with the curve button at the right end of the top bar.*
+The **Options** button at the right end of the top bar opens a panel with three tabs. `Esc` closes it.
+
+**General** sets how the room is drawn on this computer. These choices are saved in the browser, so they stay after a reload and apply to every room.
+
+| Option | What it does |
+| --- | --- |
+| Render resolution | **Auto** draws at the screen's sharpness, up to 2×. A lower percentage draws fewer pixels and is much lighter on a slow graphics chip, at the cost of a softer picture |
+| Frame rate limit | Caps the frames per second at 120, 60 or 30. A lower limit saves battery and keeps a laptop cooler; **Unlimited** follows the display |
+| Dust particles | All, half or none of the floating specks |
+| GPU preference | On computers with two graphics chips, asks for the fast one or the battery-saving one |
+| Smooth edges (antialiasing) | Smooths jagged edges; turning it off is faster on weak hardware |
+| Show performance overlay | A small box in the top-left corner with the frame rate, frame time, CPU and GPU time and a graph of recent frames |
+| Restore defaults | Puts every General option back |
+
+GPU preference and smooth edges only change when the page is loaded again: the panel says so and offers a **Reload now** button.
+
+**Camera** holds the transition curve (with a graph of its shape), the parallax amount and the warp amount.
+
+![The camera tab of Options: a transition-curve dropdown with its graph, and sliders for parallax and warp](images/settings.png)
+
+*The Camera tab of Options.*
+
+**System** shows what the room costs to draw and what it runs on, updated four times a second:
+
+- **Rendering:** frames per second, average and worst frame time, CPU time per frame, how busy the page's main thread is with drawing, GPU time per frame, long pauses in the last 10 seconds, and what is drawn (draw calls, triangles, objects, shaders), with a graph of recent frame times (dashed lines at 60 and 30 fps; taller bars are slower frames).
+- **Memory:** the page's JavaScript memory, roughly how much memory the device has, and how many shapes and textures are on the graphics chip.
+- **Graphics, Display, Device:** the graphics chip and its limits, the screen and canvas sizes, the number of processor threads, the browser and the network.
+
+Some browsers keep some of these figures to themselves (GPU time, long pauses and memory are mostly reported by Chrome and Edge only); the panel then says *not reported by this browser*. **Copy report** puts everything on the clipboard as text, ready to paste into a bug report.
 
 ## Using a screen up close
 

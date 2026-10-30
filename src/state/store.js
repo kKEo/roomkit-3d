@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { reducedMotion } from '../lib/env.js';
 import { resetSessions } from '../scene/screenState.js';
 import { runAction } from '../actions/registry.js';
+import { loadGfx, saveGfx, GFX_DEFAULTS } from '../lib/gfx.js';
 
 const setHash = id => {
   try { history.replaceState(null, '', location.pathname + location.search + (id == null ? '' : '#' + id)); } catch { /* sandboxed or not a browser */ }
@@ -27,8 +28,10 @@ export const useStore = create((set, get) => ({
   started: false,
   panelCollapsed: false,
   markersVisible: true,
-  settingsOpen: false,
-  settings: { ease: 'quint', parallax: 0.8, warp: 12 },
+  optionsOpen: false,
+  optionsTab: 'general', // general | camera | system
+  settings: { ease: 'quint', parallax: 0.8, warp: 12 }, // camera settings, reset from each scene's effects
+  gfx: loadGfx(),  // rendering preferences of this browser, see src/lib/gfx.js
   nav: null,       // { id (null = overview), duration, nonce } — consumed by CameraRig
   zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
   free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
@@ -94,11 +97,15 @@ export const useStore = create((set, get) => ({
   zoomTo: rec => {
     if (get().zoom?.key === rec.key) return;
     setCursor('');
-    set({ zoom: rec, hover: null, settingsOpen: false });
+    set({ zoom: rec, hover: null, optionsOpen: false });
   },
   exitZoom: () => set({ zoom: null }),
-  toggleSettings: () => set(s => ({ settingsOpen: !s.settingsOpen })),
+  toggleOptions: () => set(s => ({ optionsOpen: !s.optionsOpen })),
+  setOptionsTab: tab => set({ optionsTab: tab }),
   setSetting: (k, v) => set(s => ({ settings: { ...s.settings, [k]: v } })),
+  /** Change a rendering preference and remember it in this browser. */
+  setGfx: (k, v) => { set(s => ({ gfx: { ...s.gfx, [k]: v } })); saveGfx(get().gfx); },
+  resetGfx: () => { set({ gfx: { ...GFX_DEFAULTS } }); saveGfx(get().gfx); },
   /** Run a config action ({ type: 'goTo' | 'zoom' | 'openUrl' | 'togglePanel' | 'emit', … }); see src/actions/registry.js. */
   dispatch: action => runAction(action, get()),
 }));
@@ -115,6 +122,9 @@ export const runtime = {
   progress: 0,
   transiting: false,
   zoomReady: false,             // camera has arrived in front of the zoomed screen
+  gl: null,                     // the WebGLRenderer, set by Telemetry, read by Options → System
+  glAttrs: null,                // { antialias, power } the WebGL context was created with, set by the Viewer
+  stats: null,                  // live rendering figures while the probe runs, see src/scene/Telemetry.jsx
   fly: { keys: new Set(), slow: false, look: { x: 0, y: 0 }, dolly: 0 }, // free-fly input: held key codes, Shift, pending look (px) and wheel delta
 };
 

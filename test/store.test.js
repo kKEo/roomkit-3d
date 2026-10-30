@@ -90,9 +90,9 @@ describe('goTo and navigation', () => {
 
 describe('zoom and markers', () => {
   it('zoomTo closes the settings and clears hover; the same screen twice is a no-op', () => {
-    st().toggleSettings(); st().setHover('a');
+    st().toggleOptions(); st().setHover('a');
     st().zoomTo({ key: 'k1', poi: 'a' });
-    expect(st().settingsOpen).toBe(false);
+    expect(st().optionsOpen).toBe(false);
     expect(st().hover).toBe(null);
     const z = st().zoom;
     st().zoomTo({ key: 'k1', poi: 'a' });
@@ -142,5 +142,14 @@ describe('freeFly', () => {
     expect(st().free).toBe(true);
     st().setLoaded(scene('other'), pois(['a']));
     expect(st().free).toBe(false);
+  });
+});
+
+describe('gfx', () => {
+  it('changes and resets rendering preferences', () => {
+    st().setGfx('fps', 30);
+    expect(st().gfx.fps).toBe(30);
+    st().resetGfx();
+    expect(st().gfx.fps).toBe(0);
   });
 });

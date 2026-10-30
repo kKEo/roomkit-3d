@@ -36,7 +36,7 @@ The message lists every problem it found, one per line, as `file › place: prob
 
 **The floating diamonds are gone.** Someone pressed `M`, or the scene sets `"markers": false`. Press `M` to bring them back.
 
-**The room is very slow on my laptop.** Lower `particles` in the scene's `effects`, or ask your operator. Very old computers without 3D graphics support cannot show the room.
+**The room is very slow on my laptop.** Open **Options → General** and lower the render resolution (75 % or 50 % helps most), turn off smooth edges and reload, or set the dust particles to half or off. **Options → System** shows the frame rate as you change them. For every visitor at once, lower `particles` in the scene's `effects`. Very old computers without 3D graphics support cannot show the room.
 
 ## Still stuck?
 

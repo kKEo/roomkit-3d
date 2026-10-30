@@ -12,6 +12,36 @@ The look was tuned for raw, non-colour-managed output, as in three.js r147 where
 
 > **Warning.** Turning colour management back on makes every hex colour in `theme` come out darker, and the hatch shader would need `#include <colorspace_fragment>`. Change all three settings together or none.
 
+## Rendering preferences and telemetry
+
+**Options → General** stores the visitor's rendering preferences as `gfx` in the store and as JSON under `roomkit.gfx` in `localStorage` (`src/lib/gfx.js`). They belong to the device, not to a scene, so `setLoaded` never touches them; a stored value that is no longer a valid choice falls back to its default.
+
+| Key | Values (default first) | Applied |
+| --- | --- | --- |
+| `dpr` | `auto`, `0.5`, `0.75`, `1`, `1.5`, `2` | the canvas `dpr` prop; `auto` is `[1, 2]`. Live |
+| `fps` | `0` (no cap), `120`, `60`, `30` | a cap sets `frameloop="never"` and `FrameCap` (`src/scene/Telemetry.jsx`) calls `advance()` from its own `requestAnimationFrame` once a full interval has passed. R3F resets its clock on every frame-loop switch, so shader time jumps once when the cap changes. Live |
+| `particles` | `1`, `0.5`, `0` | multiplies `effects.particles`. Live |
+| `antialias` | `true`, `false` | WebGL context attribute: after a reload |
+| `power` | `high-performance`, `default`, `low-power` | WebGL `powerPreference`: after a reload |
+| `hud` | `false`, `true` | the performance overlay (`src/ui/PerfHud.jsx`) |
+
+The `Viewer` reads `antialias` and `power` once, when it first creates the canvas, and records them in `runtime.glAttrs`; the General tab compares the stored values with those and offers a reload when they differ.
+
+`Telemetry` (inside the canvas) puts the renderer in `runtime.gl`. While the System tab is open or the overlay is on, it also mounts `Probe`, which measures every frame and publishes `runtime.stats` every 250 ms:
+
+| Figure | How it is measured |
+| --- | --- |
+| frame rate, frame time | timestamps of the last second of frames; the last 120 frame times feed the graphs |
+| CPU per frame | from the first `useFrame` callback (priority −1000; negative priorities keep auto-rendering on) to the end of `gl.render`, which `Probe` wraps while mounted |
+| main thread busy | CPU per frame × frames per second |
+| GPU per frame | an `EXT_disjoint_timer_query_webgl2` query around `gl.render`, one at a time; disjoint results are dropped. Firefox and Safari don't expose the extension |
+| long tasks | a `PerformanceObserver` for `longtask` entries in the last 10 s (Chromium only) |
+| draw calls, triangles, points, lines, geometries, textures, programs | `gl.info` after each render |
+| scene objects | `scene.traverse` at each publish |
+| JS heap | `performance.memory` (Chromium only) |
+
+The static rows of the System tab (GPU, limits, extensions, display, device) come from `src/lib/sysinfo.js`. The GPU name uses `WEBGL_debug_renderer_info` where the browser allows it; Firefox and Safari return a generic or rounded name.
+
 ## Surfaces: the hatch shader
 
 Every solid surface uses a `ShaderMaterial` with one fragment shader. It computes simple diffuse light from the point lights in `room.lights` (compiled in as `NUM_LIGHTS`), then draws up to three layers of accent-coloured lines in world space. Diagonal lines appear above 10–20 % light, cross-hatching above 40–50 %, and dense horizontal lines above 68–78 %. So brighter surfaces get more ink. A slow horizontal "scan" band moves up the room. Fog is done in the shader from `theme.fog` (`[near, far]` in camera depth).

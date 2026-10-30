@@ -70,11 +70,20 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Hide markers while hovering one | the cursor returns to normal |
 | Labels during a flight | labels stay pinned above their diamonds; labels behind the camera or off-screen are hidden; the current stop's label is hidden |
 
-## Camera settings
+## Options
 
 | Try | Expect |
 | --- | --- |
-| Each transition curve | the preview curve updates; `back` overshoots and settles without jumping |
+| Click the sliders button, then `Esc` | Options opens on the last tab used (General at first) and closes; `←` / `→` on a focused tab switch tabs without moving the camera |
+| General: render resolution 50 %, then Auto | the picture turns soft at once, then sharp again; System shows the drawing buffer shrink and grow |
+| General: frame rate limit 30, then Unlimited | System and the overlay show about 30 fps, then the display rate; animations keep going at the same speed |
+| General: dust particles Half, Off | fewer specks, none; System's points count drops |
+| General: untick smooth edges, or change the GPU preference | a "Takes effect after a reload" note with **Reload now**; after the reload System → Graphics shows antialiasing off; setting it back removes the note |
+| General: show performance overlay, then reload the page | the overlay appears top-left and is still there after the reload, as are the other General choices |
+| General: restore defaults | every General choice back to its default; the overlay disappears |
+| System, in Chrome and in Firefox or Safari | figures update about four times a second; where the browser keeps GPU time, long tasks or heap to itself the row says *not reported by this browser*, never an error |
+| System: Copy report, paste into a text editor | plain text with every section, the extension list, the scene name, URL and time |
+| Camera: each transition curve | the preview curve updates; `back` overshoots and settles without jumping |
 | Parallax 0 and 1.6 | 0: mouse movement does nothing; 1.6: strong but smooth sway |
 | Warp 0 | no FOV pulse and no roll during flights |
 

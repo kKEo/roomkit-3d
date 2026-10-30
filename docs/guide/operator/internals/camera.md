@@ -55,12 +55,12 @@ Parallax and the idle bob ease to zero exactly as when zoomed, so the camera onl
 | `H` / `M` | toggle panel / toggle markers | |
 | `W` `A` `S` `D` `Q` `E` (by `code`), `Shift` | `freeFly()`, then fly | held keys are tracked until `keyup`; a window `blur` releases them all |
 | middle-button drag on the canvas | `freeFly()`, then look | the press is `preventDefault`ed (no autoscroll or paste) and the pointer is captured, so the drag continues off the canvas |
-| wheel | next / previous; while flying, forward / back | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and settings |
+| wheel | next / previous; while flying, forward / back | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and Options |
 | horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical; primary button or touch only |
 | click on a diamond | `goTo(i)` | R3F click with drag under 8 px |
 | click on a label, nav button or pager | `goTo(i)` | DOM buttons |
 | `hashchange` | `goTo(id)` | `goTo` itself uses `history.replaceState`, so it does not loop |
-| `Esc` | `exitZoom()`, else close settings | handled before the input check, so it also works while typing in an overlay |
+| `Esc` | `exitZoom()`, else close Options | handled before the input check, so it also works while typing in an overlay |
 | click on a screen | `goTo(poi)`, or `zoomTo` if the POI is current | R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
 
 While zoomed, every key except `Esc` is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom.

@@ -15,11 +15,24 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `navLabel` | `Areas of the room` | accessible name of the top navigation |
 | `hidePanel` / `showPanel` | `Hide content panel (H)` / `Show content panel (H)` | panel button |
 | `hideMarkers` / `showMarkers` | `Hide floating markers (M)` / `Show floating markers (M)` | marker button |
-| `settings` | `Camera settings` | settings button and panel heading |
-| `easeLabel` | `Transition curve` | settings |
-| `ease.quint`, `ease.expo`, `ease.back`, `ease.sine`, `ease.linear` | descriptions such as `Quint in-out (smooth start and stop)` | settings select options |
-| `parallax` | `Parallax` | settings |
-| `warp` | `Warp effect (FOV change in flight)` | settings |
+| `options` | `Options` | Options button and panel heading |
+| `optionsTabs.general`, `.camera`, `.system` | `General`, `Camera`, `System` | Options tabs |
+| `resolution`, `resolutionAuto` | `Render resolution`, `Auto (screen, up to 2×)` | General |
+| `fpsLimit`, `fpsUnlimited` | `Frame rate limit`, `Unlimited (display refresh)` | General |
+| `particlesLevel`, `particlesLevels.1`, `.0.5`, `.0` | `Dust particles`, `All`, `Half`, `Off` | General |
+| `gpuPower`, `gpuPowers.high-performance`, `.default`, `.low-power` | `GPU preference`, `Performance (discrete GPU)`, `Browser default`, `Battery saver (integrated GPU)` | General |
+| `antialias` | `Smooth edges (antialiasing)` | General |
+| `perfOverlay` | `Show performance overlay` | General |
+| `needsReload`, `reload` | `Takes effect after a reload.`, `Reload now` | General, after changing antialiasing or GPU preference |
+| `resetDefaults` | `Restore defaults` | General |
+| `easeLabel` | `Transition curve` | Camera |
+| `ease.quint`, `ease.expo`, `ease.back`, `ease.sine`, `ease.linear` | descriptions such as `Quint in-out (smooth start and stop)` | Camera select options |
+| `parallax` | `Parallax` | Camera |
+| `warp` | `Warp effect (FOV change in flight)` | Camera |
+| `systemSections.rendering`, `.memory`, `.graphics`, `.display`, `.device` | `Rendering`, `Memory`, `Graphics`, `Display`, `Device` | System section headings. The row labels inside are technical terms and stay in English |
+| `extensions` | `WebGL extensions` | System, the expandable list |
+| `copyReport`, `copied` | `Copy report`, `Copied` | System |
+| `notReported` | `not reported by this browser` | System, figures the browser keeps to itself |
 | `formPrototype` | `This is a prototype — the message was not sent.` | form without `action` |
 | `formSent` | `Message sent. Thank you!` | form POST succeeded |
 | `formFailed` | `Sending failed — please try again.` | form POST failed |

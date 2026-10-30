@@ -11,9 +11,9 @@ export function Header() {
   const pois = useStore(s => s.pois);
   const current = useStore(s => s.current);
   const collapsed = useStore(s => s.panelCollapsed);
-  const settingsOpen = useStore(s => s.settingsOpen);
+  const optionsOpen = useStore(s => s.optionsOpen);
   const markersVisible = useStore(s => s.markersVisible);
-  const { goTo, togglePanel, toggleMarkers, toggleSettings } = useStore.getState();
+  const { goTo, togglePanel, toggleMarkers, toggleOptions } = useStore.getState();
   const ui = scene.ui;
 
   return (
@@ -32,8 +32,8 @@ export function Header() {
       <button className="iconbtn" aria-pressed={!markersVisible} title={markersVisible ? ui.hideMarkers : ui.showMarkers} aria-label={markersVisible ? ui.hideMarkers : ui.showMarkers} onClick={toggleMarkers}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1.5 12.5 7 8 12.5 3.5 7Z" /><path d="M3.5 7h9" />{!markersVisible && <path d="M2 14.5 14 1.5" />}</svg>
       </button>
-      <button className="iconbtn" aria-expanded={settingsOpen} aria-controls="settings" title={ui.settings} aria-label={ui.settings} onClick={toggleSettings}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12 C5 12 5 4 8 4 S11 12 15 12" /><circle cx="8" cy="4" r="1.6" /></svg>
+      <button className="iconbtn" aria-expanded={optionsOpen} aria-controls="options" title={ui.options} aria-label={ui.options} onClick={toggleOptions}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h7M13 4h1M2 12h1M7 12h7" /><circle cx="11" cy="4" r="1.8" /><circle cx="5" cy="12" r="1.8" /></svg>
       </button>
     </header>
   );

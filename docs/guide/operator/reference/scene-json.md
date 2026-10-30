@@ -75,7 +75,7 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `ease` | `quint` \| `expo` \| `back` \| `sine` \| `linear` | `quint` | initial transition curve; visitors can change it in the settings panel |
+| `ease` | `quint` \| `expo` \| `back` \| `sine` \| `linear` | `quint` | initial transition curve; visitors can change it in Options → Camera |
 | `parallax` | number ≥ 0 | `0.8` | mouse parallax strength; forced to `0` with reduced motion |
 | `warp` | number ≥ 0 | `12` | extra FOV in degrees mid-flight; forced to `0` with reduced motion |
 | `particles` | integer ≥ 0 | `520` | falling dust points |
