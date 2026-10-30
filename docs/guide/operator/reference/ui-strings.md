@@ -6,6 +6,8 @@ This page lists every word of the interface a scene can replace through `scene.j
 | --- | --- | --- |
 | `loading` | `Initializing room` | loading screen (see the note below) |
 | `loadError` | `Could not load the scene` | heading above the error list |
+| `unsupported` | `This browser cannot show the room` | heading of the screen shown when the browser has no WebGL 2 |
+| `unsupportedHint` | `The room is drawn with WebGL 2, which this browser does not support …` | text under `unsupported` |
 | `kicker` | `{n} of {total}` | above the panel title; `{n}` and `{total}` are zero-padded |
 | `hint` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, click a marker in the room` | bottom hint; `[x]` renders as a key cap; `{total}` is the POI count and `{keys}` the highest number key (at most 9) |
 | `goTo` | `Go to {label}` | accessible name of marker labels |
@@ -32,6 +34,6 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `filterSearch` | `Filter…` | dashboard search placeholder and label |
 | `filterCount` | `{n} of {total}` | dashboard row count |
 
-> **Note.** The loading screen can only use a scene's own `loading` text once that scene has loaded, in the 650 ms pause before the fly-in. While the files are still downloading it shows the default, because the app does not yet know which strings to use. `loadError` is never taken from the scene: a scene is stored only when it loads without errors, so the error screen always uses the default. Change it in `src/config/defaults.js` if you need another language there.
+> **Note.** The loading screen can only use a scene's own `loading` text once that scene has loaded, in the 650 ms pause before the fly-in. While the files are still downloading it shows the default, because the app does not yet know which strings to use. `loadError` is never taken from the scene: a scene is stored only when it loads without errors, so the error screen always uses the default. Change it in `src/config/defaults.js` if you need another language there. `unsupported` and `unsupportedHint` follow the same rule as `loading`: the default is shown until the scene has loaded, then the scene's own text.
 
 Set `lang` in `scene.json` to the language you translate to, so screen readers pronounce it correctly.

@@ -41,6 +41,8 @@ export const SCENE_DEFAULTS = {
   ui: {
     loading: 'Initializing room',
     loadError: 'Could not load the scene',
+    unsupported: 'This browser cannot show the room',
+    unsupportedHint: 'The room is drawn with WebGL 2, which this browser does not support or has turned off. Open the page in a current Chrome, Edge, Firefox or Safari, with hardware acceleration enabled.',
     kicker: '{n} of {total}',
     hint: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, click a marker in the room',
     goTo: 'Go to {label}',

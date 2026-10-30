@@ -34,13 +34,18 @@ export function Progress() {
   return <div id="progress" ref={ref} aria-hidden="true" />;
 }
 
-export function Loader({ done }) {
+export function Loader({ done, unsupported }) {
   const status = useStore(s => s.status);
   const error = useStore(s => s.error);
   const ui = useStore(s => s.scene?.ui) || SCENE_DEFAULTS.ui;
   return (
     <div id="loader" className={done ? 'done' : ''}>
-      {status === 'error' ? (
+      {unsupported ? (
+        <div className="err" role="alert">
+          <h2>{ui.unsupported}</h2>
+          <p>{ui.unsupportedHint}</p>
+        </div>
+      ) : status === 'error' ? (
         <div className="err" role="alert">
           <h2>{ui.loadError}</h2>
           <ul>{(error.lines || [error.message]).map((l, i) => <li key={i}>{l}</li>)}</ul>

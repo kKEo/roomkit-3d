@@ -12,7 +12,7 @@ This page says what you can observe about a deployed Scene Rooms site and how. T
 | 404s for `scenes/**/media/*` | access log | missing image or video; that screen shows rain instead |
 | `ConfigError: <file> › <path>: …` | browser console (`console.error` in `App.jsx`) | a config validation failure; the same lines are on screen |
 | `Could not load image …` / `Could not load video …` | browser console (`console.warn`) | missing file, wrong content type or a CORS block on another host |
-| WebGL context errors, blank canvas | browser console | the device has no WebGL 2, or the GPU is blocklisted |
+| WebGL context errors, **This browser cannot show the room** on screen | browser console | the device has no WebGL 2, or the GPU is blocklisted |
 | requests to `fonts.googleapis.com` | browser network tab | expected with the default theme; absent with `fontsUrl: ""` |
 
 ## A synthetic check

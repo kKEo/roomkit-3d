@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Component, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useStore } from './state/store.js';
 import { loadScene } from './config/loadScene.js';
@@ -12,8 +12,20 @@ import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
 import { Hint, Loader, Progress } from './ui/Overlays.jsx';
 import { useInput, poiIdFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
-import { reducedMotion } from './lib/env.js';
+import { reducedMotion, hasWebGL2 } from './lib/env.js';
 import { fmt } from './lib/text.js';
+
+/** Turns a failed WebGL context (e.g. a blocklisted GPU) into the "unsupported" screen; other errors pass on. */
+class WebGLBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error) { if (/webgl/i.test(error?.message)) this.props.onFail(); }
+  render() {
+    const { error } = this.state;
+    if (error && !/webgl/i.test(error.message)) throw error;
+    return error ? null : this.props.children;
+  }
+}
 
 /**
  * The room and its overlays, rendering whatever scene is in the store. Used by the viewer (`App`)
@@ -24,13 +36,15 @@ export function Viewer() {
   const status = useStore(s => s.status);
   const scene = useStore(s => s.scene);
   const total = useStore(s => s.pois.length);
+  const [webgl, setWebgl] = useState(hasWebGL2);
+  const live = status === 'ready' && webgl;
   const [intro, setIntro] = useState(false);
   const introDone = useRef(false);
   const stage = useRef(null);
 
   // fly in from outside the room once the first frames are up
   useEffect(() => {
-    if (status !== 'ready' || introDone.current) return;
+    if (!live || introDone.current) return;
     introDone.current = true;
     const t = setTimeout(() => {
       setIntro(true);
@@ -38,30 +52,32 @@ export function Viewer() {
       st.goTo(poiIdFromHash(), reducedMotion ? 500 : st.scene.camera.intro.duration);
     }, reducedMotion ? 100 : 650);
     return () => clearTimeout(t);
-  }, [status]);
+  }, [live]);
 
-  useInput(stage, status === 'ready');
+  useInput(stage, live);
 
   const far = scene ? Math.max(140, 3 * Math.max(scene.room.width, scene.room.depth)) : 140;
   return (
     <>
       <div id="stage" ref={stage}>
-        {status === 'ready' && (
-          <Canvas
-            flat
-            linear
-            dpr={[1, 2]}
-            gl={{ antialias: true, powerPreference: 'high-performance' }}
-            camera={{ fov: scene.camera.fov, near: 0.05, far, position: scene.camera.intro.position }}
-            aria-label={fmt(scene.ui.canvasLabel, { total })}
-            onPointerMissed={() => useStore.getState().exitZoom()}
-          >
-            <Experience />
-          </Canvas>
+        {live && (
+          <WebGLBoundary onFail={() => setWebgl(false)}>
+            <Canvas
+              flat
+              linear
+              dpr={[1, 2]}
+              gl={{ antialias: true, powerPreference: 'high-performance' }}
+              camera={{ fov: scene.camera.fov, near: 0.05, far, position: scene.camera.intro.position }}
+              aria-label={fmt(scene.ui.canvasLabel, { total })}
+              onPointerMissed={() => useStore.getState().exitZoom()}
+            >
+              <Experience />
+            </Canvas>
+          </WebGLBoundary>
         )}
       </div>
       <div className="fx" aria-hidden="true" />
-      {status === 'ready' && (
+      {live && (
         <>
           <Progress />
           <Labels />
@@ -73,7 +89,7 @@ export function Viewer() {
           <Hint />
         </>
       )}
-      <Loader done={intro} />
+      <Loader done={intro && webgl} unsupported={!webgl} />
     </>
   );
 }

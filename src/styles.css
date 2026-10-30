@@ -165,6 +165,7 @@ nav button[aria-current="true"] b { opacity: 1 }
 .err h2 { font-family: var(--display); font-weight: 400; font-size: 32px; color: #ff6b6b; margin: 0 0 12px }
 .err ul { margin: 0; padding-left: 1.2em; line-height: 1.5 }
 .err li { margin-bottom: 6px; word-break: break-word }
+.err p { margin: 0; line-height: 1.5; color: var(--text-dim) }
 
 @media (max-width: 760px) {
   .top { padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 8px; gap: 8px 10px; flex-wrap: wrap }
