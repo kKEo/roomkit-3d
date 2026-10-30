@@ -4,11 +4,11 @@ This page describes the three example scenes that ship with Scene Rooms and some
 
 ## The examples
 
-**Neo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with eight stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, a desk with a contact form, and two control centres, one with a wall of nine screens and a smaller one opposite. Look here to see:
+**kKEo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with eight stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, a desk with a contact form, and two control centres, one with a wall of nine screens and a smaller one opposite. Look here to see:
 
-![The Neo Room example seen whole from above, with its eight stops labelled](images/whole-room.png)
+![The kKEo Room example seen whole from above, with its eight stops labelled](images/whole-room.png)
 
-*Neo Room, the default scene.*
+*kKEo Room, the default scene.*
 
 - one stop with several objects and a hand-placed camera (`poi/02-projects.json`);
 - a stop with no camera at all, placed automatically (`poi/03-archive.json`);
