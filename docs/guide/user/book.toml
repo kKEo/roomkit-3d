@@ -9,7 +9,7 @@ build-dir = "../../../site/user"
 create-missing = false
 
 [output.html]
-site-url = "/scene-rooms/user/"
+site-url = "/roomkit-3d/docs/user/"
 
 # mdBook publishes README.md as index.html but does not rewrite links to README.md; keep those links GitBook-correct and redirect here.
 [output.html.redirect]

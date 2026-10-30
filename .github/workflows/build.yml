@@ -1,3 +1,6 @@
+# Lint, test and build the app, build the docs, and on a push to master publish
+# both to GitHub Pages: the app at the site root, the docs under docs/.
+# One-time repository setting: Settings → Pages → Source: GitHub Actions.
 name: Build
 
 on:
@@ -6,9 +9,18 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# A newer push to a pull request cancels its running checks; a push to master
+# never cancels a deploy that is under way.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  MDBOOK_VERSION: v0.5.4
+  MDBOOK_SHA256: 5222beabd3e37dc5be0d18ff99b79058469354db5c220153a1b92db5ba12be89
 
 jobs:
   check:
@@ -28,8 +40,7 @@ jobs:
       - run: make test
       - run: make build
 
-      - name: Upload build
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
@@ -38,15 +49,59 @@ jobs:
   docs:
     name: Docs build
     runs-on: ubuntu-latest
-    env:
-      MDBOOK_VERSION: 0.5.4
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install mdBook
+      - name: Install mdBook (pinned, checksum verified)
         run: |
-          curl -sSL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" | tar -xz
-          sudo mv mdbook /usr/local/bin/mdbook
+          curl -sSLo mdbook.tgz "https://github.com/rust-lang/mdBook/releases/download/${MDBOOK_VERSION}/mdbook-${MDBOOK_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+          echo "${MDBOOK_SHA256}  mdbook.tgz" | sha256sum -c -
+          sudo tar xzf mdbook.tgz -C /usr/local/bin mdbook
           mdbook --version
 
-      - run: make docs-check
+      - name: Build the three guides (runs docs-check first)
+        run: make docs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+          if-no-files-found: error
+          include-hidden-files: true # .nojekyll
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: [check, docs]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: _site
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site/docs
+
+      - name: Assemble the site (app at the root, docs under docs/)
+        run: |
+          touch _site/.nojekyll
+          find _site -maxdepth 2 | sort
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

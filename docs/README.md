@@ -14,13 +14,13 @@ Each book has `README.md`, `SUMMARY.md` (only listed pages are published), `.git
 ## Build locally
 
 ```bash
-make docs                       # build all books into site/<book>/ and copy the landing page to site/
+make docs                       # run docs-check, then build all books into site/<book>/ with the landing page
 make docs-check                 # check every book builds; writes nothing
 make docs-serve BOOK=operator   # live preview of one book, http://localhost:3000
 make docs-site-serve            # build and serve the whole site with the landing page, http://localhost:8000
 ```
 
-`site/` is git-ignored. mdBook must be installed (`brew install mdbook` or `cargo install mdbook`).
+`site/` is git-ignored. mdBook must be installed (`brew install mdbook` or `cargo install mdbook`). On a push to `master`, `.github/workflows/build.yml` publishes `site/` to GitHub Pages under `/roomkit-3d/docs/`, next to the app.
 
 ## Design documents
 

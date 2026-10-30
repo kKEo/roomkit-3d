@@ -24,6 +24,17 @@ make serve           # builds, then serves dist/ at http://localhost:4173 to che
 3. **No SPA rewrites needed.** Scenes and stops are chosen with `?scene=` and `#id`, so only `index.html` itself has to be served at the app's path. A catch-all rewrite to `index.html` is harmless for the app, but it makes missing scene files look like HTML, which still reports correctly as "file not found".
 4. **CORS for media on other hosts.** Images and videos load with `crossOrigin = "anonymous"`. A file on another domain needs `Access-Control-Allow-Origin` or it fails to load, and the screen keeps showing rain.
 
+## GitHub Pages
+
+The workflow in `.github/workflows/build.yml` publishes every push to `master` to GitHub Pages, after the lint, tests, build and docs build have passed:
+
+| Address | What |
+| --- | --- |
+| `https://kkeo.github.io/roomkit-3d/` | the app (`dist/`); the editor is at `edit.html` |
+| `https://kkeo.github.io/roomkit-3d/docs/` | the documentation landing page and the three guides |
+
+It needs one repository setting, made once: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Pages serves the content types above correctly and adds no rewrites, so the hosting rules hold without configuration. The `docs/` prefix is fixed in each guide's `book.toml` (`site-url`); change it there if the repository is renamed.
+
 ## Serving scenes from elsewhere
 
 By default the app looks for scenes in `./scenes/` next to `index.html`. To host one build of the viewer and publish scene folders somewhere else (a bucket, a content server), set `VITE_SCENES_BASE` when building:

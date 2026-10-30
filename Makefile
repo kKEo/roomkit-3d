@@ -43,9 +43,12 @@ lint: node_modules ## Lint the source (eslint)
 
 check: lint test build ## Lint, test and build — what CI runs
 
-docs: ## Build all three books and the landing page into site/
+docs: docs-check ## Build all three books and the landing page into site/ (ready for GitHub Pages)
+	rm -rf $(SITE)
 	@for b in $(BOOKS); do mdbook build $(GUIDE)/$$b || exit 1; done
+	rm -f $(SITE)/*/book.toml $(SITE)/*/.gitbook.yaml
 	cp $(GUIDE)/index.html $(SITE)/index.html
+	touch $(SITE)/.nojekyll
 	@echo "Docs written to $(SITE)/ (open with: make docs-site-serve)"
 
 docs-check: ## Check every book builds (a file missing from SUMMARY.md fails); writes nothing to site/
