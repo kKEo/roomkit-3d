@@ -14,7 +14,7 @@ Put these at height `0`.
 
 | Type | What it is | Settings worth knowing |
 | --- | --- | --- |
-| `desk` | A desk with a monitor, keyboard and chair. Visitors look at it from the chair side. | `screen`: `"rain"` (default), `"image"` or `"video"`, with `src` for the file. `chair`: `false` to remove it. |
+| `desk` | A desk with a monitor, keyboard and chair. Visitors look at it from the chair side. | `screen`: `"rain"` (default), `"image"` or `"video"` with `src` for the file, or a full screen like the ones on a control desk (`{ "source": "text", "title": "…", "lines": [...] }`). `chair`: `false` to remove it. |
 | `wardrobe` | A two-door wardrobe with clothes and boxes inside. Its doors swing open while its panel is shown. | `width`, `height`, `depth`. `openOnFocus`: `false` keeps it shut. |
 | `pedestal` | A low stand with a slowly turning shape floating above it, wrapped in rings. | `shape`: `icosahedron`, `dodecahedron`, `octahedron`, `box`, `sphere`, `cone`, `torusKnot` and more. `height` of the floating shape. |
 | `controlDesk` | A curved control-centre console with operator chairs and a wall of screens behind it. Every screen can show something different (see below). | `screens`: one entry per screen. `columns`: screens per row (3). `segments`, `radius`, `arc`: the shape of the desk. `chairs`: how many. |
@@ -95,7 +95,29 @@ Visitors can click any screen of a stop (control desk screens, the desk monitor,
 
 From across the room the screen shows a preview: the last lines typed, the filtered bars, or the empty form. What visitors typed or filtered stays on the screen after they step back, until the page is reloaded.
 
-To stop a screen from being clicked, add `"zoom": false` to that screen, or to the `props` of a `desk`, `cinemaScreen` or `pictureFrame`. Objects listed under `decor` in `scene.json` are never clickable.
+To stop a screen from being clicked, add `"zoom": false` to that screen, or to the `props` of a `desk`, `cinemaScreen` or `pictureFrame`. Screens of objects listed under `decor` in `scene.json` are not clickable unless you give them an action (next section).
+
+## Making objects clickable
+
+Any object can react to a click. Add `actions` next to its `props`, naming the part of the object and what the click does:
+
+```json
+{ "type": "pictureFrame", "position": [5, 3, -12],
+  "actions": { "frame": { "type": "goTo", "poi": "studio" } } }
+```
+
+The part lights up when the mouse is over it. What you can click, per object: `pictureFrame` → `frame` and `image`; `desk` → `screen` and `chair`; `door` → `door`; `bench` → `bench`; `pedestal` → `solid`; `wardrobe` → `doors`; `serverRack` → `rack`; `cinemaScreen` → `screen`; `controlDesk` → each screen by its `id` (or `scr0`, `scr1`, …); `primitive` → `shape`.
+
+What a click can do:
+
+| Action | Example | Effect |
+| --- | --- | --- |
+| go to a stop | `{ "type": "goTo", "poi": "studio" }` | flies there and opens its panel; `"poi": null` shows the whole room |
+| open a link | `{ "type": "openUrl", "url": "https://example.com" }` | in a new tab (add `"newTab": false` to leave the page) |
+| hide or show the panel | `{ "type": "togglePanel" }` | the same as the `H` key |
+| step up to a screen | `{ "type": "zoom", "screen": "scr2" }` | zooms into that screen of the current stop |
+
+A misspelt part name is reported on the loading screen together with the names the object has. The `loft` example scene uses actions on its picture frames and its door.
 
 ## Pictures and videos
 

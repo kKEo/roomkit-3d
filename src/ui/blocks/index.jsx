@@ -49,11 +49,12 @@ export function Form({ data }) {
   const onSubmit = async e => {
     e.preventDefault();
     if (!data.action) { setStatus(ui.formPrototype); return; }
-    const body = Object.fromEntries(new FormData(e.currentTarget));
+    const form = e.currentTarget; // null after the await, so keep a reference
+    const body = Object.fromEntries(new FormData(form));
     try {
       const res = await fetch(data.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       setStatus(res.ok ? ui.formSent : ui.formFailed);
-      if (res.ok) e.currentTarget?.reset();
+      if (res.ok) form.reset();
     } catch { setStatus(ui.formFailed); }
   };
   return (

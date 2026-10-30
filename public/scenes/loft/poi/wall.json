@@ -1,0 +1,16 @@
+{
+  "id": "wall",
+  "label": "Long wall",
+  "kicker": "north wall",
+  "objects": [
+    { "type": "pictureFrame", "position": [-5, 3, -12], "props": { "width": 3.4, "height": 2.2, "exhibit": "torus" },
+      "actions": { "frame": { "type": "goTo", "poi": "wing" } } },
+    { "type": "pictureFrame", "position": [0, 3, -12], "props": { "width": 2.2, "height": 2.8, "exhibit": "octahedron" },
+      "actions": { "frame": { "type": "togglePanel" } } },
+    { "type": "pictureFrame", "position": [5, 3, -12], "props": { "width": 3.4, "height": 2.2, "exhibit": "cone" },
+      "actions": { "frame": { "type": "goTo", "poi": "studio" } } }
+  ],
+  "camera": { "position": [0, 3, -3], "target": [0, 3, -12] },
+  "marker": { "position": [0, 5.2, -11] },
+  "content": { "markdown": "content/wall.md" }
+}

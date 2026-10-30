@@ -8,6 +8,7 @@
 - [Choosing objects](objects.md)
 - [Writing panel content](content.md)
 - [Making a new scene](new-scene.md)
+- [Editing in the browser](editor.md)
 - [Examples and ideas](examples.md)
 - [Privacy: what leaves the browser](privacy.md)
 - [FAQ and troubleshooting](faq.md)

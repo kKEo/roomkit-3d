@@ -42,7 +42,7 @@ export const SCENE_DEFAULTS = {
     loading: 'Initializing room',
     loadError: 'Could not load the scene',
     kicker: '{n} of {total}',
-    hint: '[←][→] or mouse wheel — move, [1]–[{total}] areas, [0] whole room, click a marker in the room',
+    hint: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, click a marker in the room',
     goTo: 'Go to {label}',
     home: 'view the whole room (0)',
     navLabel: 'Areas of the room',

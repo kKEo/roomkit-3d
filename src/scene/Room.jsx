@@ -1,39 +1,52 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Solid, Segs, useGeometry, Outline, useWorld } from './core.jsx';
+import * as THREE from 'three';
+import { Solid, Segs, Outline, useWorld } from './core.jsx';
+import { edges, gridSegments } from '../lib/footprint.js';
+
+/** The room shell: the footprint polygon extruded from the floor to the ceiling (inner faces are drawn). */
+function useShellGeometry(footprint, height) {
+  const key = JSON.stringify(footprint);
+  const geometry = useMemo(() => {
+    // ExtrudeGeometry extrudes along +z; rotating -90° about x maps shape (x, y, e) to world (x, e, -y),
+    // so a shape point (x, -z) ends up at world (x, e, z).
+    const shape = new THREE.Shape(footprint.map(([x, z]) => new THREE.Vector2(x, -z)));
+    const g = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);
+    return g;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- footprint compared by value through `key`
+  }, [key, height]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return geometry;
+}
 
 /** Room shell, floor/ceiling grids, wall panelling, pillars and light fixtures — all from scene.room. */
 export function Room() {
   const { room, mats } = useWorld();
-  const { width: RW, height: RH, depth: RD } = room;
-  const HX = RW / 2, HZ = RD / 2;
-  const shell = useGeometry('box', [RW, RH, RD]);
+  const { height: RH, footprint } = room;
+  const shell = useShellGeometry(footprint, RH);
   // the ceiling's grid and lamps would cover the view from above (overview), so hide them up there
   const ceilingParts = useRef(null);
   useFrame(({ camera }) => { if (ceilingParts.current) ceilingParts.current.visible = camera.position.y < RH; });
 
   const { floor, ceiling, walls } = useMemo(() => {
-    const grid = (step, y) => {
-      const a = [];
-      if (!step) return a;
-      for (let v = -HX; v <= HX + 1e-6; v += step) a.push(v, y, -HZ, v, y, HZ);
-      for (let v = -HZ; v <= HZ + 1e-6; v += step) a.push(-HX, y, v, HX, y, v);
-      return a;
-    };
     const w = [], step = room.wallPanels, e = 0.02;
-    if (step) {
-      for (let v = -HZ + step; v < HZ - 1e-6; v += step) w.push(-HX + e, 0, v, -HX + e, RH, v, HX - e, 0, v, HX - e, RH, v);
-      for (let v = -HX + step; v < HX - 1e-6; v += step) w.push(v, 0, -HZ + e, v, RH, -HZ + e, v, 0, HZ - e, v, RH, HZ - e);
+    for (const { a, b, length, dir, normal } of edges(footprint)) {
+      const ox = normal[0] * e, oz = normal[1] * e; // inset a little so the lines don't fight the wall
+      if (step) {
+        for (let s = step; s < length - 1e-6; s += step) {
+          const x = a[0] + dir[0] * s + ox, z = a[1] + dir[1] * s + oz;
+          w.push(x, 0, z, x, RH, z);
+        }
+      }
+      for (const y of room.skirting) w.push(a[0] + ox, y, a[1] + oz, b[0] + ox, y, b[1] + oz);
     }
-    room.skirting.forEach(y => {
-      w.push(-HX + e, y, -HZ, -HX + e, y, HZ, HX - e, y, -HZ, HX - e, y, HZ, -HX, y, -HZ + e, HX, y, -HZ + e, -HX, y, HZ - e, HX, y, HZ - e);
-    });
-    return { floor: grid(room.grid.floor, 0.01), ceiling: grid(room.grid.ceiling, RH - 0.01), walls: w };
-  }, [room, HX, HZ, RH]);
+    return { floor: gridSegments(footprint, room.grid.floor, 0.01), ceiling: gridSegments(footprint, room.grid.ceiling, RH - 0.01), walls: w };
+  }, [room, footprint, RH]);
 
   return (
     <group>
-      <mesh geometry={shell} material={mats.fills.room} position={[0, RH / 2, 0]}>
+      <mesh geometry={shell} material={mats.fills.room}>
         <Outline geometry={shell} line="thick" />
       </mesh>
       {floor.length > 0 && <Segs points={floor} line="faint" />}

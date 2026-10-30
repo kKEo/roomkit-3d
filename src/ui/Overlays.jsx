@@ -3,12 +3,12 @@ import { useStore, runtime } from '../state/store.js';
 import { SCENE_DEFAULTS } from '../config/defaults.js';
 import { fmt } from '../lib/text.js';
 
-/** Hint text where [x] renders as a key cap and {total} is the POI count. */
+/** Hint text where [x] renders as a key cap, {total} is the POI count and {keys} the highest number key (≤ 9). */
 export function Hint() {
   const ui = useStore(s => s.scene.ui);
   const total = useStore(s => s.pois.length);
   const zoomed = useStore(s => !!s.zoom);
-  const parts = fmt(zoomed ? ui.zoomHint : ui.hint, { total }).split(/(\[[^\]]+\])/);
+  const parts = fmt(zoomed ? ui.zoomHint : ui.hint, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
   return (
     <div className="hint">
       {parts.map((p, i) => (/^\[.+\]$/.test(p) ? <kbd key={i}>{p.slice(1, -1)}</kbd> : p))}

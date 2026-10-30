@@ -24,6 +24,16 @@ make serve           # builds, then serves dist/ at http://localhost:4173 to che
 3. **No SPA rewrites needed.** Scenes and stops are chosen with `?scene=` and `#id`, so only `index.html` itself has to be served at the app's path. A catch-all rewrite to `index.html` is harmless for the app, but it makes missing scene files look like HTML, which still reports correctly as "file not found".
 4. **CORS for media on other hosts.** Images and videos load with `crossOrigin = "anonymous"`. A file on another domain needs `Access-Control-Allow-Origin` or it fails to load, and the screen keeps showing rain.
 
+## Serving scenes from elsewhere
+
+By default the app looks for scenes in `./scenes/` next to `index.html`. To host one build of the viewer and publish scene folders somewhere else (a bucket, a content server), set `VITE_SCENES_BASE` when building:
+
+```bash
+VITE_SCENES_BASE=https://content.example.com/rooms/ npm run build
+```
+
+The value may be absolute or relative to the page, and ends up in the bundle, so a scene folder at `…/rooms/<name>/` is reachable as `?scene=<name>`. The content host must send the content types above and, being another origin, `Access-Control-Allow-Origin` for every file. The base is fixed at build time on purpose: taking it from the URL would let anyone point your viewer at their content.
+
 ## Updating content without a rebuild
 
 Everything in `dist/scenes/` is read at runtime, so content authors can change, add or remove POI files, Markdown and media on the server directly. A rebuild is needed only for code changes or new prefab and block types. Keep `public/scenes/` in the repository as the source of truth, and copy it to the server with the rest of `dist/`.

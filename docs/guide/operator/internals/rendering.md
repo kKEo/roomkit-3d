@@ -20,10 +20,14 @@ Every solid surface uses a `ShaderMaterial` with one fragment shader. It compute
 | --- | --- | --- |
 | `main` | most solids | `theme.hatch.density` (4.5) |
 | `fine` | small or flat parts: frames, monitors, shelves | `theme.hatch.fineDensity` (8) |
-| `room` | the room box, rendered from inside (`BackSide`) | `theme.hatch.roomDensity` (2.6) at `roomStrength` (0.75) |
+| `room` | the room shell (the `footprint` polygon extruded to `height`, `src/scene/Room.jsx`), rendered from inside (`BackSide`) | `theme.hatch.roomDensity` (2.6) at `roomStrength` (0.75) |
 | `hit` | invisible raycast targets | — |
 
 The uniforms (`uColor`, `uLight`, `uTime`, fog) are shared objects, so one time update per frame (`Ticker` in `Experience.jsx`) animates every material.
+
+## The room
+
+`Room.jsx` builds the shell from `room.footprint` (a polygon of `[x, z]` corners; `src/lib/footprint.js` fills in the rectangle when a scene gives only `width` and `depth`) as a `THREE.Shape` extruded to `room.height`. Floor and ceiling grids are the grid lines clipped to the polygon (`gridSegments`), and wall panels and skirting are laid along every edge, inset 2 cm along the edge's inward normal. The minimap, the overview camera, the flight arcs, fog and the dust particles all read the same footprint, its `bounds` and `centre`, so a non-rectangular room needs no other change.
 
 ## Lines
 

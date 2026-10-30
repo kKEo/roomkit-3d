@@ -93,7 +93,7 @@ A special block is a fenced block (three backticks) whose first line names the b
 
 Without `action`, pressing the button only shows "This is a prototype — the message was not sent." With `action`, the answers are sent to that address. Whoever runs that address must accept them; ask your operator.
 
-> **Warning.** If a block's JSON has a mistake, the panel shows the block in red with the problem, for example a missing comma. The rest of the panel still works.
+> **Warning.** If a block's JSON has a mistake, the panel shows the block in red with the problem: a missing comma, a misspelt field such as `titel`, or a missing `label`. The rest of the panel still works.
 
 ## Writing the panel inside the point-of-interest file
 

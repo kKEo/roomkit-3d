@@ -31,6 +31,14 @@ The smallest useful `scene.json` names the room and lists the points of interest
 - `room` sets the size in metres. The room is centred on `0`: with a width of 16, the side walls are at `-8` and `8`.
 - `lights` are positions. A light near the ceiling becomes a flat ceiling panel; a lower one hangs on wires.
 
+A room need not be a box. Give `footprint` instead of `width` and `depth`: the corners of the floor, in order, as `[x, z]` pairs. This L-shaped room is 24 m across with its top-right quarter missing:
+
+```json
+"room": { "height": 7, "footprint": [[-12, -12], [12, -12], [12, 0], [0, 0], [0, 12], [-12, 12]], "lights": [[-6, 6.6, 0]] }
+```
+
+Walls, grids, the minimap and the whole-room view all follow the outline. The `loft` example scene is built this way.
+
 Everything you leave out keeps its default: the green colours, the fonts, the camera speed.
 
 ## 3. Change the look

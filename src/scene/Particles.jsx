@@ -3,18 +3,19 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useWorld } from './core.jsx';
 import { reducedMotion } from '../lib/env.js';
+import { randomPoint } from '../lib/footprint.js';
 
 /** Slowly falling dust specks — adds depth and makes parallax readable. */
 export function Particles({ count }) {
   const { room, theme } = useWorld();
   const n = reducedMotion ? Math.min(count, 220) : count;
   const { geometry, speed } = useMemo(() => {
-    const HX = room.width / 2 - 0.5, HZ = room.depth / 2 - 0.5;
     const pos = new Float32Array(n * 3), speed = new Float32Array(n);
     for (let i = 0; i < n; i++) {
-      pos[i * 3] = (Math.random() * 2 - 1) * HX;
+      const [x, z] = randomPoint(room.footprint, room.bounds);
+      pos[i * 3] = x;
       pos[i * 3 + 1] = Math.random() * room.height;
-      pos[i * 3 + 2] = (Math.random() * 2 - 1) * HZ;
+      pos[i * 3 + 2] = z;
       speed[i] = 0.15 + Math.random() * 0.5;
     }
     const geometry = new THREE.BufferGeometry();

@@ -1,6 +1,6 @@
 # Prefab reference
 
-This page lists every object type with its props, defaults, origin and the placement hints used when a POI has no `camera` or `marker`. The source is `src/prefabs/registry.js` (metadata) and `src/prefabs/<Name>.jsx` (geometry). Every prefab faces local **+Z**.
+This page lists every object type with its props, defaults, origin and the placement hints used when a POI has no `camera` or `marker`. The source is `src/prefabs/<Name>.meta.js` (the props schema with its defaults, media props and placement) and `src/prefabs/<Name>.jsx` (geometry). Props are validated when the scene loads: a wrong type or a key not in the table below is an error. Every prefab faces local **+Z**. The parts of each prefab a scene can bind a click action to are listed in [Actions and hotspots](actions.md).
 
 How to read the placement columns: `focus` is the local point the camera looks at. The camera stands `distance` metres in front of it along local +Z, at world height `cam y` (`—` means `focus.y + 0.3`). The marker hangs at the local point `marker`. `h`, `w` and `e` stand for the `height`, `width` and `elevation` props.
 
@@ -12,8 +12,8 @@ A desk with monitor, keyboard and chair. Origin: floor centre. The seated user f
 
 | Prop | Default | Notes |
 | --- | --- | --- |
-| `screen` | `"rain"` | `"rain"`, `"image"` or `"video"` on the monitor (for `text` and `graph` screens use `controlDesk`) |
-| `src` | `null` | media file for `screen`; resolved against the scene folder |
+| `screen` | `"rain"` | a source name (`"rain"`, `"image"`, `"video"`, …) or a full screen config `{ source, title, lines, … }` with the same keys as a [control desk screen](#controldesk) |
+| `src` | `null` | media file for an `image`/`video` screen given by name; resolved against the scene folder (a screen config carries its own `src`) |
 | `chair` | `true` | |
 | `zoom` | `true` | `false` makes the monitor not clickable (see [Zoomable screens](#zoomable-screens)) |
 
@@ -97,7 +97,7 @@ Placement (`top` = upper edge of the screen wall): focus `[0, (1.65 + top) / 2, 
 
 #### Zoomable screens
 
-Every `ScreenSurface` inside a POI's objects is clickable unless its `zoom` is `false`. Screens in `decor` are not: `PoiObjects` (`src/scene/Experience.jsx`) provides the POI index through `PoiContext`, and decor has none. The first click on a screen of another POI calls `goTo` for that POI; a click on a screen of the current POI zooms into it (see [Navigation and the camera](../internals/camera.md#zooming-into-a-screen)).
+Every `ScreenSurface` inside a POI's objects is clickable unless its `zoom` is `false`. Screens in `decor` are not: `PoiObjects` (`src/scene/Experience.jsx`) provides the POI id through `PoiContext`, and decor has none. The first click on a screen of another POI calls `goTo` for that POI; a click on a screen of the current POI zooms into it (see [Navigation and the camera](../internals/camera.md#zooming-into-a-screen)).
 
 The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI index and the screen's `id` (the control desk passes `scr0`, `scr1`, …). The state lives until the page reloads; it is not saved anywhere.
 
@@ -180,8 +180,8 @@ One shape. Origin: the shape's centre.
 | Prop | Default | Notes |
 | --- | --- | --- |
 | `shape` | `"box"` | `box`, `sphere`, `cylinder`, `cone`, `torus`, `torusKnot`, `icosahedron`, `dodecahedron`, `octahedron`, `tetrahedron`, `plane` |
-| `size` | `null` | approximate bounding size; when set, `args` is derived from it (`shapeArgs()` in `src/scene/core.jsx`) |
-| `args` | `[1, 1, 1]` | raw three.js geometry constructor arguments, used when `size` is `null` |
+| `size` | `1` | approximate bounding size in metres; `args` is derived from it (`shapeArgs()` in `src/scene/core.jsx`) |
+| `args` | `null` | raw three.js geometry constructor arguments for `shape`; when given, they replace the size-derived ones |
 | `fill` | `"main"` | `"main"`, `"fine"` or `false` (outline only) |
 | `edge` | `"thick"` | `"thick"`, `"mid"`, `"thin"`, `"faint"`, `"glow"` or `false` |
 | `spin` | `0` | rad/s around y |

@@ -7,14 +7,16 @@ import { objectMatrix } from './math.js';
  * are in the prefab's local space.
  */
 /**
- * Default overview: outside the front wall and above the ceiling, looking in and down.
+ * Default overview: outside the front (+z) wall and above the ceiling, looking in and down.
  * The shell only draws its inner faces, so from here the whole room shows like a cut-away model.
+ * Works from the footprint's bounds, so an L-shaped room is framed like a rectangular one.
  */
-export function overviewCamera({ width, height, depth }) {
+export function overviewCamera({ width, height, depth, bounds, centre }) {
   const size = Math.max(width, depth);
+  const cx = centre?.[0] ?? 0, cz = centre?.[1] ?? 0, maxZ = bounds?.maxZ ?? depth / 2;
   return {
-    position: [0, height + size * 0.22, depth / 2 + size * 0.28],
-    target: [0, 0, -depth * 0.06],
+    position: [cx, height + size * 0.22, maxZ + size * 0.28],
+    target: [cx, 0, cz - depth * 0.06],
   };
 }
 

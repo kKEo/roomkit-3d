@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { useStore, runtime } from '../state/store.js';
+import { useStore, runtime, viewRect } from '../state/store.js';
 
-/** POI named by the #hash, or -1 (the room overview) when there is none or it is unknown. */
-export function poiIndexFromHash() {
+/** Id of the POI named by the #hash, or null (the room overview) when there is none or it is unknown. */
+export function poiIdFromHash() {
   const id = decodeURIComponent((location.hash || '').slice(1));
-  return useStore.getState().pois.findIndex(p => p.id === id);
+  return useStore.getState().pois.some(p => p.id === id) ? id : null;
 }
 
 /** Keyboard, wheel, swipe, pointer (for parallax) and #hash navigation; Esc leaves a zoomed-in screen. */
@@ -12,7 +12,7 @@ export function useInput(stageRef, enabled) {
   useEffect(() => {
     if (!enabled) return;
     const st = () => useStore.getState();
-    const inUi = t => t.closest && (t.closest('#panel') || t.closest('.settings') || t.closest('.screen-ui'));
+    const inUi = t => t.closest && t.closest('#panel, .settings, .screen-ui, .editor');
 
     const onKey = e => {
       if (e.key === 'Escape') {
@@ -44,8 +44,9 @@ export function useInput(stageRef, enabled) {
 
     const onMove = e => {
       if (e.pointerType === 'touch') { runtime.touch = true; return; }
-      runtime.mouse.x = (e.clientX / innerWidth) * 2 - 1;
-      runtime.mouse.y = (e.clientY / innerHeight) * 2 - 1;
+      const { left, top, width, height } = viewRect();
+      runtime.mouse.x = ((e.clientX - left) / width) * 2 - 1;
+      runtime.mouse.y = ((e.clientY - top) / height) * 2 - 1;
     };
 
     let down = null;
@@ -57,7 +58,7 @@ export function useInput(stageRef, enabled) {
       down = null;
     };
 
-    const onHash = () => { const i = poiIndexFromHash(); if (i !== st().current) st().goTo(i); };
+    const onHash = () => { const id = poiIdFromHash(); if (id !== st().current) st().goTo(id); };
 
     const stage = stageRef.current;
     addEventListener('keydown', onKey);

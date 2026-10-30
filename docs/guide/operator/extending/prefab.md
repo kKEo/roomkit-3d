@@ -43,18 +43,29 @@ Rules that keep prefabs consistent:
 - Memoise anything derived from props (`useMemo`); `Segs` already compares its points by value.
 - Don't create materials. Reuse `mats.fills` and `mats.lines` so the theme applies and nothing leaks.
 
-## 2. Register its metadata
+## 2. Describe its props
 
-In `src/prefabs/registry.js` add:
+Create `src/prefabs/Lamp.meta.js` next to the component. It has no React in it, so the config loader and the tests can import it:
 
 ```js
-lamp: {
-  props: { height: 1.8 },
+import { z } from 'zod';
+
+/** Floor lamp (origin = floor centre). */
+export const lamp = {
+  schema: z.strictObject({
+    height: z.number().positive().default(1.8),
+  }),
   placement: p => ({ focus: [0, p.height * 0.7, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
-},
+};
 ```
 
-Add `media: ['src']` if a prop holds a file path that should resolve against the scene folder, or `media: ['items[].src']` for a path inside each entry of an array prop, as `controlDesk` does for its screens. For a screen, render `<ScreenSurface {...config} w h />` from `src/prefabs/media.jsx`, and every screen source works in your prefab too. Inside a POI the screen is also clickable and zoomable; add a `zoom: true` prop and pass it through so scenes can switch that off, and pass a stable `id` when a prefab has several screens so their state survives re-renders. The schema reads `PREFAB_TYPES` from this file, so `lamp` is now a valid `type`, and the "unknown type" error lists it.
+- `schema` is a `z.strictObject` and **every key has a `.default()`**: the defaults become the prefab's `props`, a wrong type or a misspelt key is reported on the loading screen as `… › objects.0.props.height: …`, and an editor can build its inspector from it. Use `z.enum([...])` for choices and `.nullable().default(null)` for optional paths.
+- Add `media: ['src']` if a prop holds a file path that should resolve against the scene folder; `'screen.src'` for a nested prop; `'items[].src'` for a path inside each entry of an array prop, as `controlDesk` does.
+- For a screen, give the prop the `screenSchema` from `src/prefabs/screenSchema.js` (or `screenOrSource`, which also accepts a bare source name) and render `<ScreenSurface {...config} id="screen" w h />` from `src/prefabs/media.jsx`. Every screen source then works in your prefab. Pass a stable `id` so the screen's zoom and session state survive re-renders, and respect `zoom: false`.
+
+- Name the parts a scene may make clickable in `hotspots` (a list, or a function of the props), and give the matching `<Solid>` a `hotspot="name"` prop. A `ScreenSurface`'s hotspot is its `id`. For the lamp, `hotspots: ['shade']` and `<Solid ref={shade} hotspot="shade" …>` let a scene write `"actions": { "shade": { "type": "goTo", "poi": "…" } }`; see [Actions and hotspots](../reference/actions.md).
+
+Then register it in `src/prefabs/registry.js`: import `lamp` and add it to `META`. The schema reads `PREFAB_TYPES` from there, so `lamp` is now a valid `type`, and the "unknown type" error lists it. `make test` checks every registered prefab: its defaults validate, unknown keys are rejected, and its placement is finite.
 
 ## 3. Map the type to the component
 
@@ -69,6 +80,6 @@ Add `{ "type": "lamp", "position": [3, 0, 3] }` to a scene's `decor`, run `make 
 A screen source is a canvas drawer plus, if it is interactive, an overlay component:
 
 1. In `src/scene/screens.js`, write `createXScreen(theme, config, session)` returning `{ texture, step(dt), dispose() }`. Draw on a 512 × 288 canvas and read whatever the overlay wrote into `session`.
-2. In `src/prefabs/media.jsx`, add the name to `SCREEN_SOURCES` (and to `INTERACTIVE_SOURCES` if it has an overlay), add a branch to `useCanvasScreen`, and destructure any new config keys in `ScreenSurface` so they reach both the drawer and `config`.
+2. In `src/prefabs/screenSchema.js`, add the name to `SCREEN_SOURCES` (and to `INTERACTIVE_SOURCES` if it has an overlay) and any new config keys to `screenSchema`. In `src/prefabs/media.jsx`, add a branch to `useCanvasScreen` and destructure the new keys in `ScreenSurface` so they reach both the drawer and `config`.
 3. For an overlay, write `src/ui/screens/X.jsx` taking `{ config, session, ui }`. Initialise its state from `session` and write changes back to it. Then add it to `KINDS` in `src/ui/ScreenOverlay.jsx`. Size text in `em`: the overlay sets its font size from the screen's height on the page.
 4. Add any new interface strings to `src/config/defaults.js` and to [Interface strings](../reference/ui-strings.md), and the keys to the screen table in the [Prefab reference](../reference/prefabs.md#controldesk).

@@ -15,17 +15,18 @@ This page lists every key of a scene's `scene.json`. Every key is optional excep
 | `effects` | object | below | |
 | `ui` | object | English strings | see [Interface strings](ui-strings.md) |
 | `decor` | object[] | `[]` | non-interactive objects, same shape as [POI objects](poi-json.md) |
-| `poi` | string[] | — | **required**; 1–9 paths relative to the scene folder; the order is the navigation order |
+| `poi` | string[] | — | **required**; at least one path relative to the scene folder; the order is the navigation order. Number keys reach the first nine |
 
 ## room
 
-The room is a box centred on the origin, with the floor at `y = 0`.
+The floor is at `y = 0`. By default the room is a `width` × `depth` box centred on the origin; give a `footprint` for any other outline.
 
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `width` | number > 0 | `30` | along x |
+| `width` | number > 0 | `30` | along x; ignored when `footprint` is given (then derived from it) |
 | `height` | number > 0 | `9` | |
-| `depth` | number > 0 | `30` | along z |
+| `depth` | number > 0 | `30` | along z; ignored when `footprint` is given |
+| `footprint` | `[x, z][]` (3 or more) | the `width` × `depth` rectangle | the floor outline as corners in order, either way round, without self-intersections. Walls, skirting and wall panels follow every edge; grids are clipped to it; the minimap draws it; the overview camera and flight arcs use its bounds and centroid. The `loft` example scene is an L |
 | `grid.floor` | number ≥ 0 | `1.5` | floor grid spacing; `0` = none |
 | `grid.ceiling` | number ≥ 0 | `3` | ceiling grid spacing; `0` = none |
 | `wallPanels` | number ≥ 0 | `3` | spacing of vertical wall lines; `0` = none |

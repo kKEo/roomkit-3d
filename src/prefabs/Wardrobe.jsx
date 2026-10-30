@@ -42,11 +42,11 @@ export function Wardrobe({ props, active }) {
       ))}
       {/* doors, hinged on the outer edges */}
       <group ref={left} position={[-W / 2, 0, D / 2]}>
-        <Solid args={[doorW, doorH, 0.05]} position={[doorW / 2, 0.2 + doorH / 2, 0.025]} />
+        <Solid hotspot="doors" args={[doorW, doorH, 0.05]} position={[doorW / 2, 0.2 + doorH / 2, 0.025]} />
         <Solid args={[0.05, 0.5, 0.06]} position={[doorW - 0.15, H * 0.55, 0.08]} line="mid" />
       </group>
       <group ref={right} position={[W / 2, 0, D / 2]}>
-        <Solid args={[doorW, doorH, 0.05]} position={[-doorW / 2, 0.2 + doorH / 2, 0.025]} />
+        <Solid hotspot="doors" args={[doorW, doorH, 0.05]} position={[-doorW / 2, 0.2 + doorH / 2, 0.025]} />
         <Solid args={[0.05, 0.5, 0.06]} position={[-doorW + 0.15, H * 0.55, 0.08]} line="mid" />
       </group>
     </group>

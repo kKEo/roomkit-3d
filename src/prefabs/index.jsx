@@ -6,6 +6,7 @@ import { Desk } from './Desk.jsx';
 import { ControlDesk } from './ControlDesk.jsx';
 import { ServerRack } from './ServerRack.jsx';
 import { Door, Bench, Primitive } from './simple.jsx';
+import { ActionsContext } from '../scene/core.jsx';
 import { toRad } from '../lib/math.js';
 
 const COMPONENTS = {
@@ -21,12 +22,16 @@ const COMPONENTS = {
   primitive: Primitive,
 };
 
-/** A config object ({ type, position, rotation (deg), scale, props }) placed in the world. */
+const NO_ACTIONS = {};
+
+/** A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world. */
 export function PlacedObject({ object, active = false, hovered = false }) {
   const Component = COMPONENTS[object.type];
   return (
-    <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
-      <Component props={object.props} active={active} hovered={hovered} />
-    </group>
+    <ActionsContext.Provider value={object.actions ?? NO_ACTIONS}>
+      <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
+        <Component props={object.props} active={active} hovered={hovered} />
+      </group>
+    </ActionsContext.Provider>
   );
 }

@@ -1,17 +1,16 @@
 import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld, PoiContext } from '../scene/core.jsx';
+import { useWorld, PoiContext, ActionsContext } from '../scene/core.jsx';
 import { useStore } from '../state/store.js';
-import { getSession } from '../scene/screenState.js';
+import { getSession, sessionKey, registerScreen } from '../scene/screenState.js';
 import {
   createTextScreen, createGraphScreen, createOwnRain,
   createTerminalScreen, createDashboardScreen, createFormScreen,
 } from '../scene/screens.js';
+import { SCREEN_SOURCES, INTERACTIVE_SOURCES } from './screenSchema.js';
 
-export const SCREEN_SOURCES = ['rain', 'image', 'video', 'text', 'graph', 'terminal', 'dashboard', 'form'];
-/** Sources with a DOM overlay you can use once zoomed in. */
-export const INTERACTIVE_SOURCES = ['terminal', 'dashboard', 'form'];
+export { SCREEN_SOURCES, INTERACTIVE_SOURCES };
 
 const WHITE = [1, 1, 1], BRIGHT = [1.35, 1.35, 1.35];
 
@@ -100,17 +99,19 @@ function zoomRecord(mesh, w, h) {
  *  - "dashboard" `title`, `rows`, `columns`, `filters`, `value` — filter a table once zoomed in
  *  - "form" `title`, `form` (same shape as the panel form block) — fill it in once zoomed in
  * `color` tints canvas-drawn screens. Shows the shared rain while loading or on failure.
- * Screens of a POI can be clicked to zoom in (unless `zoom` is false); `id` keeps their state stable.
+ * Screens of a POI can be clicked to zoom in (unless `zoom` is false); `id` keeps their state stable
+ * and is the hotspot name a scene can bind an action to instead (`actions: { <id>: … }`).
+ * The config shape is `screenSchema` in ./screenSchema.js; the loader has already validated it.
  */
 export function ScreenSurface({
   source = 'rain', src, label, title, lines, graph, color,
   prompt, commands, rows, columns, filters, value, form,
   zoom = true, id, w, h, ...rest
 }) {
-  const { rain } = useWorld();
-  const poi = useContext(PoiContext);
+  const { rain, name } = useWorld();
+  const poi = useContext(PoiContext); // POI id, or null in decor
   const reactId = useId();
-  const key = `${poi}:${id ?? reactId}`;
+  const key = sessionKey(name, poi, id ?? reactId);
   const session = useMemo(() => (INTERACTIVE_SOURCES.includes(source) ? getSession(key, () => ({})) : null), [key, source]);
   const config = { source, src, label, title, lines, graph, color, prompt, commands, rows, columns, filters, value, form };
   const media = useMediaTexture(source, src, w, h);
@@ -118,11 +119,19 @@ export function ScreenSurface({
   const mesh = useRef(null);
   const [hovered, setHovered] = useState(false);
   const zoomed = useStore(s => s.zoom?.key === key);
+  const action = useContext(ActionsContext)[id];
   useEffect(() => {
     if (!SCREEN_SOURCES.includes(source)) console.warn(`Unknown screen source "${source}" (known: ${SCREEN_SOURCES.join(', ')}); showing rain`);
   }, [source]);
 
-  const selectable = zoom && poi >= 0 && !zoomed;
+  // let `zoom` actions (and anything else) find this screen by its key while it is mounted
+  const record = () => ({ key, poi, screen: config, ...zoomRecord(mesh.current, w, h) });
+  const recordRef = useRef(record);
+  recordRef.current = record;
+  useEffect(() => registerScreen(key, () => recordRef.current()), [key]);
+
+  // clickable: inside a POI by default (fly there, then zoom in), or wherever an action is bound
+  const selectable = !zoomed && (action ? true : zoom && poi != null);
   // handlers go away while zoomed in, so no pointer-out will arrive to clear the hover
   useEffect(() => { if (!selectable) setHovered(false); }, [selectable]);
   const handlers = selectable ? {
@@ -132,8 +141,12 @@ export function ScreenSurface({
       e.stopPropagation();
       if (e.delta >= 8) return; // a drag or swipe, not a click
       const st = useStore.getState();
-      if (st.current !== poi) st.goTo(poi);
-      else st.zoomTo({ key, poi, screen: config, ...zoomRecord(mesh.current, w, h) });
+      if (action) {
+        // a bare { type: 'zoom' } means this very screen
+        if (action.type === 'zoom' && !action.screen) st.zoomTo(record());
+        else st.dispatch(action);
+      } else if (st.current !== poi) st.dispatch({ type: 'goTo', poi });
+      else st.zoomTo(record());
     },
   } : {};
 

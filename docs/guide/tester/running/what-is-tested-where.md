@@ -4,17 +4,21 @@ This page maps each area of the product to the check that covers it today and na
 
 | Area | Code | Covered today by | Gap |
 | --- | --- | --- | --- |
-| Config schema and defaults | `src/config/schema.js`, `defaults.js` | loading every scene (step 2) | nothing tests that **bad** config is rejected with the right message |
-| Loader: fetch, merge, URLs, errors | `src/config/loadScene.js` | step 2 (happy path) | missing file, HTML fallback, duplicate ids and media URL resolution are untested |
-| Auto-placement | `src/lib/autoCamera.js` | looking at POIs without `camera` (`neo-room` archive, all of `gallery`) | no numeric test of position and rotation maths |
-| Prefabs | `src/prefabs/*.jsx` | the prefabs used in the example scenes, by eye | `primitive` with every shape, prop edge cases (`count: 1`, `chair: false`, a `controlDesk` with 1 or 9 screens) |
+| Config schema and defaults | `src/config/schema.js`, `defaults.js` | `test/schema.test.js`, `test/deepMerge.test.js`: good and bad input, exact error lines | — |
+| Scene building: merge, media URLs, auto-placement, errors | `src/config/buildScene.js` | `test/buildScene.test.js` (in-memory fixture: missing file, bad JSON, duplicate ids, unknown props, media resolution); `test/scenes.test.js` builds every shipped scene | — |
+| Loader: scene choice, fetch, HTML fallback | `src/config/loadScene.js` | step 2 | the fetch glue itself (about 30 lines) has no test |
+| Auto-placement | `src/lib/autoCamera.js` | `test/autoCamera.test.js`: position, rotation, scale, default height; every prefab's hints | — |
+| Prefab metadata | `src/prefabs/*.meta.js`, `registry.js` | `test/registry.test.js`: defaults validate, unknown keys rejected, placement finite, media keys exist | — |
+| Prefab geometry | `src/prefabs/*.jsx` | the prefabs used in the example scenes, by eye | `primitive` with every shape, prop edge cases (`count: 1`, `chair: false`, a `controlDesk` with 1 or 9 screens) |
+| Block and screen schemas | `src/ui/blocks/schema.js`, `src/prefabs/screenSchema.js` | `test/blocks.test.js` | fenced blocks inside Markdown are validated only when rendered (step 3) |
 | Screens | `src/prefabs/media.jsx`, `src/scene/screens.js` | images in `gallery`; every other source (`text`, all three `graph` styles, own rain with colour, image, `terminal`, `dashboard`, `form`) on the `neo-room` control desk | **video is untested**; no example scene uses one. Unknown `source` fallback is untested |
-| Screen zoom and overlays | `src/ui/ScreenOverlay.jsx`, `src/ui/screens/`, `src/scene/screenState.js` | explore ([Zoomed-in screens](../exploring/exploratory.md#zoomed-in-screens)) | overlay alignment under 760 px and on touch devices has not been checked; terminal command parsing and dashboard filtering have no unit tests |
+| Screen zoom and overlays | `src/ui/ScreenOverlay.jsx`, `src/ui/screens/`, `src/scene/screenState.js` | explore ([Zoomed-in screens](../exploring/exploratory.md#zoomed-in-screens)); dashboard filtering in `test/dashboard.test.js` | overlay alignment under 760 px and on touch devices has not been checked; terminal command parsing has no unit test |
 | Camera and transitions | `src/scene/CameraRig.jsx` | explore | everything; motion is checked only by eye |
 | Input | `src/ui/useInput.js` | explore | everything |
 | Panel and blocks | `src/ui/Panel.jsx`, `Markdown.jsx`, `blocks/` | step 3 | form `action` POST path |
 | Labels, minimap, progress | `src/ui/Labels.jsx`, `Minimap.jsx`, `Overlays.jsx` | explore | alignment of labels with diamonds |
 | Theme | `src/ui/theme.js`, `src/styles.css` | `gallery` (amber theme) | `scanlines`/`vignette` combinations, `fontsUrl: ""` |
 | Responsive and reduced motion | CSS media queries, `src/lib/env.js` | explore | everything |
-| Build and base path | `vite.config.js` | step 1 and step 4 | hosting under a real sub-path with a real web server |
+| Build and base path | `vite.config.js` | step 1 and step 4 | hosting under a real sub-path with a real web server; `VITE_SCENES_BASE` pointing at another origin |
+| Easing, text, maths helpers | `src/lib/easing.js`, `text.js`, `math.js` | `test/easing.test.js`, `test/text.test.js`, `test/math.test.js` | — |
 | Docs | `docs/guide/` | `mdbook build` | links from docs to code (paths, defaults) can drift silently |

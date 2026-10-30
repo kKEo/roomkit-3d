@@ -3,7 +3,6 @@ import { createRain } from './rain.js';
 import { reducedMotion } from '../lib/env.js';
 
 const W = 512, H = 288;
-export const GRAPH_KINDS = ['wave', 'bars', 'radar'];
 
 function canvasTexture() {
   const canvas = document.createElement('canvas');

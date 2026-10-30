@@ -10,33 +10,35 @@ import { Labels } from './ui/Labels.jsx';
 import { SettingsPanel } from './ui/SettingsPanel.jsx';
 import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
 import { Hint, Loader, Progress } from './ui/Overlays.jsx';
-import { useInput, poiIndexFromHash } from './ui/useInput.js';
+import { useInput, poiIdFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
 import { reducedMotion } from './lib/env.js';
 import { fmt } from './lib/text.js';
 
-export function App() {
+/**
+ * The room and its overlays, rendering whatever scene is in the store. Used by the viewer (`App`)
+ * and by the editor, which installs scenes itself; the first time the store turns `ready` it
+ * flies the camera in from the intro pose.
+ */
+export function Viewer() {
   const status = useStore(s => s.status);
   const scene = useStore(s => s.scene);
   const total = useStore(s => s.pois.length);
   const [intro, setIntro] = useState(false);
+  const introDone = useRef(false);
   const stage = useRef(null);
-
-  useEffect(() => {
-    loadScene()
-      .then(({ scene, pois }) => { applyTheme(scene); useStore.getState().setLoaded(scene, pois); })
-      .catch(err => { console.error(err); useStore.getState().setError(err); });
-  }, []);
 
   // fly in from outside the room once the first frames are up
   useEffect(() => {
-    if (status !== 'ready') return;
+    if (status !== 'ready' || introDone.current) return;
+    introDone.current = true;
     const t = setTimeout(() => {
       setIntro(true);
-      useStore.getState().goTo(poiIndexFromHash(), reducedMotion ? 500 : scene.camera.intro.duration);
+      const st = useStore.getState();
+      st.goTo(poiIdFromHash(), reducedMotion ? 500 : st.scene.camera.intro.duration);
     }, reducedMotion ? 100 : 650);
     return () => clearTimeout(t);
-  }, [status, scene]);
+  }, [status]);
 
   useInput(stage, status === 'ready');
 
@@ -74,4 +76,14 @@ export function App() {
       <Loader done={intro} />
     </>
   );
+}
+
+/** The published viewer: loads the scene named in the URL and shows it. */
+export function App() {
+  useEffect(() => {
+    loadScene()
+      .then(({ scene, pois }) => { applyTheme(scene); useStore.getState().setLoaded(scene, pois); })
+      .catch(err => { console.error(err); useStore.getState().setError(err); });
+  }, []);
+  return <Viewer />;
 }

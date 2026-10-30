@@ -25,7 +25,8 @@ Used in `objects` and in `scene.json` `decor`.
 | `position` | `[x, y, z]` | `[0, 0, 0]` | the prefab's origin (see its "origin" column) |
 | `rotation` | `[x, y, z]` degrees | `[0, 0, 0]` | Euler XYZ; prefabs face local +Z, so `y` picks the facing |
 | `scale` | number > 0 or `[x, y, z]` | `1` | also scales the auto-placed marker, but not the camera distance |
-| `props` | object | prefab defaults | merged over the prefab's defaults (shallowly: an array such as `controlDesk.screens` replaces the default list); unknown props are ignored |
+| `props` | object | prefab defaults | validated with the prefab's schema: missing keys get their defaults, an array such as `controlDesk.screens` replaces the default list, and a wrong type or unknown key is a load error |
+| `actions` | `{ hotspot: Action }` | `{}` | makes parts of the object clickable; see [Actions and hotspots](actions.md) |
 
 ## Block
 
@@ -41,4 +42,4 @@ Inside `content.blocks`:
 | `timeline` | `data: [{ title, text }]` | vertical timeline |
 | `form` | `data: { fields: [{ name, label, type? = "text" \| "email" \| "textarea", autocomplete?, required?, rows? }], submit?, action? }` | form; with `action` it POSTs the fields as JSON and shows `ui.formSent` / `ui.formFailed`; without it shows `ui.formPrototype` |
 
-A `{ markdown: path }` content is turned into a single `markdown` block at load time.
+A `{ markdown: path }` content is turned into a single `markdown` block at load time. Blocks in `content.blocks` are validated at load time (`src/ui/blocks/schema.js`); fenced blocks inside Markdown are validated when the panel renders.

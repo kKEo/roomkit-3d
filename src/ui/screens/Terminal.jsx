@@ -27,8 +27,8 @@ export function Terminal({ config, session, ui }) {
     else if (cmd === 'help') reply = [fmt(ui.termHelp, { commands: [...Object.keys(commands), ...BUILT_INS].join('  ') })];
     else if (cmd === 'goto') {
       const arg = args[0] ?? '';
-      const i = /^\d+$/.test(arg) ? +arg - 1 : st.pois.findIndex(p => p.id === arg);
-      if (i >= 0 && i < st.pois.length) st.goTo(i);
+      const i = /^\d+$/.test(arg) ? +arg - 1 : st.indexOf(arg);
+      if (i >= 0 && i < st.pois.length) st.dispatch({ type: 'goTo', poi: st.pois[i].id });
       else reply = [fmt(ui.termNoArea, { arg })];
     } else if (Object.hasOwn(commands, cmd)) reply = [].concat(commands[cmd]).map(String);
     else reply = [fmt(ui.termUnknown, { cmd: word })];

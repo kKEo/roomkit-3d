@@ -19,8 +19,8 @@ function PanelContent({ index }) {
       })}
       {N > 1 && (
         <div className="pager">
-          <button type="button" className="btn ghost" onClick={() => goTo(prev)}>← {pois[prev].label}</button>
-          <button type="button" className="btn ghost" onClick={() => goTo(next)}>{pois[next].label} →</button>
+          <button type="button" className="btn ghost" onClick={() => goTo(pois[prev].id)}>← {pois[prev].label}</button>
+          <button type="button" className="btn ghost" onClick={() => goTo(pois[next].id)}>{pois[next].label} →</button>
         </div>
       )}
     </>
@@ -33,12 +33,12 @@ export function Panel() {
   const collapsed = useStore(s => s.panelCollapsed);
   const pois = useStore(s => s.pois);
   const zoomed = useStore(s => !!s.zoom);
-  const last = useRef(-1);
+  const last = useRef(null);
   const inner = useRef(null);
-  if (shown >= 0) last.current = shown;
-  const index = last.current;
+  if (shown != null) last.current = shown;
+  const index = pois.findIndex(p => p.id === last.current);
 
-  useEffect(() => { if (shown >= 0 && inner.current) inner.current.scrollTop = 0; }, [shown]);
+  useEffect(() => { if (shown != null && inner.current) inner.current.scrollTop = 0; }, [shown]);
 
   // DOM layer drifts opposite to the camera parallax, which reads as depth
   useEffect(() => {
@@ -53,7 +53,7 @@ export function Panel() {
   }, []);
 
   return (
-    <aside id="panel" className={`panel${shown >= 0 && !zoomed ? ' on' : ''}${collapsed ? ' collapsed' : ''}`} aria-live="polite">
+    <aside id="panel" className={`panel${shown != null && !zoomed ? ' on' : ''}${collapsed ? ' collapsed' : ''}`} aria-live="polite">
       <div className="panel-inner" ref={inner}>
         {index >= 0 && <PanelContent key={pois[index].id} index={index} />}
       </div>

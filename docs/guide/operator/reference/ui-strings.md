@@ -1,13 +1,13 @@
 # Interface strings
 
-This page lists every word of the interface a scene can replace through `scene.json` → `ui`. Give only the keys you change; the rest keep the English defaults from `src/config/defaults.js`. `{name}` placeholders are filled in at runtime.
+This page lists every word of the interface a scene can replace through `scene.json` → `ui`. Give only the keys you change; the rest keep the English defaults from `src/config/defaults.js`. A key not in this table is a load error. `{name}` placeholders are filled in at runtime.
 
 | Key | Default | Where |
 | --- | --- | --- |
 | `loading` | `Initializing room` | loading screen (see the note below) |
 | `loadError` | `Could not load the scene` | heading above the error list |
 | `kicker` | `{n} of {total}` | above the panel title; `{n}` and `{total}` are zero-padded |
-| `hint` | `[←][→] or mouse wheel — move, [1]–[{total}] areas, [0] whole room, click a marker in the room` | bottom hint; `[x]` renders as a key cap |
+| `hint` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, click a marker in the room` | bottom hint; `[x]` renders as a key cap; `{total}` is the POI count and `{keys}` the highest number key (at most 9) |
 | `goTo` | `Go to {label}` | accessible name of marker labels |
 | `home` | `view the whole room (0)` | accessible name of the logo, after the brand |
 | `navLabel` | `Areas of the room` | accessible name of the top navigation |

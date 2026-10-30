@@ -1,4 +1,4 @@
 {
   "default": "neo-room",
-  "scenes": ["neo-room", "gallery"]
+  "scenes": ["neo-room", "gallery", "loft"]
 }

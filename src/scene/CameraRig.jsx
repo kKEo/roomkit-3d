@@ -31,13 +31,18 @@ export function CameraRig() {
   const nav = useStore(s => s.nav);
   const zoom = useStore(s => s.zoom);
   const base = useRef(null);
-  if (!base.current) base.current = { pos: new V3(...scene.camera.intro.position), tgt: new V3(...scene.camera.intro.target) };
+  const sceneName = useRef(null);
+  if (sceneName.current !== scene.name) {
+    // a different scene starts from its own intro pose; the same scene reloaded keeps the camera where it is
+    sceneName.current = scene.name;
+    base.current = { pos: new V3(...scene.camera.intro.position), tgt: new V3(...scene.camera.intro.target) };
+  }
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
   const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
-  function startTransit(p1, t1, { dur, arc = true, index = null, zoomed = false }) {
+  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false }) {
     const b = base.current;
     const p0 = b.pos.clone();
     const dist = p0.distanceTo(p1);
@@ -45,7 +50,7 @@ export function CameraRig() {
     if (dist > 0.01 && arc) {
       const mid = p0.clone().lerp(p1, 0.5);
       mid.y = Math.min(scene.room.height - 0.6, mid.y + 1.2 + dist * 0.07);
-      mid.lerp(new V3(0, mid.y, 0), 0.3);
+      mid.lerp(new V3(scene.room.centre[0], mid.y, scene.room.centre[1]), 0.3);
       curve = new THREE.CatmullRomCurve3([p0, mid, p1], false, 'centripetal');
     } else if (dist > 0.01) curve = new THREE.LineCurve3(p0, p1);
     const f0 = b.tgt.clone().sub(p0).normalize(), f1 = t1.clone().sub(p1).normalize();
@@ -54,21 +59,21 @@ export function CameraRig() {
       start: performance.now(),
       dur: dur || (reducedMotion ? 450 : Math.min(2800, Math.max(1500, 1300 + dist * 55))),
       roll: arc ? Math.sign(new V3().crossVectors(f0, f1).y) || 1 : 0,
-      warp: arc, index, zoomed, shown: false,
+      warp: arc, poi, zoomed, shown: false,
     };
     runtime.transiting = true;
     runtime.zoomReady = false;
   }
 
-  // camera of POI `i`, or the room overview for -1
-  const viewOf = i => (i < 0 ? scene.camera.overview : useStore.getState().pois[i].camera);
+  // camera of the POI with that id, or the room overview for null (and for an id that no longer exists)
+  const viewOf = id => (id == null ? null : useStore.getState().pois.find(p => p.id === id)?.camera) ?? scene.camera.overview;
 
   useEffect(() => {
     const prev = last.current;
     last.current = { nav, zoom };
     if (nav && nav !== prev.nav) {
-      const view = viewOf(nav.index);
-      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, index: nav.index >= 0 ? nav.index : null });
+      const view = viewOf(nav.id);
+      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
     } else if (zoom && zoom !== prev.zoom) {
       // back off along the screen normal until the screen fills ~82% of the view
       const { size } = getThree();
@@ -78,7 +83,7 @@ export function CameraRig() {
       const c = new V3(...zoom.center);
       startTransit(c.clone().addScaledVector(new V3(...zoom.normal), d), c, { dur: reducedMotion ? 300 : 900, arc: false, zoomed: true });
     } else if (!zoom && prev.zoom && nav) {
-      const view = viewOf(nav.index);
+      const view = viewOf(nav.id);
       startTransit(new V3(...view.position), new V3(...view.target), { dur: reducedMotion ? 300 : 1000, arc: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,7 +110,7 @@ export function CameraRig() {
         roll = settings.warp > 0 ? bell * 0.045 * tr.roll : 0;
       }
       runtime.progress = t;
-      if (t > 0.8 && !tr.shown && tr.index != null) { tr.shown = true; st.showPanel(tr.index); }
+      if (t > 0.8 && !tr.shown && tr.poi != null) { tr.shown = true; st.showPanel(tr.poi); }
       if (t >= 1) { transit.current = null; runtime.transiting = false; runtime.zoomReady = tr.zoomed; }
     }
 
@@ -130,7 +135,7 @@ export function CameraRig() {
 
     // shift the frame so the subject isn't hidden under the content panel
     const w = size.width, h = size.height, narrow = w < 760;
-    const open = !st.panelCollapsed && st.current >= 0 && !st.zoom;
+    const open = !st.panelCollapsed && st.current != null && !st.zoom;
     const tx = open && !narrow ? w * scene.effects.panelOffset : 0, ty = open && narrow ? h * 0.2 : 0;
     tmp.vo.x += (tx - tmp.vo.x) * k; tmp.vo.y += (ty - tmp.vo.y) * k;
     camera.setViewOffset(w, h, tmp.vo.x, tmp.vo.y, w, h);
@@ -139,12 +144,16 @@ export function CameraRig() {
     // outside the room (intro, overview) push the fog back, so the far side doesn't fade out
     if (world.fog) {
       const [n, f] = scene.theme.fog;
-      const out = Math.max(0, camera.position.distanceTo(tmp.centre.set(0, scene.room.height / 2, 0)) - Math.max(scene.room.width, scene.room.depth) / 2);
+      const { centre, width, depth, height } = scene.room;
+      const out = Math.max(0, camera.position.distanceTo(tmp.centre.set(centre[0], height / 2, centre[1])) - Math.max(width, depth) / 2);
       world.fog.near = n + out; world.fog.far = f + out;
     }
 
     runtime.camera = camera;
     runtime.time = time;
+    // the canvas rectangle on the page, so DOM overlays project correctly wherever the canvas sits
+    const vw = runtime.view;
+    vw.left = size.left; vw.top = size.top; vw.width = w; vw.height = h;
     camera.position.toArray(runtime.camPos);
     tmp.fwd.toArray(runtime.camDir);
   });

@@ -9,7 +9,7 @@ export function CinemaScreen({ props }) {
   return (
     <group>
       <Solid args={[w + 0.5, h + 0.5, 0.22]} position={[0, elevation, 0.11]} fill="fine" />
-      <ScreenSurface source={source} src={src} zoom={zoom} w={w} h={h} position={[0, elevation, 0.23]} />
+      <ScreenSurface source={source} src={src} zoom={zoom} id="screen" w={w} h={h} position={[0, elevation, 0.23]} />
       {stage && <Solid args={[w + 2.5, 0.25, 2.6]} position={[0, 0.125, 1.4]} />}
       {speakers && [-sx, sx].map(x => (
         <group key={x}>

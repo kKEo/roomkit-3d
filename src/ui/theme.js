@@ -21,9 +21,12 @@ export function applyTheme(scene) {
   document.documentElement.classList.toggle('no-vignette', !t.vignette);
   document.documentElement.lang = scene.lang;
   document.title = scene.title;
-  if (t.fontsUrl && !document.querySelector(`link[data-theme-fonts]`)) {
-    const l = document.createElement('link');
-    l.rel = 'stylesheet'; l.href = t.fontsUrl; l.dataset.themeFonts = '';
-    document.head.appendChild(l);
-  }
+  // one stylesheet link for the theme fonts, kept in step with the current scene
+  let link = document.querySelector('link[data-theme-fonts]');
+  if (!t.fontsUrl) link?.remove();
+  else if (!link) {
+    link = document.createElement('link');
+    link.rel = 'stylesheet'; link.href = t.fontsUrl; link.dataset.themeFonts = '';
+    document.head.appendChild(link);
+  } else if (link.getAttribute('href') !== t.fontsUrl) link.href = t.fontsUrl;
 }

@@ -4,9 +4,9 @@ This page describes what happens between a visitor pressing `→` and the next p
 
 ## The flight
 
-When `nav` changes, `CameraRig` builds a transit from the camera's current base position `p0` to the POI's `camera.position` `p1`. Index `−1` is the whole-room view: it uses `scene.camera.overview` (computed from the room size when the scene leaves it out, in `overviewCamera()` in `src/lib/autoCamera.js`), opens no panel, and clears the address hash:
+When `nav` changes, `CameraRig` builds a transit from the camera's current base position `p0` to the POI's `camera.position` `p1`. `nav.id` is the POI's id; `null` is the whole-room view: it uses `scene.camera.overview` (computed from the footprint's bounds when the scene leaves it out, in `overviewCamera()` in `src/lib/autoCamera.js`), opens no panel, and clears the address hash:
 
-- **Path.** A centripetal Catmull-Rom curve through `p0`, a mid-point and `p1`. The mid-point is the halfway point raised by `1.2 + 0.07 × distance` (capped at `room.height − 0.6`) and pulled 30 % towards the room's vertical axis, so flights arc through the middle of the room. A distance under 1 cm skips the curve.
+- **Path.** A centripetal Catmull-Rom curve through `p0`, a mid-point and `p1`. The mid-point is the halfway point raised by `1.2 + 0.07 × distance` (capped at `room.height − 0.6`) and pulled 30 % towards the vertical axis through the footprint's centroid, so flights arc through the middle of the room. A distance under 1 cm skips the curve.
 - **Duration.** `clamp(1300 + 55 × distance, 1500, 2800)` ms; 450 ms with reduced motion; or the explicit duration (the intro uses `camera.intro.duration`).
 - **Easing.** `settings.ease` (default from `effects.ease`) on the position. Overshooting curves (`back`) extrapolate along the curve's end tangent.
 - **Gaze.** The look target eases with a cubic curve that finishes at 77 % of the flight (`t × 1.3`), so the camera turns before it lands.
@@ -40,7 +40,7 @@ When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, paralla
 | --- | --- | --- |
 | `→` `↓` `PageDown` / `←` `↑` `PageUp` | next / previous (wraps) | ignored while focus is in an input, textarea or select, or with Cmd/Ctrl/Alt held |
 | `1`–`9` | `goTo(n − 1)` | only up to the number of POIs |
-| `0`, click on the logo | `home()` = `goTo(−1)` | the whole-room view; from there `→` goes to POI 1 and `←` to the last |
+| `0`, click on the logo | `home()` = `goTo(null)` | the whole-room view; from there `→` goes to POI 1 and `←` to the last |
 | `H` / `M` | toggle panel / toggle markers | |
 | wheel | next / previous | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and settings |
 | horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical |

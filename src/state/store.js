@@ -1,66 +1,96 @@
 import { create } from 'zustand';
 import { reducedMotion } from '../lib/env.js';
+import { resetSessions } from '../scene/screenState.js';
+import { runAction } from '../actions/registry.js';
+
+const setCursor = c => { if (typeof document !== 'undefined') document.body.style.cursor = c; };
 
 /**
  * React-facing state. Per-frame values (camera pose, smoothed mouse,
  * transition progress) live in `runtime` so they don't re-render React.
+ *
+ * POIs are referred to by `id`, never by position in the list, so the list can be
+ * reordered or replaced (an editor, a hot reload) without the selection going stale.
+ * Navigation accepts an id, an index (wrapping; negative = overview) or null (overview).
  */
 export const useStore = create((set, get) => ({
   status: 'loading', // loading | ready | error
   error: null,
   scene: null,
   pois: [],
-  current: -1,     // POI the camera is at / flying to; -1 = the room overview
-  shown: -1,       // POI whose panel is visible
-  hover: -1,
+  current: null,   // id of the POI the camera is at / flying to; null = the room overview
+  shown: null,     // id of the POI whose panel is visible
+  hover: null,     // id of the hovered marker
   started: false,
   panelCollapsed: false,
   markersVisible: true,
   settingsOpen: false,
   settings: { ease: 'quint', parallax: 0.8, warp: 12 },
-  nav: null,       // { index (-1 = overview), duration, nonce } — consumed by CameraRig
-  zoom: null,      // { key, poi, center, normal, up, w, h, screen } — screen the camera is zoomed into
+  nav: null,       // { id (null = overview), duration, nonce } — consumed by CameraRig
+  zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
 
-  setLoaded: (scene, pois) => set({
-    status: 'ready', scene, pois,
-    markersVisible: scene.effects.markers,
-    settings: {
-      ease: scene.effects.ease,
-      parallax: reducedMotion ? 0 : scene.effects.parallax,
-      warp: reducedMotion ? 0 : scene.effects.warp,
-    },
-  }),
+  /** Index of a POI id in `pois`, or -1. */
+  indexOf: id => get().pois.findIndex(p => p.id === id),
+  /** The id a navigation target means: an id (unknown ids and the overview give null) or a wrapping index. */
+  resolve: target => {
+    const { pois } = get();
+    if (typeof target === 'number') return target < 0 || !pois.length ? null : pois[((target % pois.length) + pois.length) % pois.length].id;
+    return pois.some(p => p.id === target) ? target : null;
+  },
+
+  /**
+   * Install a loaded scene. A different scene starts fresh; the same scene again (a reload
+   * while editing) keeps the visitor where they were, as far as its POIs still exist.
+   */
+  setLoaded: (scene, pois) => {
+    const prev = get();
+    const fresh = prev.scene?.name !== scene.name;
+    if (fresh) resetSessions();
+    const keep = id => (!fresh && pois.some(p => p.id === id) ? id : null);
+    set({
+      status: 'ready', error: null, scene, pois,
+      current: keep(prev.current), shown: keep(prev.shown), hover: null, zoom: null,
+      nav: fresh ? null : prev.nav,
+      markersVisible: fresh ? scene.effects.markers : prev.markersVisible,
+      settings: fresh ? {
+        ease: scene.effects.ease,
+        parallax: reducedMotion ? 0 : scene.effects.parallax,
+        warp: reducedMotion ? 0 : scene.effects.warp,
+      } : prev.settings,
+    });
+  },
   setError: error => set({ status: 'error', error }),
 
-  /** Fly to POI `i`, or to the whole-room overview with `i = -1`. */
-  goTo: (i, duration) => {
+  /** Fly to a POI (id or index), or to the whole-room overview with null / a negative index. */
+  goTo: (target, duration) => {
     const { pois, current, shown, nav } = get();
-    const n = pois.length;
-    if (!n) return;
-    i = i < 0 ? -1 : i % n;
-    if (i === current && (i < 0 ? nav : shown === i)) { if (get().zoom) get().exitZoom(); return; }
-    set({ current: i, shown: -1, started: true, zoom: null, nav: { index: i, duration, nonce: (nav?.nonce || 0) + 1 } });
-    try { history.replaceState(null, '', location.pathname + location.search + (i < 0 ? '' : '#' + pois[i].id)); } catch { /* sandboxed */ }
+    if (!pois.length) return;
+    const id = get().resolve(target);
+    if (id === current && (id == null ? nav : shown === id)) { if (get().zoom) get().exitZoom(); return; }
+    set({ current: id, shown: null, started: true, zoom: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
+    try { history.replaceState(null, '', location.pathname + location.search + (id == null ? '' : '#' + id)); } catch { /* sandboxed or not a browser */ }
   },
-  home: () => get().goTo(-1),
-  next: () => get().goTo(get().current + 1),
-  prev: () => { const { current, pois } = get(); get().goTo(current <= 0 ? pois.length - 1 : current - 1); },
-  showPanel: i => set({ shown: i }),
-  setHover: i => set({ hover: i }),
+  home: () => get().goTo(null),
+  next: () => get().goTo(get().indexOf(get().current) + 1),
+  prev: () => { const i = get().indexOf(get().current); get().goTo(i <= 0 ? get().pois.length - 1 : i - 1); },
+  showPanel: id => set({ shown: id }),
+  setHover: id => set({ hover: id }),
   togglePanel: () => set(s => ({ panelCollapsed: !s.panelCollapsed })),
   toggleMarkers: () => {
     // hidden markers can't receive pointer-out, so drop any hover they held
-    if (get().markersVisible) document.body.style.cursor = '';
-    set(s => ({ markersVisible: !s.markersVisible, hover: -1 }));
+    if (get().markersVisible) setCursor('');
+    set(s => ({ markersVisible: !s.markersVisible, hover: null }));
   },
   zoomTo: rec => {
     if (get().zoom?.key === rec.key) return;
-    document.body.style.cursor = '';
-    set({ zoom: rec, hover: -1, settingsOpen: false });
+    setCursor('');
+    set({ zoom: rec, hover: null, settingsOpen: false });
   },
   exitZoom: () => set({ zoom: null }),
   toggleSettings: () => set(s => ({ settingsOpen: !s.settingsOpen })),
   setSetting: (k, v) => set(s => ({ settings: { ...s.settings, [k]: v } })),
+  /** Run a config action ({ type: 'goTo' | 'zoom' | 'openUrl' | 'togglePanel' | 'emit', … }); see src/actions/registry.js. */
+  dispatch: action => runAction(action, get()),
 }));
 
 export const runtime = {
@@ -70,8 +100,14 @@ export const runtime = {
   camPos: [0, 0, 0],
   camDir: [0, 0, -1],
   camera: null,                 // set by CameraRig, read by DOM overlays
+  view: { left: 0, top: 0, width: 0, height: 0 }, // the canvas rectangle on the page, set by CameraRig
   time: 0,
   progress: 0,
   transiting: false,
   zoomReady: false,             // camera has arrived in front of the zoomed screen
 };
+
+/** The canvas rectangle the overlays project into; the whole window until the first frame. */
+export function viewRect() {
+  return runtime.view.width ? runtime.view : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+}

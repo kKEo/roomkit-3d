@@ -30,7 +30,7 @@ export function Pedestal({ props }) {
       <Solid shape="cylinder" args={[1.3, 1.55, 0.9, 12]} position={[0, 0.6, 0]} />
       <Segs line="faint" points={[-0.9, 1.05, 0, -0.3, top, 0, 0.9, 1.05, 0, 0.3, top, 0, 0, 1.05, -0.9, 0, top, -0.3, 0, 1.05, 0.9, 0, top, 0.3]} />
       <group ref={core} position={[0, height, 0]}>
-        <Solid ref={solid} shape={shape} args={shapeArgs(shape, size * 2)} />
+        <Solid ref={solid} hotspot="solid" shape={shape} args={shapeArgs(shape, size * 2)} />
         <lineSegments ref={inner} geometry={innerGeo} material={mats.lines.thin} />
         {rings && <Segs ref={r1} points={circlePts(2.0 * k, 72)} rotation-x={1.15} />}
         {rings && <Segs ref={r2} points={circlePts(2.45 * k, 96)} line="faint" rotation-z={0.6} />}

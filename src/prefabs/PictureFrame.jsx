@@ -19,9 +19,9 @@ export function PictureFrame({ props }) {
   const iw = w - 0.4, ih = h - 0.4, z = 0.16;
   return (
     <group>
-      <Solid args={[w, h, 0.14]} position={[0, 0, 0.08]} fill="fine" />
+      <Solid hotspot="frame" args={[w, h, 0.14]} position={[0, 0, 0.08]} fill="fine" />
       <Segs points={[-iw / 2, -ih / 2, z, iw / 2, -ih / 2, z, -iw / 2, ih / 2, z, iw / 2, ih / 2, z, -iw / 2, -ih / 2, z, -iw / 2, ih / 2, z, iw / 2, -ih / 2, z, iw / 2, ih / 2, z]} />
-      {image && <ScreenSurface source="image" src={image} zoom={zoom} w={iw - 0.04} h={ih - 0.04} position={[0, 0, z + 0.005]} />}
+      {image && <ScreenSurface source="image" src={image} zoom={zoom} id="image" w={iw - 0.04} h={ih - 0.04} position={[0, 0, z + 0.005]} />}
       {caption && (
         <Segs points={[-w / 2 + 0.25, -h / 2 - 0.35, 0.03, 0.2, -h / 2 - 0.35, 0.03, -w / 2 + 0.25, -h / 2 - 0.55, 0.03, -0.6, -h / 2 - 0.55, 0.03]} />
       )}

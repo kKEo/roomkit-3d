@@ -19,17 +19,17 @@ function Ticker({ world }) {
     if (acc.current < 0.055) return;
     acc.current = 0;
     const { pois, current } = useStore.getState();
-    const poi = pois[current];
+    const poi = pois.find(p => p.id === current);
     world.rain.step(poi ? poi.screenLabel ?? poi.label.toLowerCase() : '');
   });
   return null;
 }
 
-function PoiObjects({ poi, index }) {
-  const active = useStore(s => s.shown === index);
-  const hovered = useStore(s => s.hover === index);
+function PoiObjects({ poi }) {
+  const active = useStore(s => s.shown === poi.id);
+  const hovered = useStore(s => s.hover === poi.id);
   return (
-    <PoiContext.Provider value={index}>
+    <PoiContext.Provider value={poi.id}>
       {poi.objects.map((o, i) => <PlacedObject key={i} object={o} active={active} hovered={hovered} />)}
     </PoiContext.Provider>
   );
@@ -39,6 +39,7 @@ export function Experience() {
   const scene = useStore(s => s.scene);
   const pois = useStore(s => s.pois);
   const world = useMemo(() => ({
+    name: scene.name,
     mats: createMaterials(scene),
     rain: createRain(scene.theme),
     room: scene.room,
@@ -55,7 +56,7 @@ export function Experience() {
       <CameraRig />
       <Room />
       {scene.decor.map((o, i) => <PlacedObject key={i} object={o} />)}
-      {pois.map((p, i) => <PoiObjects key={p.id} poi={p} index={i} />)}
+      {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
       <Particles count={scene.effects.particles} />
     </WorldContext.Provider>

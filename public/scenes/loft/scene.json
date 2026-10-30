@@ -1,0 +1,36 @@
+{
+  "title": "Cyan Loft — an L-shaped room",
+  "brand": "Cyan/Loft",
+  "room": {
+    "height": 7,
+    "footprint": [[-12, -12], [12, -12], [12, 0], [0, 0], [0, 12], [-12, 12]],
+    "grid": { "floor": 2, "ceiling": 0 },
+    "wallPanels": 4,
+    "skirting": [0.3],
+    "pillars": [[-6, 0]],
+    "lights": [[-6, 6.6, -6], [6, 6.6, -6], [-6, 6.6, 6]]
+  },
+  "theme": {
+    "accent": "#4de3ff",
+    "accentInk": "#001a22",
+    "highlight": "#d6f7ff",
+    "text": "#cdf3ff",
+    "textDim": "#5e9fb3",
+    "surface": "rgba(0,14,20,.78)",
+    "fog": [12, 44],
+    "glyphs": "01<>/\\|=+*#"
+  },
+  "camera": {
+    "intro": { "position": [-2, 5, 26], "target": [-2, 2.5, 0], "duration": 2800 }
+  },
+  "effects": { "particles": 320 },
+  "ui": {
+    "loading": "Opening the loft",
+    "hint": "[←][→] — walk, [1]–[{keys}] corners, [0] whole loft, or click a marker"
+  },
+  "decor": [
+    { "type": "door", "position": [6, 0, 0], "rotation": [0, 180, 0], "actions": { "door": { "type": "goTo", "poi": null } } },
+    { "type": "bench", "position": [-6, 0, 8], "rotation": [0, 90, 0], "props": { "width": 3, "height": 0.5 } }
+  ],
+  "poi": ["poi/wall.json", "poi/studio.json", "poi/wing.json"]
+}

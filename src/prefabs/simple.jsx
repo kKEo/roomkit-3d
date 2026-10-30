@@ -9,9 +9,9 @@ export function Door({ props }) {
   const s = w / 2 - 0.3;
   return (
     <group>
-      <Solid args={[0.25, h, 0.4]} position={[-w / 2, h / 2, 0.2]} />
-      <Solid args={[0.25, h, 0.4]} position={[w / 2, h / 2, 0.2]} />
-      <Solid args={[w + 0.25, 0.25, 0.4]} position={[0, h + 0.12, 0.2]} />
+      <Solid hotspot="door" args={[0.25, h, 0.4]} position={[-w / 2, h / 2, 0.2]} />
+      <Solid hotspot="door" args={[0.25, h, 0.4]} position={[w / 2, h / 2, 0.2]} />
+      <Solid hotspot="door" args={[w + 0.25, 0.25, 0.4]} position={[0, h + 0.12, 0.2]} />
       <Segs points={[-s, 0.02, 0.45, s, 0.02, 0.45, -s, 0.02, 0.45, -s - 0.4, 0.02, 1.6, s, 0.02, 0.45, s + 0.4, 0.02, 1.6]} />
     </group>
   );
@@ -20,12 +20,13 @@ export function Door({ props }) {
 /** Plain bench / low block (origin = floor centre). */
 export function Bench({ props }) {
   const { width, height, depth } = props;
-  return <Solid args={[width, height, depth]} position={[0, height / 2, 0]} />;
+  return <Solid hotspot="bench" args={[width, height, depth]} position={[0, height / 2, 0]} />;
 }
 
-/** Any basic shape; `args` overrides the size-derived geometry args. Optional spin (rad/s) and float (amplitude). */
+/** Any basic shape; raw geometry `args` override the size-derived ones. Optional spin (rad/s) and float (amplitude). */
 export function Primitive({ props }) {
   const { shape, args, size, fill, edge, spin, float } = props;
+  const geoArgs = Array.isArray(args) ? args : shapeArgs(shape, size ?? 1);
   const ref = useRef();
   useFrame(({ clock }, dt) => {
     if (reducedMotion) return;
@@ -34,7 +35,7 @@ export function Primitive({ props }) {
   });
   return (
     <group ref={ref}>
-      <Solid shape={shape} args={size ? shapeArgs(shape, size) : args} fill={fill} line={edge} />
+      <Solid hotspot="shape" shape={shape} args={geoArgs} fill={fill} line={edge} />
     </group>
   );
 }

@@ -1,6 +1,16 @@
 # Running the tests
 
-This page runs every check that exists today, in the order that finds problems fastest. A full run takes about ten minutes. There are no unit tests yet, so most of the run is the build plus loading every scene, which makes the app validate its own config.
+This page runs every check that exists today, in the order that finds problems fastest. A full run takes about ten minutes, most of it the manual part.
+
+## 0. Lint and unit tests
+
+```bash
+make check           # make lint, make test, make build in one go
+```
+
+**Pass:** eslint prints nothing, vitest ends with `Test Files … passed`, the build ends with `✓ built in …`.
+**Catches:** hook and scoping mistakes; every config and schema error in `public/scenes/`, with the same `file › path: message` lines the loading screen would show; wrong block or screen data in `content.blocks`; broken imports.
+**Misses:** anything that needs a browser: rendering, fenced blocks inside Markdown, media files, motion.
 
 ## 1. Build
 
@@ -22,7 +32,7 @@ cat public/scenes/index.json   # the scene names to open
 Open `http://localhost:5173/?scene=<name>` for each name in `scenes`, with the browser console open.
 
 **Pass:** the room flies in, the first panel opens, and the console shows no red errors.
-**Fail:** the red **Could not load the scene** screen. Each line names a file and a field. The app validates every `scene.json` and POI file with zod and checks that every listed file and Markdown page exists, so this step is the config test suite.
+**Fail:** the red **Could not load the scene** screen. Each line names a file and a field. The unit tests already build every scene the same way, so a failure here that the tests did not catch points at hosting: a wrong content type, a missing copy of `public/scenes/`, or a media file served from another origin without CORS headers.
 
 ## 3. Visit every point of interest
 

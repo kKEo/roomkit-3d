@@ -1,0 +1,19 @@
+{
+  "id": "wing",
+  "label": "South wing",
+  "kicker": "around the corner",
+  "objects": [
+    { "type": "pedestal", "position": [-6, 0, 5], "props": { "shape": "dodecahedron", "height": 2.6, "size": 1 } }
+  ],
+  "content": {
+    "blocks": [
+      { "type": "heading", "text": "South wing" },
+      { "type": "markdown", "text": "This corner is only reachable around the pillar: the room is an **L**, not a box. The minimap at the bottom left shows the real outline." },
+      { "type": "stats", "data": [
+        { "value": "6", "label": "corners" },
+        { "value": "432", "label": "m² floor" },
+        { "value": "7", "label": "m high" }
+      ] }
+    ]
+  }
+}

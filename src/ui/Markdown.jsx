@@ -2,6 +2,7 @@ import { Children, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BLOCKS } from './blocks/index.jsx';
+import { parseBlockData } from './blocks/schema.js';
 import { useStore } from '../state/store.js';
 import { scramble } from '../lib/scramble.js';
 
@@ -16,14 +17,16 @@ export function ScrambleHeading({ children }) {
   return <h1 ref={ref}>{text}</h1>;
 }
 
-/** A JSON-bodied block (```stats, ```cards, ...) or the raw text with a parse error. */
+/** A JSON-bodied block (```stats, ```cards, ...); a parse or validation problem is shown in its place. */
 export function Block({ type, data, source }) {
   const Component = BLOCKS[type];
-  if (!Component) return <pre className="block-error">Unknown block type "{type}" (known: {Object.keys(BLOCKS).join(', ')})</pre>;
+  if (!Component) return <pre className="block-error">{`Unknown block type "${type}" (known: ${Object.keys(BLOCKS).join(', ')})`}</pre>;
   if (data === undefined && source !== undefined) {
-    try { data = JSON.parse(source); } catch (e) { return <pre className="block-error">```{type}: {e.message}</pre>; }
+    try { data = JSON.parse(source); } catch (e) { return <pre className="block-error">{`\`\`\`${type}: ${e.message}`}</pre>; }
   }
-  return <Component data={data} />;
+  const r = parseBlockData(type, data);
+  if (!r.ok) return <pre className="block-error">{`\`\`\`${type}:\n` + r.issues.map(i => `  ${i.path.join('.') || '(root)'}: ${i.message}`).join('\n')}</pre>;
+  return <Component data={r.data} />;
 }
 
 function Pre({ node, children }) {

@@ -8,21 +8,16 @@ A change may be merged only when the author has run, and the reviewer has seen t
 
 | Gate | Command / action | Blocks when |
 | --- | --- | --- |
+| Lint | `make lint` | it reports an error |
+| Unit tests | `make test` | any test fails; this includes building every scene in `public/scenes/` |
 | Build | `make build` | it fails |
-| Scenes load | open every scene from `public/scenes/index.json` | any scene shows **Could not load the scene** |
+| Scenes load | open every scene from `public/scenes/index.json` | any scene shows **Could not load the scene** (the unit tests catch config errors; this catches hosting and media ones) |
 | Panels render | visit every point of interest in every scene | a block is red, or the console shows an error |
 | Docs build | `make docs-check` | it fails, for any change under `docs/` |
 | Exploratory pass | the parts of the [exploratory checklist](../exploring/exploratory.md) that match the change | the reviewer finds a regression |
 
-Why these: each one is cheap, and each catches a class of mistake the others cannot. The build catches code errors, scene loading catches config errors, panel rendering catches content errors, and exploration catches motion and layout.
+Why these: each one is cheap, and each catches a class of mistake the others cannot. Lint catches hook and scoping mistakes, the tests catch config and schema errors, the build catches code errors, panel rendering catches content errors inside Markdown, and exploration catches motion and layout. `make check` runs the first three.
 
 ## Planned CI
 
-When the repository gets a remote, a workflow should run on every pull request:
-
-1. `npm ci` and `make build`.
-2. `npm test`: the unit tests described in [Adding tests](../writing/adding-tests.md).
-3. A scene lint, which validates every scene folder with the same schema the app uses, from Node.
-4. `make docs-check`.
-
-All four would be required checks. Until they exist, this page's "Gates today" table is the contract.
+When the repository gets a remote, a workflow should run on every pull request: `npm ci`, `make check` (lint, tests, build) and `make docs-check`. Both would be required checks. Until they exist, this page's "Gates today" table is the contract.

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useStore, runtime } from '../state/store.js';
+import { useStore, runtime, viewRect } from '../state/store.js';
 import { getSession } from '../scene/screenState.js';
 import { Terminal } from './screens/Terminal.jsx';
 import { Dashboard } from './screens/Dashboard.jsx';
@@ -32,11 +32,11 @@ export function ScreenOverlay() {
       raf = requestAnimationFrame(tick);
       const el = ref.current, cam = runtime.camera;
       if (!el || !cam) return;
-      const w = innerWidth, h = innerHeight;
+      const { left, top, width: w, height: h } = viewRect();
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       for (const p of corners) {
         v.copy(p).project(cam);
-        const x = ((v.x + 1) / 2) * w, y = ((1 - v.y) / 2) * h;
+        const x = left + ((v.x + 1) / 2) * w, y = top + ((1 - v.y) / 2) * h;
         x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
       }
       Object.assign(el.style, { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });

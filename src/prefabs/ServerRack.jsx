@@ -47,7 +47,7 @@ export function ServerRack({ props }) {
 
   return (
     <group>
-      {xs.map(x => <Solid key={x} args={[1.05, H, 1.6]} position={[x, H / 2, 0]} />)}
+      {xs.map(x => <Solid key={x} hotspot="rack" args={[1.05, H, 1.6]} position={[x, H / 2, 0]} />)}
       <Segs points={slots} />
       <points ref={ledRef} geometry={ledGeo}>
         <pointsMaterial size={0.055} vertexColors sizeAttenuation />

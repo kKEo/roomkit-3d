@@ -13,7 +13,7 @@ VITE_PORT   = $(if $(PORT),-- --port $(PORT))
 MDBOOK_PORT = $(if $(PORT),--port $(PORT))
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build serve docs docs-check docs-serve docs-site-serve all clean
+.PHONY: help install dev build serve test lint check docs docs-check docs-serve docs-site-serve all clean
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -34,6 +34,14 @@ build: node_modules ## Build the app into dist/
 
 serve: build ## Build the app and serve the production build (http://localhost:4173)
 	npm run preview $(VITE_PORT)
+
+test: node_modules ## Run the unit tests (vitest)
+	npm test
+
+lint: node_modules ## Lint the source (eslint)
+	npm run lint
+
+check: lint test build ## Lint, test and build — what CI runs
 
 docs: ## Build all three books and the landing page into site/
 	@for b in $(BOOKS); do mdbook build $(GUIDE)/$$b || exit 1; done

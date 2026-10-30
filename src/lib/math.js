@@ -23,8 +23,11 @@ export function circlePts(r, n, y = 0) {
   return a;
 }
 
-/** "#00ff66" + alpha -> "rgba(0,255,102,a)" */
-export function rgba(hex, a) {
-  const c = new THREE.Color(hex);
+/**
+ * "#00ff66" + alpha -> "rgba(0,255,102,a)". Parsed in the working colour space so the
+ * result is the literal CSS colour whatever THREE.ColorManagement.enabled is set to.
+ */
+export function rgba(css, a) {
+  const c = new THREE.Color().setStyle(css, THREE.LinearSRGBColorSpace);
   return `rgba(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)},${a})`;
 }
