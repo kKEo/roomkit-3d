@@ -27,6 +27,10 @@ A normal paragraph, with **bold**, *italic*, `code` and a [link](https://example
 - Links to other websites open in a new tab.
 - A line ending with `\` starts a new line without starting a new paragraph, which is handy for addresses.
 
+![The Welcome panel of the example room: a title, a larger introduction paragraph, ordinary text, and a row of three numbers](images/start.png)
+
+*A panel: the title, the larger introduction, ordinary text and a `stats` block.*
+
 ## Special blocks
 
 A special block is a fenced block (three backticks) whose first line names the block. Its body is a list of items in JSON, the same format as the point-of-interest files.
@@ -93,7 +97,23 @@ A special block is a fenced block (three backticks) whose first line names the b
 
 Without `action`, pressing the button only shows "This is a prototype — the message was not sent." With `action`, the answers are sent to that address. Whoever runs that address must accept them; ask your operator.
 
+![The Projects panel with a cards block: four cards in a two-by-two grid, each with a title, a line of text and a small meta line](images/projects.png)
+
+*A `cards` block in the Projects panel.*
+
+![The About panel with a timeline block: four dated entries down the right-hand side, each with a square marker](images/about.png)
+
+*A `timeline` block in the About panel.*
+
+![The Contact panel with a form block: Name, E-mail and Message fields and a Send message button](images/contact.png)
+
+*A `form` block in the Contact panel.*
+
 > **Warning.** If a block's JSON has a mistake, the panel shows the block in red with the problem: a missing comma, a misspelt field such as `titel`, or a missing `label`. The rest of the panel still works.
+
+![A panel where the cards block is drawn as a red box reading: cards: 0.title: Invalid input, 0: Unrecognized key "titel"; the text below it is still shown](images/block-error.png)
+
+*A `cards` block with `titel` instead of `title`. The block turns red and says what is wrong; the rest of the panel still shows.*
 
 ## Writing the panel inside the point-of-interest file
 

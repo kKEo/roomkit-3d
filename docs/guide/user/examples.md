@@ -1,10 +1,14 @@
 # Examples and ideas
 
-This page describes the two example scenes that ship with Scene Rooms and some ideas for your own, so you can decide quickly whether a room fits what you want to show. Open each example and look at its files side by side.
+This page describes the three example scenes that ship with Scene Rooms and some ideas for your own, so you can decide quickly whether a room fits what you want to show. Open each example and look at its files side by side.
 
 ## The examples
 
-**Neo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with seven stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, a desk with a contact form, and a control centre with a wall of nine screens. Look here to see:
+**Neo Room** (`public/scenes/neo-room/`, the default). A green "Matrix" studio website with eight stops: a floating shape at the entrance, project frames on a wall, a wardrobe archive, an "about us" cinema screen, a server room for services, a desk with a contact form, and two control centres, one with a wall of nine screens and a smaller one opposite. Look here to see:
+
+![The Neo Room example seen whole from above, with its eight stops labelled](images/whole-room.png)
+
+*Neo Room, the default scene.*
 
 - one stop with several objects and a hand-placed camera (`poi/02-projects.json`);
 - a stop with no camera at all, placed automatically (`poi/03-archive.json`);
@@ -15,6 +19,19 @@ This page describes the two example scenes that ship with Scene Rooms and some i
 
 - your own pictures in frames and on a screen (`media/`);
 - a different theme, fog, easing curve and interface words, all in `scene.json`.
+
+![The Amber Gallery example seen whole: an amber room with a portrait and a landscape in frames on the side walls, a cinema screen at the far end and a bench in the middle](images/gallery-room.png)
+
+*Amber Gallery, seen whole.*
+
+**Cyan Loft** (`public/scenes/loft/`). An L-shaped cyan room with three stops: a long wall of frames, a studio desk behind a partition, and a pedestal in the south wing. Open it with `?scene=loft`. Look here to see:
+
+- a room that is not a box, drawn from a `footprint` (`scene.json`);
+- picture frames and a door that react to clicks with `actions` (see [Making objects clickable](objects.md#making-objects-clickable)).
+
+![The Cyan Loft example seen whole: an L-shaped cyan room with a pedestal in the near wing, frames along the far wall and a desk in the far corner](images/loft-room.png)
+
+*Cyan Loft, seen whole.*
 
 ## Ideas
 

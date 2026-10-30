@@ -20,11 +20,15 @@ This page explains every line of a point-of-interest file: where the object stan
 }
 ```
 
+![The Projects stop as the file above describes it: two picture frames with floating shapes on the west wall, a bench below them, the diamond above, and the Projects panel](images/projects.png)
+
+*The file above, in the room: the frames and the bench on the west wall, seen from the hand-placed camera.*
+
 | Line | What it does | Needed? |
 | --- | --- | --- |
 | `id` | Short name used in links (`#projects`). Letters, digits, `-` and `_` only; unique in the scene. | yes |
 | `label` | Name shown in the top bar, on the floating label and on the next/previous buttons. | yes |
-| `kicker` | Small line above the panel title, after the stop number, e.g. "02 of 07 · west wall". | no |
+| `kicker` | Small line above the panel title, after the stop number, e.g. "02 of 08 · west wall". | no |
 | `screenLabel` | Words shown on the green "rain" screens while the visitor is here. Defaults to the label. | no |
 | `objects` | One or more things to place in the room. See below. | yes |
 | `camera` | Where the camera stops and what it looks at. Worked out for you if left out. | no |
@@ -57,6 +61,10 @@ Any angle works; the example desk uses `-45` to sit diagonally in a corner.
 ## Letting the app place the camera
 
 Leave out `camera` and `marker` and the app places them from the **first** object in the list: the camera stands in front of the object at a distance that suits its type, and the diamond floats just above it. This works well for single objects. Add `camera` yourself when one stop shows several objects, as in the example above, or when something blocks the view.
+
+![The Archive stop: a wardrobe with its doors swung open, seen straight on from an automatically placed camera, the diamond floating above it](images/archive.png)
+
+*The Archive stop has no `camera` or `marker` in its file. Both were worked out from the wardrobe's position and rotation.*
 
 `camera.position` is where the camera stands; `camera.target` is the point it looks at. Both are positions in the room.
 

@@ -12,11 +12,15 @@ make dev      # then open the address it prints, usually http://localhost:5173
 
 If `make` is not available, run `npm install` once and then `npm run dev`.
 
-You should see the green room fly in and stop at **01 Start**.
+You should see the green room fly in and settle on a view of the whole room. Press `1` to walk to **01 Start**:
+
+![Stop 01 Start: a floating icosahedron on a pedestal, with the Welcome panel open on the right and the minimap in the bottom-left corner](images/start.png)
+
+*The first stop of the example room. The panel on the right is what you will write in a moment.*
 
 ## 1. Describe the point of interest
 
-Create the file `public/scenes/neo-room/poi/08-hello.json` with this content:
+Create the file `public/scenes/neo-room/poi/09-hello.json` with this content:
 
 ```json
 {
@@ -57,13 +61,18 @@ Open `public/scenes/neo-room/scene.json`, find the `"poi"` list at the bottom, a
     "poi/05-services.json",
     "poi/06-contact.json",
     "poi/07-control.json",
-    "poi/08-hello.json"
+    "poi/08-control2.json",
+    "poi/09-hello.json"
   ]
 ```
 
 ## 4. See it
 
-Reload the page and press `8`, or click **08 Hello** in the top bar. The camera turns to the near wall and your panel slides in.
+Reload the page and press `9`, or click **09 Hello** in the top bar. The camera turns to the near wall and your panel slides in.
+
+![Stop 09 Hello: an empty picture frame on the near wall with the Hello panel open beside it](images/quick-start.png)
+
+*Your new stop. The frame is empty until you give it a picture; the camera and the floating diamond were placed for you.*
 
 > **Tip.** If the page shows a red **Could not load the scene** message instead, it names the file and the line that is wrong. See [FAQ and troubleshooting](faq.md).
 

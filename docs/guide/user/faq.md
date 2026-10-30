@@ -4,7 +4,11 @@ This page lists the problems people run into most often and how to fix them. Mos
 
 ## The loading screen shows "Could not load the scene"
 
-The message lists every problem it found, one per line, as `file › place: problem`. For example, `neo-room/poi/08-hello.json › objects.0.type` means "in `08-hello.json`, the `type` of the first object" (counting starts at 0).
+![A black loading screen with the red title "Could not load the scene" and one line below it: no-such-scene/scene.json: file not found](images/load-error.png)
+
+*The loading screen when a scene cannot be loaded. Here the address asked for a scene folder that does not exist.*
+
+The message lists every problem it found, one per line, as `file › place: problem`. For example, `neo-room/poi/09-hello.json › objects.0.type` means "in `09-hello.json`, the `type` of the first object" (counting starts at 0).
 
 | The message says… | What it means | Fix |
 | --- | --- | --- |

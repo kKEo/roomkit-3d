@@ -31,6 +31,14 @@ Put these at the wall's position (for example `15` across for the right wall) an
 | `cinemaScreen` | A big screen with a stage and two speakers. Put it at height `0`; the screen is raised for you. | `source`: `"rain"`, `"image"` or `"video"`, with `src`. `width`, `height`, `elevation` (height of the screen's centre). `stage`, `speakers`: `false` to remove them. |
 | `door` | A door frame. Decoration only. Put it at height `0`. | `width`, `height`. |
 
+![The About stop: a cinema screen full of green rain with the words "about // lorem" in the middle, speakers either side, and the About panel with a timeline](images/about.png)
+
+*A `cinemaScreen` showing the shared rain and this stop's `screenLabel`.*
+
+![The Contact stop: a desk with a monitor, keyboard and chair, seen from the chair side, with a contact form in the panel](images/contact.png)
+
+*A `desk`. Its monitor shows the rain by default; the panel holds a form block.*
+
 ## Anything else
 
 | Type | What it is | Settings worth knowing |
@@ -40,6 +48,10 @@ Put these at the wall's position (for example `15` across for the right wall) an
 ## Control desk screens
 
 A `controlDesk` takes a list of screens. They fill the wall left to right, top row first, and each one is set up on its own:
+
+![The Control stop: a curved console with chairs and a wall of nine screens in four columns showing a wave graph, status text, a radar, a floor plan, its own rain, a console, a table, a form and an amber bar chart](images/control.png)
+
+*The control desk of the example room. Nine screens in four columns: the last one wraps onto a third row, and has its own amber `color`.*
 
 ```json
 {
@@ -92,6 +104,10 @@ Visitors can click any screen of a stop (control desk screens, the desk monitor,
 { "source": "form", "title": "REPORT",
   "form": { "fields": [{ "name": "subject", "label": "Subject" }], "submit": "File report" } }
 ```
+
+![Up close to the NODES dashboard screen: a filter box, chip rows for region and status, and a table of nodes with the load column drawn as bars](images/dashboard.png)
+
+*A `dashboard` screen up close. The `filters` become rows of chips and the `value` field is drawn as a bar.*
 
 From across the room the screen shows a preview: the last lines typed, the filtered bars, or the empty form. What visitors typed or filtered stays on the screen after they step back, until the page is reloaded.
 

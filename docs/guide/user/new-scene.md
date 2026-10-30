@@ -39,6 +39,10 @@ A room need not be a box. Give `footprint` instead of `width` and `depth`: the c
 
 Walls, grids, the minimap and the whole-room view all follow the outline. The `loft` example scene is built this way.
 
+![The Cyan Loft scene seen whole from above: an L-shaped cyan wireframe room with three stops, and an L-shaped minimap in the corner](images/loft-room.png)
+
+*The `loft` example: an L-shaped `footprint`, with the minimap following the same outline.*
+
 Everything you leave out keeps its default: the green colours, the fonts, the camera speed.
 
 ## 3. Change the look
@@ -57,6 +61,10 @@ Add a `theme` to change colours. Any colour you leave out stays green:
 ```
 
 `accent` colours the lines in the room and the titles. `surface` is the panel background. `scanlines` turns the old-monitor stripes on or off. The `gallery` example scene uses exactly this amber theme.
+
+![The Amber Gallery scene at its Portrait stop: an amber wireframe room with a framed picture, the panel and the top bar all in amber tones](images/gallery.png)
+
+*The `gallery` example with the amber theme above. Everything that was green, from the walls to the panel title, follows `accent`.*
 
 You can also replace the interface words, for example the loading text and the hint at the bottom:
 

@@ -6,6 +6,10 @@ This page is what your visitors can do, and the addresses you can share to send 
 
 The room opens with a view of all of it from above. From there, `→` goes to stop 1 and `←` to the last stop.
 
+![Stop 02 Projects: the top bar with the current stop highlighted, the text panel on the right, the floating diamond above the frames, and the minimap bottom-left](images/projects.png)
+
+*What visitors see at a stop. Top: the bar with every stop; right: the panel; bottom-left: the map; above the object: its diamond.*
+
 | To… | Do this |
 | --- | --- |
 | Go to the next or previous stop | Press `→` / `←` (or `↓` / `↑`), scroll the mouse wheel, or swipe left or right on a phone |
@@ -14,6 +18,10 @@ The room opens with a view of all of it from above. From there, `→` goes to st
 | Hide or show the text panel | Press `H` or click the panel button in the top bar |
 | Hide or show the floating diamonds | Press `M` or click the diamond button in the top bar |
 | Change how the camera moves | Click the curve button in the top bar and pick a transition curve, parallax and warp amount |
+
+![The camera settings popover open under the curve button: a transition-curve dropdown with its graph, and sliders for parallax and warp](images/settings.png)
+
+*The camera settings, opened with the curve button at the right end of the top bar.*
 
 ## Using a screen up close
 
@@ -25,6 +33,10 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 | Switch to the screen next to it | Click the neighbouring screen at the edge of the view |
 | Use it | Type commands, filter a table or fill in a form, depending on the screen (see [Objects you can place](objects.md#screens-you-can-use)) |
 | Step back | Press `Esc`, click **← Back** in the screen's corner, or click anywhere outside the screen |
+
+![Up close to the CONSOLE screen of the control desk: a full-width terminal with the commands status and uptime typed and answered, and a Back button with Esc in the corner](images/terminal.png)
+
+*Up close to a terminal screen. The hint at the bottom changes to "Esc back to the room", and the Back button sits in the screen's corner.*
 
 While you are up close, the text panel, the diamonds and the arrow keys are switched off, so typing never moves the camera. Clicking a stop in the top bar still takes you there.
 

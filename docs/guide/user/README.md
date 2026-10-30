@@ -4,6 +4,10 @@ This guide is for people who fill a Scene Rooms site with content: you decide wh
 
 Scene Rooms shows a 3D room that visitors walk through. Each stop on the walk is a **point of interest**: an object, such as a desk, a picture on the wall, a wardrobe or a cinema screen, and a panel of text that slides in when the visitor arrives. You describe each point of interest in its own small file, so adding one never means touching the others.
 
+![The example room seen whole from above: a green wireframe studio with eight labelled stops, the top bar listing them, and the small map in the corner](images/whole-room.png)
+
+*The example room, seen whole. Each floating label is a point of interest; the top bar lists them in walking order.*
+
 | If you want to… | Read |
 | --- | --- |
 | Try it now and see your own text in the room | [Quick start](quick-start.md) |
