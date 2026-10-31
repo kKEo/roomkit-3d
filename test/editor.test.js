@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { makeZip, crc32 } from '../src/editor/zip.js';
 import { newSceneFiles, addPoi, addObject, objectTemplate, slug } from '../src/editor/bundle.js';
 import { buildScene, readerFromMap } from '../src/config/buildScene.js';
-import { PREFAB_TYPES } from '../src/prefabs/registry.js';
+import { z } from 'zod';
+import { PREFAB_TYPES, createRegistry, normalisePrefab } from '../src/prefabs/registry.js';
 
 const build = files => buildScene({ name: 't', read: readerFromMap(files), resolveUrl: p => p });
 
@@ -62,5 +63,21 @@ describe('bundle templates', () => {
   it('slug makes url-safe ids', () => {
     expect(slug('North Wall!')).toBe('north-wall');
     expect(slug('***')).toBe('item');
+  });
+});
+
+describe('templates with a scene registry', () => {
+  it('objectTemplate and addObject use the scene prefab\'s defaults', async () => {
+    const lamp = normalisePrefab('lamp', {
+      schema: z.strictObject({ height: z.number().positive().default(1.8) }),
+      placement: p => ({ focus: [0, p.height, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
+    });
+    const registry = createRegistry({ lamp });
+    expect(objectTemplate('lamp', registry).props).toEqual({ height: 1.8 });
+    expect(() => objectTemplate('lamp')).toThrow();
+    const files = addObject(newSceneFiles(), 'scene.json', 'lamp', registry);
+    files.set('scene.json', files.get('scene.json').replace('"decor"', '"prefabs": { "lamp": "prefabs/lamp.js" },\n  "decor"'));
+    const { scene } = await buildScene({ name: 't', read: readerFromMap(files), resolveUrl: p => p, loadModule: async () => ({ meta: () => lamp }) });
+    expect(scene.decor[0]).toMatchObject({ type: 'lamp', props: { height: 1.8 } });
   });
 });

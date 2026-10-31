@@ -120,3 +120,86 @@ describe('resolveObjectMedia', () => {
     expect(resolveObjectMedia(o, resolveUrl)).toBe(o);
   });
 });
+
+describe('buildScene with scene prefabs', () => {
+  const lampModule = {
+    meta: ({ z }) => ({
+      schema: z.strictObject({ height: z.number().positive().default(1.8), glb: z.string().nullable().default(null) }),
+      media: ['glb'],
+      hotspots: ['shade'],
+      placement: p => ({ focus: [0, p.height, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
+    }),
+    component: () => () => null,
+  };
+  const modules = { 'scene://x/prefabs/lamp.js': lampModule };
+  const loadModule = async url => { if (url in modules) return modules[url]; throw new Error('Failed to fetch dynamically imported module'); };
+  const sceneWith = (prefabs, decor) => json({ title: 'T', room: { width: 10, height: 4, depth: 12 }, poi: ['poi/a.json'], prefabs, decor });
+  /** `lm` null = no loadModule at all. */
+  const buildWith = (overrides, lm) => {
+    const m = new Map(files);
+    m.delete('poi/b.json');
+    for (const [k, v] of Object.entries(overrides)) m.set(k, v);
+    return buildScene({ name: 'x', read: readerFromMap(m), resolveUrl, loadModule: lm === null ? undefined : loadModule });
+  };
+
+  it('loads the module, validates objects with its schema, resolves its media against the scene and exposes the registry', async () => {
+    const { scene } = await buildWith({ 'scene.json': sceneWith({ lamp: 'prefabs/lamp.js' }, [{ type: 'lamp', props: { glb: 'media/lamp.glb' }, actions: { shade: { type: 'togglePanel' } } }]) });
+    expect(scene.prefabs).toEqual({ lamp: 'scene://x/prefabs/lamp.js' });
+    expect(scene.registry.has('lamp')).toBe(true);
+    expect(scene.registry.get('lamp').module).toBe(lampModule);
+    expect(scene.decor[0].props).toEqual({ height: 1.8, glb: 'scene://x/media/lamp.glb' });
+  });
+
+  it('leaves an absolute module URL alone', async () => {
+    modules['https://cdn.example/lamp.js'] = lampModule;
+    const { scene } = await buildWith({ 'scene.json': sceneWith({ lamp: 'https://cdn.example/lamp.js' }) });
+    expect(scene.prefabs.lamp).toBe('https://cdn.example/lamp.js');
+  });
+
+  it('a scene without prefabs has an empty map and the built-in registry types', async () => {
+    const { scene } = await build();
+    expect(scene.prefabs).toEqual({});
+    expect(scene.registry.has('lamp')).toBe(false);
+  });
+
+  it.each([
+    ['a module that fails to load', { lamp: 'prefabs/missing.js' }, /prefabs\.lamp: could not load scene:\/\/x\/prefabs\/missing\.js: Failed to fetch/],
+    ['a module without meta', { lamp: 'prefabs/nometa.js' }, /prefabs\.lamp: .*module has no "meta" export/],
+    ['a meta() that throws', { lamp: 'prefabs/throws.js' }, /prefabs\.lamp: meta\(\) failed: boom/],
+    ['a schema without defaults', { lamp: 'prefabs/nodefaults.js' }, /prefabs\.lamp: defaults do not validate/],
+    ['a built-in type name', { door: 'prefabs/lamp.js' }, /prefabs\.door: "door" is a built-in type/],
+    ['a bad type name', { 'Lamp-1': 'prefabs/lamp.js' }, /prefabs\.Lamp-1: a type name is letters/],
+    ['an empty path', { lamp: '' }, /prefabs\.lamp: give the path/],
+  ])('reports %s as a scene.json › prefabs line', async (_, prefabs, re) => {
+    modules['scene://x/prefabs/nometa.js'] = { component: () => null };
+    modules['scene://x/prefabs/throws.js'] = { meta: () => { throw new Error('boom'); } };
+    modules['scene://x/prefabs/nodefaults.js'] = { meta: ({ z }) => ({ ...lampModule.meta({ z }), schema: z.strictObject({ height: z.number() }) }) };
+    const e = await fails(buildWith({ 'scene.json': sceneWith(prefabs) }));
+    expect(e).toBeInstanceOf(ConfigError);
+    expect(e.lines.filter(l => /prefabs/.test(l))).toHaveLength(1);
+    expect(e.lines[0]).toMatch(/^x\/scene\.json › /);
+    expect(e.lines[0]).toMatch(re);
+  });
+
+  it('without loadModule, declared prefabs are a config error', async () => {
+    const e = await fails(buildWith({ 'scene.json': sceneWith({ lamp: 'prefabs/lamp.js' }) }, null));
+    expect(e.lines).toEqual(['x/scene.json › prefabs.lamp: this build cannot load scene prefabs']);
+  });
+
+  it('a prefab failure and a POI error land in the same ConfigError, and the other prefab still loads', async () => {
+    const e = await fails(buildWith({
+      'scene.json': sceneWith({ lamp: 'prefabs/lamp.js', kiosk: 'prefabs/missing.js' }, [{ type: 'lamp' }]),
+      'poi/a.json': '{ not json',
+    }));
+    expect(e.lines).toHaveLength(2);
+    expect(e.lines[0]).toMatch(/prefabs\.kiosk: could not load/);
+    expect(e.lines[1]).toMatch(/poi\/a\.json: invalid JSON/);
+  });
+
+  it('objects of a prefab that failed to load are reported as unknown types, after the cause', async () => {
+    const e = await fails(buildWith({ 'scene.json': sceneWith({ lamp: 'prefabs/lamp.js', kiosk: 'prefabs/missing.js' }, [{ type: 'lamp' }, { type: 'kiosk' }]) }));
+    expect(e.lines[0]).toMatch(/prefabs\.kiosk: could not load/);
+    expect(e.lines[1]).toMatch(/decor\.1\.type: unknown object type "kiosk" \(known: .*lamp\)/);
+    expect(e.lines).toHaveLength(2);
+  });
+});

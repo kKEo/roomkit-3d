@@ -21,8 +21,10 @@
             "> all systems nominal"
           ] },
           { "source": "graph", "graph": "radar", "title": "PERIMETER" },
+          { "source": "rain", "label": "uplink // secure", "color": "#b80f7c" },
           { "source": "image", "src": "media/floorplan.svg" },
-          { "source": "rain", "label": "uplink // secure", "color": "#b8ffcc" },
+          { "source": "image", "src": "media/floorplan.svg" },
+          { "source": "rain", "label": "uplink // secure", "color": "#b80fcc" },
           { "source": "terminal", "title": "CONSOLE", "lines": [
             "operator console v0.9",
             "type help and press Enter"
@@ -32,6 +34,7 @@
             "uptime": "up 42 days, 1 user, load 0.42",
             "ping": "pong"
           } },
+          { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#f0b000" },
           { "source": "dashboard", "title": "NODES", "filters": ["region", "status"], "value": "load", "rows": [
             { "node": "zion-01", "region": "south", "status": "online", "load": 42 },
             { "node": "zion-02", "region": "south", "status": "online", "load": 77 },

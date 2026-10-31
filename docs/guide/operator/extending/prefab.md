@@ -1,6 +1,6 @@
 # Adding a prefab
 
-This page walks through adding a new object type, a `lamp`, from geometry to auto-placement. It takes about twenty minutes. Three files change.
+This page walks through adding a new built-in object type, a `lamp`, from geometry to auto-placement. It takes about twenty minutes. Three files change. If the type belongs to one scene rather than to the app, ship it with the scene instead: [Scene-shipped prefabs](scene-prefabs.md) needs no rebuild.
 
 ## 1. Write the component
 
@@ -65,11 +65,11 @@ export const lamp = {
 
 - Name the parts a scene may make clickable in `hotspots` (a list, or a function of the props), and give the matching `<Solid>` a `hotspot="name"` prop. A `ScreenSurface`'s hotspot is its `id`. For the lamp, `hotspots: ['shade']` and `<Solid ref={shade} hotspot="shade" …>` let a scene write `"actions": { "shade": { "type": "goTo", "poi": "…" } }`; see [Actions and hotspots](../reference/actions.md).
 
-Then register it in `src/prefabs/registry.js`: import `lamp` and add it to `META`. The schema reads `PREFAB_TYPES` from there, so `lamp` is now a valid `type`, and the "unknown type" error lists it. `make test` checks every registered prefab: its defaults validate, unknown keys are rejected, and its placement is finite.
+Then register it in `src/prefabs/registry.js`: import `lamp` and add it to `META`. `normalisePrefab` checks it (defaults validate, placement is finite, hotspots are names) and it becomes part of `BUILTIN`; every registry the loader builds includes the built-ins, so `lamp` is now a valid `type` and the "unknown type" error lists it. `make test` checks every built-in prefab the same way.
 
 ## 3. Map the type to the component
 
-In `src/prefabs/index.jsx`, import `Lamp` and add `lamp: Lamp` to `COMPONENTS`.
+Components load as separate chunks, fetched only by scenes that use the type. In `src/prefabs/loaders.js`, add `lamp: once(() => import('./Lamp.jsx'))` to `LOADERS` and `lamp: 'Lamp'` to `EXPORT_NAMES`. `PlacedObject` in `src/prefabs/index.jsx` wraps every object in `Suspense` (a faint box while the chunk loads) and an error boundary; `preloadPrefabs` fetches the chunks a scene uses while the loading screen is up. `test/loaders.test.js` checks that every registered type has a loader whose module exports the named component.
 
 ## 4. Try and document it
 

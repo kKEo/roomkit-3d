@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Viewer } from '../App.jsx';
 import { useStore } from '../state/store.js';
 import { buildScene, readerFromMap } from '../config/buildScene.js';
-import { scenesBase, sceneNameFromUrl, SCENE_NAME } from '../config/loadScene.js';
+import { scenesBase, sceneNameFromUrl, importModule, SCENE_NAME } from '../config/loadScene.js';
 import { ConfigError } from '../config/schema.js';
 import { applyTheme } from '../ui/theme.js';
-import { PREFAB_TYPES } from '../prefabs/registry.js';
+import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
+import { preloadPrefabs } from '../prefabs/preload.js';
 import { fetchBundle, newSceneFiles, addPoi, addObject, slug } from './bundle.js';
 import { makeZip } from './zip.js';
 
@@ -23,6 +24,10 @@ export function EditorApp() {
   const [errors, setErrors] = useState([]);
   const [status, setStatus] = useState('Loading…');
   const [addType, setAddType] = useState('desk');
+  // the prefab types the last good build knew: built-ins plus the scene's own
+  const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
+  // bumped by "Reload prefabs": the scene's prefab modules are re-imported under a new `?v=`
+  const [bust, setBust] = useState(0);
   // media paths resolve against the scene the editor started from (new scenes have no media yet)
   const base = useRef(null);
   const built = useRef(false);
@@ -40,10 +45,11 @@ export function EditorApp() {
     if (!files) return;
     const t = setTimeout(async () => {
       try {
-        const { scene, pois } = await buildScene({
+        const { scene, pois } = await preloadPrefabs(await buildScene({
           name, read: readerFromMap(files),
           resolveUrl: p => (base.current ? new URL(p, base.current).href : p),
-        });
+          loadModule: url => importModule(`${url}${url.includes('?') ? '&' : '?'}v=${bust}`),
+        }));
         applyTheme(scene);
         useStore.getState().setLoaded(scene, pois);
         built.current = true;
@@ -56,7 +62,7 @@ export function EditorApp() {
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [files, name]);
+  }, [files, name, bust]);
 
   const badFiles = useMemo(() => new Set(errors.map(l => l.split(/ › |: /)[0].replace(`${name}/`, ''))), [errors, name]);
   const paths = useMemo(() => (files ? sortPaths(files.keys()) : []), [files]);
@@ -67,10 +73,10 @@ export function EditorApp() {
   const onAddPoi = () => {
     const label = prompt('Label of the new point of interest', `Area ${poiFiles.length + 1}`);
     if (!label) return;
-    try { const r = addPoi(files, label, addType); setFiles(r.files); setSel(r.file); } catch (e) { setErrors([`scene.json: ${e.message}`]); }
+    try { const r = addPoi(files, label, addType, registry); setFiles(r.files); setSel(r.file); } catch (e) { setErrors([`scene.json: ${e.message}`]); }
   };
   const onAddObject = () => {
-    try { setFiles(addObject(files, target, addType)); setSel(target); } catch (e) { setErrors([`${target}: ${e.message}`]); }
+    try { setFiles(addObject(files, target, addType, registry)); setSel(target); } catch (e) { setErrors([`${target}: ${e.message}`]); }
   };
   const onDownload = () => {
     const safe = SCENE_NAME.test(name) ? name : slug(name);
@@ -90,10 +96,13 @@ export function EditorApp() {
         </div>
         <div className="editor-bar">
           <select value={addType} onChange={e => setAddType(e.target.value)} aria-label="Prefab to add">
-            {PREFAB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {registry.types().map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <button type="button" className="btn ghost" onClick={onAddObject} disabled={!files}>Add to {target === 'scene.json' ? 'decor' : target.replace(/^poi\//, '')}</button>
           <button type="button" className="btn ghost" onClick={onAddPoi} disabled={!files}>New point of interest</button>
+          {Object.keys(registry.extra).length > 0 && (
+            <button type="button" className="btn ghost" onClick={() => setBust(b => b + 1)} title="Import the scene's prefab modules again">Reload prefabs</button>
+          )}
         </div>
         <ul className="editor-files">
           {paths.map(p => (

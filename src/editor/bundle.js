@@ -1,4 +1,4 @@
-import { PREFABS } from '../prefabs/registry.js';
+import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
 
 /**
  * Scene bundles for the editor: a `Map<path, text>` of a scene folder's text files
@@ -36,15 +36,18 @@ export async function fetchBundle(base) {
 /** A url-safe id from a label: "North wall" → "north-wall". */
 export const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
 
-/** A placed object with every prop of the prefab spelled out at its default, so the author sees the knobs. */
-export function objectTemplate(type) {
-  return { type, position: [0, 0, 0], rotation: [0, 0, 0], props: PREFABS[type].props };
+/**
+ * A placed object with every prop of the prefab spelled out at its default, so the author sees the knobs.
+ * `registry` is the scene's (built-ins plus its own prefabs, `scene.registry`); the built-ins by default.
+ */
+export function objectTemplate(type, registry = BUILTIN_REGISTRY) {
+  return { type, position: [0, 0, 0], rotation: [0, 0, 0], props: registry.get(type).props };
 }
 
 /** A new POI file and its Markdown page. */
-export function poiTemplate(id, label, type) {
+export function poiTemplate(id, label, type, registry) {
   return {
-    poi: { id, label, objects: [objectTemplate(type)], content: { markdown: `content/${id}.md` } },
+    poi: { id, label, objects: [objectTemplate(type, registry)], content: { markdown: `content/${id}.md` } },
     markdown: `# ${label}\n\nWrite about this point of interest here.\n`,
   };
 }
@@ -61,11 +64,11 @@ export function newSceneFiles(title = 'My Room') {
 }
 
 /** A copy of `files` with a new POI added and listed in scene.json. Throws if scene.json is not valid JSON. */
-export function addPoi(files, label, type = 'pedestal') {
+export function addPoi(files, label, type = 'pedestal', registry) {
   const scene = JSON.parse(files.get('scene.json'));
   let id = slug(label), n = 2;
   while (files.has(`poi/${id}.json`)) id = `${slug(label)}-${n++}`;
-  const { poi, markdown } = poiTemplate(id, label, type);
+  const { poi, markdown } = poiTemplate(id, label, type, registry);
   const out = new Map(files);
   out.set(`poi/${id}.json`, json(poi));
   out.set(`content/${id}.md`, markdown);
@@ -75,9 +78,9 @@ export function addPoi(files, label, type = 'pedestal') {
 }
 
 /** A copy of `files` with an object of `type` appended to the POI file (or to `decor` for scene.json). */
-export function addObject(files, file, type) {
+export function addObject(files, file, type, registry) {
   const doc = JSON.parse(files.get(file));
   const list = file === 'scene.json' ? (doc.decor ??= []) : (doc.objects ??= []);
-  list.push(objectTemplate(type));
+  list.push(objectTemplate(type, registry));
   return new Map(files).set(file, json(doc));
 }

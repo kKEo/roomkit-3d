@@ -8,6 +8,8 @@ This page describes each kind of object you can put in a room, with the settings
 
 Leave out `"props"` to use the defaults. Sizes are in metres.
 
+A room can also bring object types of its own: a developer puts a small module in the scene folder and lists it under `"prefabs"` in `scene.json`, and you place it like any type here. The `loft` example has a `lamp` made this way. See [Scene-shipped prefabs](../operator/extending/scene-prefabs.md) in the Operator guide.
+
 ## Things that stand on the floor
 
 Put these at height `0`.

@@ -47,7 +47,9 @@ The value may be absolute or relative to the page, and ends up in the bundle, so
 
 ## Updating content without a rebuild
 
-Everything in `dist/scenes/` is read at runtime, so content authors can change, add or remove POI files, Markdown and media on the server directly. A rebuild is needed only for code changes or new prefab and block types. Keep `public/scenes/` in the repository as the source of truth, and copy it to the server with the rest of `dist/`.
+Everything in `dist/scenes/` is read at runtime, so content authors can change, add or remove POI files, Markdown and media on the server directly, and a scene can ship its own object types as modules in its folder (`scene.json › prefabs`, see [Scene-shipped prefabs](../extending/scene-prefabs.md)). A rebuild is needed only for code changes, new built-in prefab types and new block types. Keep `public/scenes/` in the repository as the source of truth, and copy it to the server with the rest of `dist/`.
+
+Scene prefab modules must be served as `text/javascript` (a SPA fallback that answers `index.html` for unknown paths breaks the import). By default they may come only from the page's origin or the scenes' origin; `VITE_PREFAB_ORIGINS` (a comma-separated list of origins, or `*`) allows others at build time, and such a host needs `Access-Control-Allow-Origin` on the module and on the models and textures it loads.
 
 ## External requests
 

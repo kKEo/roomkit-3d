@@ -1,36 +1,46 @@
-import { Pedestal } from './Pedestal.jsx';
-import { PictureFrame } from './PictureFrame.jsx';
-import { Wardrobe } from './Wardrobe.jsx';
-import { CinemaScreen } from './CinemaScreen.jsx';
-import { Desk } from './Desk.jsx';
-import { ControlDesk } from './ControlDesk.jsx';
-import { ServerRack } from './ServerRack.jsx';
-import { Door, Bench, Primitive } from './simple.jsx';
-import { ActionsContext } from '../scene/core.jsx';
+import { Component, Suspense, lazy } from 'react';
+import { ActionsContext, Solid } from '../scene/core.jsx';
+import { useStore } from '../state/store.js';
+import { BUILTIN_REGISTRY } from './registry.js';
+import { LOADERS, loadComponent } from './loaders.js';
+import { externalComponent } from './external.js';
 import { toRad } from '../lib/math.js';
 
-const COMPONENTS = {
-  pedestal: Pedestal,
-  pictureFrame: PictureFrame,
-  wardrobe: Wardrobe,
-  cinemaScreen: CinemaScreen,
-  desk: Desk,
-  controlDesk: ControlDesk,
-  serverRack: ServerRack,
-  door: Door,
-  bench: Bench,
-  primitive: Primitive,
-};
+/** Built-in components, each loaded as its own chunk the first time it renders (or is preloaded). */
+const COMPONENTS = Object.fromEntries(Object.keys(LOADERS).map(t => [t, lazy(() => loadComponent(t).then(c => ({ default: c })))]));
 
 const NO_ACTIONS = {};
 
+/** Stands in for an object whose code is still loading: a faint 1 m box on the floor. */
+function Placeholder() {
+  return <Solid fill={false} line="faint" args={[1, 1, 1]} position={[0, 0.5, 0]} />;
+}
+
+/**
+ * Keeps one broken prefab (a chunk that failed to load, a scene prefab that throws while rendering)
+ * from taking the whole canvas down: WebGLBoundary in App.jsx rethrows anything that is not a WebGL
+ * failure. The object renders nothing and the error is logged once.
+ */
+class PrefabBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error) { console.error(`Prefab "${this.props.type}" failed:`, error); }
+  componentDidUpdate(prev) { if (prev.type !== this.props.type && this.state.failed) this.setState({ failed: false }); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 /** A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world. */
 export function PlacedObject({ object, active = false, hovered = false }) {
-  const Component = COMPONENTS[object.type];
+  const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
+  const Component = COMPONENTS[object.type] ?? externalComponent(registry.get(object.type));
   return (
     <ActionsContext.Provider value={object.actions ?? NO_ACTIONS}>
       <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
-        <Component props={object.props} active={active} hovered={hovered} />
+        <PrefabBoundary type={object.type}>
+          <Suspense fallback={<Placeholder />}>
+            <Component props={object.props} active={active} hovered={hovered} />
+          </Suspense>
+        </PrefabBoundary>
       </group>
     </ActionsContext.Provider>
   );

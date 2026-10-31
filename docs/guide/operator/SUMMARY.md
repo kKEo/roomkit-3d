@@ -20,6 +20,7 @@
 - [Part IV: Extending](extending/README.md)
   - [Adding a prefab](extending/prefab.md)
   - [Adding a content block](extending/block.md)
+  - [Scene-shipped prefabs](extending/scene-prefabs.md)
 - [Part V: Operations](operations/README.md)
   - [Commands](operations/commands.md)
   - [Monitoring](operations/monitoring.md)

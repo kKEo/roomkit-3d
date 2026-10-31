@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { sceneSchema, poiSchema, objectSchema, parseOrThrow, ConfigError } from '../src/config/schema.js';
+import { z } from 'zod';
+import { sceneSchema, poiSchema, objectSchema, makeSchemas, parseOrThrow, ConfigError } from '../src/config/schema.js';
+import { createRegistry, normalisePrefab } from '../src/prefabs/registry.js';
 import { SCENE_DEFAULTS, deepMerge } from '../src/config/defaults.js';
 
 const minimalScene = raw => deepMerge(SCENE_DEFAULTS, raw);
@@ -108,5 +110,36 @@ describe('parseOrThrow', () => {
     expect(err.lines).toContain('neo/poi/a.json › id: id may contain only letters, digits, "-" and "_"');
     expect(err.lines.find(l => l.startsWith('neo/poi/a.json › objects:'))).toMatch(/at least one object/);
     expect(err.message).toBe(err.lines.join('\n'));
+  });
+});
+
+describe('makeSchemas with a scene registry', () => {
+  const lamp = normalisePrefab('lamp', {
+    schema: z.strictObject({ height: z.number().positive().default(1.8) }),
+    hotspots: p => { if (p.height > 5) throw new Error('too tall'); return ['shade']; },
+    placement: p => ({ focus: [0, p.height, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
+  });
+  const { objectSchema: withLamp, sceneSchema: sceneWithLamp } = makeSchemas(createRegistry({ lamp }));
+
+  it('accepts the scene\'s own type and lists it among the known ones', () => {
+    expect(withLamp.parse({ type: 'lamp' }).props).toEqual({ height: 1.8 });
+    const r = withLamp.safeParse({ type: 'kiosk' });
+    expect(r.error.issues[0].message).toMatch(/known: .*lamp\)/);
+    expect(objectSchema.safeParse({ type: 'lamp' }).success).toBe(false);
+  });
+
+  it('binds actions to the scene prefab\'s hotspots and reports a failing hotspots()', () => {
+    expect(withLamp.safeParse({ type: 'lamp', actions: { shade: { type: 'togglePanel' } } }).success).toBe(true);
+    const bad = withLamp.safeParse({ type: 'lamp', actions: { base: { type: 'togglePanel' } } });
+    expect(bad.error.issues[0].message).toMatch(/no hotspot "base"/);
+    const thrown = withLamp.safeParse({ type: 'lamp', props: { height: 9 } });
+    expect(thrown.error.issues[0].message).toMatch(/hotspots\(\) of "lamp" failed: too tall/);
+  });
+
+  it('sceneSchema takes a prefabs map and defaults it to {}', () => {
+    expect(sceneSchema.parse(minimalScene({ poi: ['a'] })).prefabs).toEqual({});
+    expect(sceneWithLamp.parse(minimalScene({ poi: ['a'], prefabs: { lamp: 'prefabs/lamp.js' }, decor: [{ type: 'lamp' }] })).decor[0].props).toEqual({ height: 1.8 });
+    const r = sceneSchema.safeParse(minimalScene({ poi: ['a'], prefabs: { 'Bad-Name': 'x.js', ok: '' } }));
+    expect(r.error.issues.map(i => i.path.join('.')).sort()).toEqual(['prefabs.Bad-Name', 'prefabs.ok']);
   });
 });
