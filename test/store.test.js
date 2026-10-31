@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../src/state/store.js';
+import { registerScreen } from '../src/scene/screenState.js';
 
 const scene = (name = 's') => ({ name, effects: { markers: true, ease: 'quint', parallax: 0.8, warp: 12 } });
-const pois = ids => ids.map(id => ({ id, label: id }));
+const pois = ids => ids.map(id => ({ id, label: id, camera: { position: [0, 2, 10], target: [0, 2, 0] } }));
 const st = () => useStore.getState();
 
 beforeEach(() => {
@@ -97,6 +98,52 @@ describe('zoom and markers', () => {
     const z = st().zoom;
     st().zoomTo({ key: 'k1', poi: 'a' });
     expect(st().zoom).toBe(z);
+  });
+
+  describe('keyboard zoom', () => {
+    // three screens on the far wall (z = 0) of POI "a", registered out of order; seen from +z, "right" is +x
+    const screen = (key, x, poi = 'a', zoom = true) => ({ key, poi, screen: { source: 'image', zoom }, center: [x, 2, 0], normal: [0, 0, 1], up: [0, 1, 0], w: 1, h: 1 });
+    const mount = recs => { const offs = recs.map(r => registerScreen(r.key, () => r)); return () => offs.forEach(f => f()); };
+
+    it('zoomIn takes the screen the POI camera faces, only once the camera has arrived', () => {
+      const off = mount([screen('r', 3), screen('m', 0.2), screen('l', -3)]);
+      st().goTo('a');
+      st().zoomIn();
+      expect(st().zoom).toBe(null);
+      st().showPanel('a');
+      st().zoomIn();
+      expect(st().zoom?.key).toBe('m');
+      off();
+    });
+
+    it('zoomIn ignores the overview, free flight and screens of other POIs or with zoom off', () => {
+      const off = mount([screen('other', 0, 'b'), screen('no', 0, 'a', false)]);
+      st().home(); st().zoomIn();
+      expect(st().zoom).toBe(null);
+      st().goTo('a'); st().showPanel('a'); st().zoomIn();
+      expect(st().zoom).toBe(null);
+      st().freeFly(); st().zoomIn();
+      expect(st().zoom).toBe(null);
+      off();
+    });
+
+    it('zoomStep walks the screens left to right and wraps', () => {
+      const off = mount([screen('r', 3), screen('m', 0), screen('l', -3)]);
+      st().goTo('a'); st().showPanel('a'); st().zoomIn();
+      st().zoomStep(1);
+      expect(st().zoom.key).toBe('r');
+      st().zoomStep(1);
+      expect(st().zoom.key).toBe('l');
+      st().zoomStep(-1);
+      expect(st().zoom.key).toBe('r');
+      expect(st().current).toBe('a');
+      off();
+    });
+
+    it('zoomStep does nothing when not zoomed', () => {
+      st().goTo('a'); st().zoomStep(1);
+      expect(st().zoom).toBe(null);
+    });
   });
 
   it('toggleMarkers clears hover', () => {

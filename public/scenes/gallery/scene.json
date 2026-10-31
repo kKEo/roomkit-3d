@@ -28,7 +28,7 @@
   "effects": { "ease": "sine", "particles": 260 },
   "ui": {
     "loading": "Opening the gallery",
-    "hint": "[←][→] — walk, [1]–[{total}] rooms, [0] whole gallery, or click a marker"
+    "hint": "[←][→] — walk, [1]–[{total}] rooms, [0] whole gallery, [Space] look at a picture, or click a marker"
   },
   "decor": [
     { "type": "bench", "position": [0, 0, 1], "props": { "width": 3.5, "height": 0.55, "depth": 0.9 } },

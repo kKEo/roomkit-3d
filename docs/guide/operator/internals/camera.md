@@ -61,6 +61,8 @@ Parallax and the idle bob ease to zero exactly as when zoomed, so the camera onl
 | click on a label, nav button or pager | `goTo(i)` | DOM buttons |
 | `hashchange` | `goTo(id)` | `goTo` itself uses `history.replaceState`, so it does not loop |
 | `Esc` | `exitZoom()`, else close Options | handled before the input check, so it also works while typing in an overlay |
+| `Space` | `zoomIn()` | once the camera has arrived at a POI (`shown === current`): zooms into the POI's screen nearest the camera's `target`; ignored on the overview, while flying or over a button |
+| `→` `↓` `PageDown` / `←` `↑` `PageUp` while zoomed | `zoomStep(±1)` | the POI's zoomable screens in left-to-right order as seen from the POI camera (`src/lib/screenOrder.js`), wrapping; on a video screen `←` `→` keep seeking, so only `↑` `↓` `PageUp` `PageDown` step; in an input only `PageUp` `PageDown` step |
 | click on a screen | `goTo(poi)`, or `zoomTo` if the POI is current | R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
 
-While zoomed, every key except `Esc` is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom.
+While zoomed, every other key is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom. The screens a POI offers come from the registry in `src/scene/screenState.js` (`screensOf(poi)`): every mounted `ScreenSurface` registers its zoom-record builder, and screens with `zoom: false` are skipped.

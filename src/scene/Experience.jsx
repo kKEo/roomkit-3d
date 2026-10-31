@@ -31,7 +31,7 @@ function PoiObjects({ poi }) {
   const hovered = useStore(s => s.hover === poi.id);
   return (
     <PoiContext.Provider value={poi.id}>
-      {poi.objects.map((o, i) => <PlacedObject key={i} object={o} active={active} hovered={hovered} />)}
+      {poi.objects.map((o, i) => <PlacedObject key={i} slot={i} object={o} active={active} hovered={hovered} />)}
     </PoiContext.Provider>
   );
 }
@@ -58,7 +58,7 @@ export function Experience() {
       <Telemetry />
       <CameraRig />
       <Room />
-      {scene.decor.map((o, i) => <PlacedObject key={i} object={o} />)}
+      {scene.decor.map((o, i) => <PlacedObject key={i} slot={i} object={o} />)}
       {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
       <Particles count={Math.round(scene.effects.particles * particles)} />

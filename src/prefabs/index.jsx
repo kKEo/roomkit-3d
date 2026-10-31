@@ -1,5 +1,5 @@
 import { Component, Suspense, lazy } from 'react';
-import { ActionsContext, Solid } from '../scene/core.jsx';
+import { ActionsContext, SlotContext, Solid } from '../scene/core.jsx';
 import { useStore } from '../state/store.js';
 import { BUILTIN_REGISTRY } from './registry.js';
 import { LOADERS, loadComponent } from './loaders.js';
@@ -29,19 +29,21 @@ class PrefabBoundary extends Component {
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-/** A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world. */
-export function PlacedObject({ object, active = false, hovered = false }) {
+/** A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world; `slot` is its index in the list. */
+export function PlacedObject({ object, slot = null, active = false, hovered = false }) {
   const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
   const Component = COMPONENTS[object.type] ?? externalComponent(registry.get(object.type));
   return (
     <ActionsContext.Provider value={object.actions ?? NO_ACTIONS}>
-      <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
-        <PrefabBoundary type={object.type}>
-          <Suspense fallback={<Placeholder />}>
-            <Component props={object.props} active={active} hovered={hovered} />
-          </Suspense>
-        </PrefabBoundary>
-      </group>
+      <SlotContext.Provider value={slot}>
+        <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
+          <PrefabBoundary type={object.type}>
+            <Suspense fallback={<Placeholder />}>
+              <Component props={object.props} active={active} hovered={hovered} />
+            </Suspense>
+          </PrefabBoundary>
+        </group>
+      </SlotContext.Provider>
     </ActionsContext.Provider>
   );
 }

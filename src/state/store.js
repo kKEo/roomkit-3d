@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { reducedMotion } from '../lib/env.js';
-import { resetSessions } from '../scene/screenState.js';
+import { resetSessions, screensOf } from '../scene/screenState.js';
+import { nearestScreen, stepScreen } from '../lib/screenOrder.js';
 import { feeds } from '../data/feeds.js';
 import { runAction } from '../actions/registry.js';
 import { loadGfx, saveGfx, GFX_DEFAULTS } from '../lib/gfx.js';
@@ -101,6 +102,20 @@ export const useStore = create((set, get) => ({
     set({ zoom: rec, hover: null, optionsOpen: false });
   },
   exitZoom: () => set({ zoom: null }),
+  /** Zoom into the screen of the current POI the camera is facing (Space); nothing while flying, zoomed or in transit. */
+  zoomIn: () => {
+    const { current, shown, zoom, free, pois } = get();
+    if (zoom || free || current == null || shown !== current) return;
+    const rec = nearestScreen(screensOf(current), pois.find(p => p.id === current)?.camera);
+    if (rec) get().zoomTo(rec);
+  },
+  /** While zoomed, move to the next (+1) or previous (-1) screen of the same POI, left to right as seen from the POI, wrapping. */
+  zoomStep: dir => {
+    const { zoom, pois } = get();
+    if (!zoom) return;
+    const rec = stepScreen(screensOf(zoom.poi), pois.find(p => p.id === zoom.poi)?.camera, zoom.key, dir);
+    if (rec) get().zoomTo(rec);
+  },
   toggleOptions: () => set(s => ({ optionsOpen: !s.optionsOpen })),
   setOptionsTab: tab => set({ optionsTab: tab }),
   setSetting: (k, v) => set(s => ({ settings: { ...s.settings, [k]: v } })),

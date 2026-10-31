@@ -27,9 +27,21 @@ export function useInput(stageRef, enabled) {
         else if (st().optionsOpen) st().toggleOptions();
         return;
       }
-      if (st().zoom) return; // zoomed in: only Esc (or the Back button) leaves
       const tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (st().zoom) {
+        // zoomed in: step between the POI's screens; a video keeps ← → for seeking, an input keeps the arrows for its caret
+        const video = st().zoom.screen?.source === 'video';
+        const fwd = ['PageDown', ...(typing ? [] : ['ArrowDown', ...(video ? [] : ['ArrowRight'])])];
+        const back = ['PageUp', ...(typing ? [] : ['ArrowUp', ...(video ? [] : ['ArrowLeft'])])];
+        if (tag === 'textarea') return;
+        if (fwd.includes(e.key)) { e.preventDefault(); st().zoomStep(1); }
+        else if (back.includes(e.key)) { e.preventDefault(); st().zoomStep(-1); }
+        return;
+      }
+      if (typing) return;
+      if (e.key === ' ' && tag !== 'button') { e.preventDefault(); st().zoomIn(); return; }
       const { fly } = runtime;
       fly.slow = e.shiftKey;
       if (FLY_KEYS.has(e.code)) { fly.keys.add(e.code); st().freeFly(); return; }

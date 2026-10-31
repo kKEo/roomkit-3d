@@ -18,7 +18,7 @@
   "effects": { "particles": 700 },
   "ui": {
     "loading": "Opening the cinema",
-    "hint": "[←][→] or mouse wheel — next stop, [1]–[{keys}] stops, [0] whole hall, click a marker, [W][A][S][D] fly, click a screen to zoom"
+    "hint": "[←][→] or mouse wheel — next stop, [1]–[{keys}] stops, [0] whole hall, click a marker, [W][A][S][D] fly, [Space] or a click on a screen to zoom"
   },
   "prefabs": { "seats": "prefabs/seats.js", "projector": "prefabs/projector.js" },
   "transforms": {

@@ -32,8 +32,8 @@ describe('runAction', () => {
 
   it('zoom finds a registered screen of the current POI by its id', () => {
     const st = fakeStore();
-    const rec = { key: 'k' };
-    const off = registerScreen(sessionKey('s', 'a', 'scr1'), () => rec);
+    const rec = { key: sessionKey('s', 'a', 'scr1', 0), poi: 'a', id: 'scr1', screen: {} };
+    const off = registerScreen(rec.key, () => rec);
     runAction({ type: 'zoom', screen: 'scr1' }, st);
     expect(st.zoomTo).toHaveBeenCalledWith(rec);
     off();

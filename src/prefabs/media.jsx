@@ -1,7 +1,7 @@
 import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld, PoiContext, ActionsContext } from '../scene/core.jsx';
+import { useWorld, PoiContext, ActionsContext, SlotContext } from '../scene/core.jsx';
 import { useStore } from '../state/store.js';
 import { getSession, sessionKey, registerScreen, registerVideo } from '../scene/screenState.js';
 import {
@@ -157,8 +157,9 @@ export function ScreenSurface({ w, h, ...props }) {
   const { source = 'rain', zoom = true, id } = config;
   const { rain, name } = useWorld();
   const poi = useContext(PoiContext); // POI id, or null in decor
+  const slot = useContext(SlotContext); // index of the placed object, or null outside one
   const reactId = useId();
-  const key = sessionKey(name, poi, id ?? reactId);
+  const key = sessionKey(name, poi, id ?? reactId, slot);
   const session = useMemo(() => (INTERACTIVE_SOURCES.includes(source) ? getSession(key, () => ({})) : null), [key, source]);
   const { config: live, status } = useLiveScreen(config);
   const { source: _s, zoom: _z, id: _i, feed: _f, ...content } = live;
@@ -174,7 +175,7 @@ export function ScreenSurface({ w, h, ...props }) {
 
   // let `zoom` actions (and anything else) find this screen by its key while it is mounted;
   // the record keeps the static config (with its feed), so the overlay follows the same live data
-  const record = () => ({ key, poi, screen: config, ...zoomRecord(mesh.current, w, h) });
+  const record = () => ({ key, poi, id, screen: config, ...zoomRecord(mesh.current, w, h) });
   const recordRef = useRef(record);
   recordRef.current = record;
   useEffect(() => registerScreen(key, () => recordRef.current()), [key]);

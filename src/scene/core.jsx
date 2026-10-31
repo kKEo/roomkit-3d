@@ -17,6 +17,9 @@ export const PoiContext = createContext(null);
 /** The placed object's `actions` ({ hotspotName: action }), provided by PlacedObject. */
 export const ActionsContext = createContext({});
 
+/** Position of the placed object in its list (`objects[i]` of a POI, or `decor[i]`); keeps the screens of two alike objects apart. */
+export const SlotContext = createContext(null);
+
 /**
  * Pointer handlers for a named hotspot: a hand cursor, `hot` while hovered, and the bound
  * action dispatched on click (not on a drag). Empty when the scene binds nothing to it.

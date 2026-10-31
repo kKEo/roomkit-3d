@@ -57,8 +57,8 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 
 | To… | Do this |
 | --- | --- |
-| Step up to a screen | Click it. If it belongs to another stop, the first click takes you to that stop and the second one steps up to the screen |
-| Switch to the screen next to it | Click the neighbouring screen at the edge of the view |
+| Step up to a screen | Click it, or press `Space` once you have arrived at a stop to step up to the screen in front of you. If it belongs to another stop, the first click takes you to that stop and the second one steps up to the screen |
+| Switch to the screen next to it | Press `→` or `←` (`↓` / `↑` or `PageDown` / `PageUp` also work, and are the keys to use on a video, where `←` `→` seek), or click the neighbouring screen at the edge of the view. The order runs left to right along the wall and wraps around |
 | Use it | Type commands, filter a table or fill in a form, depending on the screen (see [Objects you can place](objects.md#screens-you-can-use)) |
 | Step back | Press `Esc`, click **← Back** in the screen's corner, or click anywhere outside the screen |
 
@@ -66,7 +66,7 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 
 *Up close to a terminal screen. The hint at the bottom changes to "Esc back to the room", and the Back button sits in the screen's corner.*
 
-While you are up close, the text panel, the diamonds and the arrow keys are switched off, so typing never moves the camera. Clicking a stop in the top bar still takes you there.
+While you are up close, the text panel and the diamonds are switched off, and the arrow keys only move between the screens of the same stop (not while you are typing in one), so typing never moves the camera. Clicking a stop in the top bar still takes you there.
 
 ## Flying freely
 

@@ -12,7 +12,7 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `unsupported` | `This browser cannot show the room` | heading of the screen shown when the browser has no WebGL 2 |
 | `unsupportedHint` | `The room is drawn with WebGL 2, which this browser does not support …` | text under `unsupported` |
 | `kicker` | `{n} of {total}` | above the panel title; `{n}` and `{total}` are zero-padded |
-| `hint` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, click a marker in the room, [W][A][S][D] fly` | bottom hint; `[x]` renders as a key cap; `{total}` is the POI count and `{keys}` the highest number key (at most 9) |
+| `hint` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room, [W][A][S][D] fly` | bottom hint; `[x]` renders as a key cap; `{total}` is the POI count and `{keys}` the highest number key (at most 9) |
 | `goTo` | `Go to {label}` | accessible name of marker labels |
 | `home` | `view the whole room (0)` | accessible name of the logo, after the brand |
 | `navLabel` | `Areas of the room` | accessible name of the top navigation |
@@ -40,10 +40,10 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `formSent` | `Message sent. Thank you!` | form POST succeeded |
 | `formFailed` | `Sending failed — please try again.` | form POST failed |
 | `canvasLabel` | `3D room with {total} areas` | accessible name of the canvas |
-| `zoomHint` | `[Esc] back to the room — click another screen to switch` | bottom hint while zoomed into a screen |
+| `zoomHint` | `[←][→] next screen, [Esc] back to the room` | bottom hint while zoomed into a screen |
 | `flyHint` | `[W][A][S][D] fly, [Q][E] down / up, [Shift] slower, middle-drag — look, wheel — forward / back, [0] whole room` | bottom hint while flying freely |
 | `zoomBack` | `Back` | Back button on a zoomed-in screen |
-| `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [Esc] back to the room` | bottom hint while zoomed into a video screen |
+| `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [↑][↓] next screen, [Esc] back to the room` | bottom hint while zoomed into a video screen |
 | `videoPlay`, `videoPause` | `Play`, `Pause` | the play/pause button of a zoomed-in video (label and tooltip) |
 | `videoRestart`, `videoBack`, `videoForward` | `From the start`, `10 s back`, `10 s forward` | tooltips of the transport buttons |
 | `videoSpeed` | `Speed` | label before the speed buttons (¼×, ½×, 1×, 2×) |

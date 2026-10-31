@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { sessionKey, findScreen } from '../scene/screenState.js';
+import { findScreenIn } from '../scene/screenState.js';
 
 /**
  * Actions a scene can bind to a prefab hotspot (`objects[].actions`). No React here.
@@ -18,8 +18,8 @@ export const ACTIONS = {
     schema: z.strictObject({ type: z.literal('zoom'), poi: z.string().optional(), screen: z.string().optional() }),
     run: (a, st) => {
       if (!a.screen) return;
-      const rec = findScreen(sessionKey(st.scene.name, a.poi ?? st.current, a.screen));
-      if (rec) st.zoomTo(rec());
+      const rec = findScreenIn(a.poi ?? st.current, a.screen);
+      if (rec) st.zoomTo(rec);
       else console.warn(`zoom: no screen "${a.screen}" in POI "${a.poi ?? st.current}"`);
     },
   },
