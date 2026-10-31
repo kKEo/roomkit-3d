@@ -4,13 +4,13 @@
   "kicker": "south wall",
   "objects": [
     { "type": "door", "position": [3.5, 0, 20], "rotation": [0, 180, 0],
-      "actions": { "door": { "type": "openUrl", "url": "?scene=neo-room", "newTab": false } } },
+      "actions": { "door": { "type": "openUrl", "url": "?scene=neo-room", "newTab": false, "label": "kKEo Room", "confirm": true } } },
     { "type": "door", "position": [7, 0, 20], "rotation": [0, 180, 0],
-      "actions": { "door": { "type": "openUrl", "url": "?scene=gallery", "newTab": false } } },
+      "actions": { "door": { "type": "openUrl", "url": "?scene=gallery", "newTab": false, "label": "Amber Gallery", "confirm": true } } },
     { "type": "door", "position": [10.5, 0, 20], "rotation": [0, 180, 0],
-      "actions": { "door": { "type": "openUrl", "url": "?scene=loft", "newTab": false } } },
+      "actions": { "door": { "type": "openUrl", "url": "?scene=loft", "newTab": false, "label": "Cyan Loft", "confirm": true } } },
     { "type": "door", "position": [14, 0, 20], "rotation": [0, 180, 0],
-      "actions": { "door": { "type": "openUrl", "url": "docs/", "newTab": true } } }
+      "actions": { "door": { "type": "openUrl", "url": "docs/", "newTab": true, "label": "Documentation", "confirm": true } } }
   ],
   "camera": { "position": [7.5, 3.6, 8.5], "target": [8.5, 2.4, 20] },
   "marker": { "position": [8.75, 5.4, 19.6] },

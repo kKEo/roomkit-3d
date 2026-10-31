@@ -23,10 +23,19 @@ export const ACTIONS = {
       else console.warn(`zoom: no screen "${a.screen}" in POI "${a.poi ?? st.current}"`);
     },
   },
-  /** Open a link, in a new tab unless `newTab` is false. */
+  /**
+   * Open a link, in a new tab unless `newTab` is false. `label` names the destination for people;
+   * with `confirm`, the viewer asks first (the store holds the pending action meanwhile).
+   */
   openUrl: {
-    schema: z.strictObject({ type: z.literal('openUrl'), url: z.string().min(1), newTab: z.boolean().default(true) }),
-    run: a => { if (a.newTab) window.open(a.url, '_blank', 'noopener,noreferrer'); else location.assign(a.url); },
+    schema: z.strictObject({
+      type: z.literal('openUrl'),
+      url: z.string().min(1),
+      newTab: z.boolean().default(true),
+      label: z.string().min(1).optional(),
+      confirm: z.boolean().default(false),
+    }),
+    run: (a, st) => { if (a.confirm) st.askConfirm(a); else openLink(a); },
   },
   /** Collapse or expand the content panel. */
   togglePanel: {
@@ -39,6 +48,11 @@ export const ACTIONS = {
     run: (a, st) => window.dispatchEvent(new CustomEvent(`scene-rooms:${a.name}`, { detail: { ...(a.detail ?? {}), poi: st.current } })),
   },
 };
+
+/** Follow an `openUrl` action right away. */
+export function openLink(a) {
+  if (a.newTab) window.open(a.url, '_blank', 'noopener,noreferrer'); else location.assign(a.url);
+}
 
 export const ACTION_TYPES = Object.keys(ACTIONS);
 

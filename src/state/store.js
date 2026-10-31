@@ -3,7 +3,7 @@ import { reducedMotion } from '../lib/env.js';
 import { resetSessions, screensOf } from '../scene/screenState.js';
 import { nearestScreen, stepScreen } from '../lib/screenOrder.js';
 import { feeds } from '../data/feeds.js';
-import { runAction } from '../actions/registry.js';
+import { runAction, openLink } from '../actions/registry.js';
 import { loadGfx, saveGfx, GFX_DEFAULTS } from '../lib/gfx.js';
 
 const setHash = id => {
@@ -37,6 +37,7 @@ export const useStore = create((set, get) => ({
   nav: null,       // { id (null = overview), duration, nonce } — consumed by CameraRig
   zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
   free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
+  confirm: null,   // an `openUrl` action waiting for the visitor's yes (the same object the scene binds, so a prefab can tell it is its own)
 
   /** Index of a POI id in `pois`, or -1. */
   indexOf: id => get().pois.findIndex(p => p.id === id),
@@ -76,7 +77,7 @@ export const useStore = create((set, get) => ({
     if (!pois.length) return;
     const id = get().resolve(target);
     if (id === current && (id == null ? nav : shown === id)) { if (get().zoom) get().exitZoom(); return; }
-    set({ current: id, shown: null, started: true, zoom: null, free: false, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
+    set({ current: id, shown: null, started: true, zoom: null, free: false, confirm: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
     setHash(id);
   },
   /** Take the camera by hand: leaves the current POI (and any flight to it) where the camera is now. */
@@ -122,6 +123,10 @@ export const useStore = create((set, get) => ({
   /** Change a rendering preference and remember it in this browser. */
   setGfx: (k, v) => { set(s => ({ gfx: { ...s.gfx, [k]: v } })); saveGfx(get().gfx); },
   resetGfx: () => { set({ gfx: { ...GFX_DEFAULTS } }); saveGfx(get().gfx); },
+  /** Ask before following an `openUrl` action; `acceptConfirm` follows it, `cancelConfirm` drops it. */
+  askConfirm: action => set({ confirm: action }),
+  cancelConfirm: () => set({ confirm: null }),
+  acceptConfirm: () => { const a = get().confirm; if (!a) return; set({ confirm: null }); openLink(a); },
   /** Run a config action ({ type: 'goTo' | 'zoom' | 'openUrl' | 'togglePanel' | 'emit', … }); see src/actions/registry.js. */
   dispatch: action => runAction(action, get()),
 }));

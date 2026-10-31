@@ -176,7 +176,7 @@ Placement: focus `[0, e − 0.2, 0]`, distance `12`, cam y `3.4`, marker `[0, e 
 
 ### door
 
-A door frame with a swing arc on the floor. Decoration. Origin: wall surface at floor level.
+A door frame around a door wing with a handle, plus a swing arc on the floor. Only the wing is the `door` hotspot; the frame is decoration. When the `door` action is an `openUrl` with a `label`, the wing carries a nameplate with it, and while that action waits in `store.confirm` the wing swings ajar. Origin: wall surface at floor level.
 
 | Prop | Default |
 | --- | --- |

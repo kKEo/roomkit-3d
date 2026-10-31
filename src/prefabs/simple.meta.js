@@ -3,7 +3,7 @@ import { SHAPES } from '../scene/shapes.js';
 
 const LINES = ['thick', 'mid', 'thin', 'faint', 'glow'];
 
-/** Door frame in a wall (origin = wall surface at floor level, facing +Z). */
+/** Door in a wall: frame plus clickable wing (origin = wall surface at floor level, facing +Z). */
 export const door = {
   schema: z.strictObject({
     width: z.number().positive().default(2.4),

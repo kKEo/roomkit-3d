@@ -160,6 +160,13 @@ nav button[aria-current="true"] b { opacity: 1 }
 
 /* ——— Minimap, hint, progress ——— */
 #minimap { position: fixed; z-index: 6; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; border: 1px solid var(--line); background: rgba(0,0,0,.55) }
+.confirm { position: fixed; inset: 0; z-index: 14; display: grid; place-items: center; background: rgba(0,0,0,.55); padding: 16px }
+.confirm-box { position: relative; width: min(440px, 100%); background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 22px 26px; box-shadow: var(--glow) }
+.confirm-box h3 { font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; color: var(--accent); text-shadow: var(--glow); margin: 0 0 12px }
+.confirm-box .dest { font-size: 16px; color: var(--text); margin: 0 0 6px }
+.confirm-box code { display: block; font-size: 12.5px; color: var(--text-dim); word-break: break-all; margin: 0 0 18px }
+.confirm-box .row { display: flex; gap: 10px; flex-wrap: wrap }
+.confirm-box kbd { font-family: var(--body); color: var(--accent); border: 1px solid var(--line); padding: 0 5px; margin-left: 4px }
 .hint { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: var(--text-dim); background: rgba(0,0,0,.55); padding: 5px 12px; border: 1px solid var(--line); white-space: nowrap }
 .hint kbd { font-family: var(--body); color: var(--accent); border: 1px solid var(--line); padding: 0 5px; margin: 0 2px }
 #progress { position: fixed; z-index: 12; left: 0; right: 0; top: env(safe-area-inset-top, 0px); height: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); box-shadow: var(--glow); opacity: 0; transition: opacity .3s }

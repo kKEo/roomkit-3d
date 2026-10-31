@@ -19,7 +19,7 @@ A hotspot with an action shows a hand cursor and a glowing outline on hover, and
 | --- | --- | --- |
 | `goTo` | `poi`: a POI id, or `null` | flies to that POI (and opens its panel), or to the whole-room view |
 | `zoom` | `screen`: a screen id, `poi`: its POI (default: the current one); both optional | zooms into a screen. Bound to a screen's own hotspot with no `screen` key, it zooms into that screen |
-| `openUrl` | `url`, `newTab` (default `true`) | opens a link in a new tab, or navigates the page |
+| `openUrl` | `url`, `newTab` (default `true`), `label`, `confirm` (default `false`) | opens a link in a new tab, or navigates the page. With `confirm` the viewer first shows a dialog with the `label` (a name for people) and the URL; `Esc` or *Stay here* cancels. The pending action sits in the store as `confirm`, so a prefab can react (the door swings ajar) |
 | `togglePanel` | — | hides or shows the content panel (the `H` key) |
 | `emit` | `name`, `detail` (any JSON) | dispatches `new CustomEvent("scene-rooms:<name>", { detail })` on `window`, with the current POI id added to `detail`; for a page that embeds the viewer |
 
@@ -33,7 +33,7 @@ The built-in interactions use the same actions: a marker click and a screen clic
 | `cinemaScreen` | `screen` | the screen surface |
 | `controlDesk` | one per screen: its `id`, else `scr0`, `scr1`, … in list order | each screen surface |
 | `desk` | `screen`, `chair` | the monitor, the chair |
-| `door` | `door` | posts and lintel |
+| `door` | `door` | the door wing (the frame is plain). A `label` on its action becomes a nameplate on the wing |
 | `pedestal` | `solid` | the floating shape |
 | `pictureFrame` | `frame`, `image` | the frame board, the picture (when `image` is set) |
 | `primitive` | `shape` | the shape |

@@ -17,6 +17,33 @@ export function Hint() {
   );
 }
 
+/** The question an `openUrl` action with `confirm` asks: where it goes (its label and the URL), with Go / Stay. */
+export function Confirm() {
+  const action = useStore(s => s.confirm);
+  const ui = useStore(s => s.scene.ui);
+  const accept = useStore(s => s.acceptConfirm);
+  const cancel = useStore(s => s.cancelConfirm);
+  const go = useRef(null);
+  useEffect(() => { if (action) go.current?.focus(); }, [action]);
+  if (!action) return null;
+  let href = action.url;
+  try { href = new URL(action.url, location.href).href; } catch { /* shown as written */ }
+  const label = action.label ?? action.url;
+  return (
+    <div className="confirm" role="presentation" onClick={e => { if (e.target === e.currentTarget) cancel(); }}>
+      <div className="confirm-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h3 id="confirm-title">{ui.confirmTitle}</h3>
+        {action.label && <p className="dest">{action.label}</p>}
+        <code>{href}</code>
+        <div className="row">
+          <button ref={go} type="button" className="btn" onClick={accept}>{fmt(action.newTab ? ui.confirmGoTab : ui.confirmGo, { label })}</button>
+          <button type="button" className="btn ghost" onClick={cancel}>{ui.confirmStay} <kbd>Esc</kbd></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Progress() {
   const ref = useRef(null);
   useEffect(() => {

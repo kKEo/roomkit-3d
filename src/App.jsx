@@ -9,7 +9,7 @@ import { Minimap } from './ui/Minimap.jsx';
 import { Labels } from './ui/Labels.jsx';
 import { Options } from './ui/Options.jsx';
 import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
-import { Hint, Loader, Progress } from './ui/Overlays.jsx';
+import { Confirm, Hint, Loader, Progress } from './ui/Overlays.jsx';
 import { PerfHud } from './ui/PerfHud.jsx';
 import { useInput, poiIdFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
@@ -95,6 +95,7 @@ export function Viewer() {
           <PerfHud />
           <Minimap />
           <Hint />
+          <Confirm />
         </>
       )}
       <Loader done={intro && webgl} unsupported={!webgl} />

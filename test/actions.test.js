@@ -6,7 +6,7 @@ import { PREFABS } from '../src/prefabs/registry.js';
 
 const fakeStore = () => ({
   scene: { name: 's' }, current: 'a', pois: [{ id: 'a' }, { id: 'b' }],
-  goTo: vi.fn(), zoomTo: vi.fn(), togglePanel: vi.fn(),
+  goTo: vi.fn(), zoomTo: vi.fn(), togglePanel: vi.fn(), askConfirm: vi.fn(),
 });
 
 describe('actionSchema', () => {
@@ -14,7 +14,9 @@ describe('actionSchema', () => {
     expect(ACTION_TYPES).toEqual(['goTo', 'zoom', 'openUrl', 'togglePanel', 'emit']);
     expect(actionSchema.parse({ type: 'goTo', poi: 'b' })).toEqual({ type: 'goTo', poi: 'b' });
     expect(actionSchema.parse({ type: 'goTo', poi: null }).poi).toBe(null);
-    expect(actionSchema.parse({ type: 'openUrl', url: '/x' })).toEqual({ type: 'openUrl', url: '/x', newTab: true });
+    expect(actionSchema.parse({ type: 'openUrl', url: '/x' })).toEqual({ type: 'openUrl', url: '/x', newTab: true, confirm: false });
+    expect(actionSchema.parse({ type: 'openUrl', url: '/x', label: 'X', confirm: true })).toMatchObject({ label: 'X', confirm: true });
+    expect(actionSchema.safeParse({ type: 'openUrl', url: '/x', label: '' }).success).toBe(false);
     expect(actionSchema.safeParse({ type: 'goTo' }).success).toBe(false);
     expect(actionSchema.safeParse({ type: 'fly', poi: 'a' }).success).toBe(false);
     expect(actionSchema.safeParse({ type: 'openUrl', url: '/x', target: '_blank' }).success).toBe(false);
@@ -22,6 +24,20 @@ describe('actionSchema', () => {
 });
 
 describe('runAction', () => {
+  it('openUrl with confirm hands the action to the store instead of opening it', () => {
+    const st = fakeStore();
+    const open = vi.fn();
+    vi.stubGlobal('window', { open });
+    try {
+      const a = { type: 'openUrl', url: 'https://example.com', newTab: true, confirm: true, label: 'Example' };
+      runAction(a, st);
+      expect(st.askConfirm).toHaveBeenCalledWith(a);
+      expect(open).not.toHaveBeenCalled();
+      runAction({ ...a, confirm: false }, st);
+      expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it('goTo and togglePanel call the store', () => {
     const st = fakeStore();
     runAction({ type: 'goTo', poi: 'b' }, st);

@@ -31,7 +31,7 @@ Put these at the wall's position (for example `15` across for the right wall) an
 | --- | --- | --- |
 | `pictureFrame` | A frame. Give its **centre** height as the position's middle number. | `image`: a picture file such as `"media/photo.jpg"`. `width`, `height`. `exhibit`: a shape that floats in front of the frame, such as `"cone"`. |
 | `cinemaScreen` | A big screen with a stage and two speakers. Put it at height `0`; the screen is raised for you. | `source`: `"rain"`, `"image"` or `"video"`, with `src`. `width`, `height`, `elevation` (height of the screen's centre). `stage`, `speakers`: `false` to remove them. |
-| `door` | A door frame. Decoration only. Put it at height `0`. | `width`, `height`. |
+| `door` | A door in its frame. Click the door wing to use its action; a `label` on an `openUrl` action is shown on the wing. Put it at height `0`. | `width`, `height`. |
 
 ![The About stop: a cinema screen full of green rain with the words "about // lorem" in the middle, speakers either side, and the About panel with a timeline](images/about.png)
 
@@ -151,7 +151,7 @@ What a click can do:
 | Action | Example | Effect |
 | --- | --- | --- |
 | go to a stop | `{ "type": "goTo", "poi": "studio" }` | flies there and opens its panel; `"poi": null` shows the whole room |
-| open a link | `{ "type": "openUrl", "url": "https://example.com" }` | in a new tab (add `"newTab": false` to leave the page) |
+| open a link | `{ "type": "openUrl", "url": "https://example.com" }` | in a new tab (add `"newTab": false` to leave the page). Add `"label": "Gallery"` to name the place and `"confirm": true` to ask before going; a door shows the label on its wing and swings ajar while the question is open |
 | hide or show the panel | `{ "type": "togglePanel" }` | the same as the `H` key |
 | step up to a screen | `{ "type": "zoom", "screen": "scr2" }` | zooms into that screen of the current stop |
 
