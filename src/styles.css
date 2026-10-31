@@ -126,6 +126,15 @@ nav button[aria-current="true"] b { opacity: 1 }
 .screen-ui > .zback { position: absolute; top: .5em; right: .5em }
 .zback { background: rgba(0,0,0,.75); border: 1px solid var(--accent); color: var(--accent); padding: .15em .6em; font-size: .85em; cursor: pointer; white-space: nowrap }
 .zback kbd { font-family: inherit; opacity: .7; margin-left: .3em }
+.vctl { position: absolute; left: .5em; right: .5em; bottom: .5em; display: flex; align-items: center; gap: .4em; padding: .3em .5em; background: rgba(0,0,0,.78); border: 1px solid var(--accent); color: var(--accent); font-size: .8em; opacity: 0; transition: opacity .25s }
+.screen-ui.on .vctl { opacity: 1; pointer-events: auto }
+.vctl button { background: none; border: 1px solid var(--accent); color: var(--accent); font: inherit; padding: .1em .55em; cursor: pointer; white-space: nowrap }
+.vctl button:hover, .vctl button[aria-pressed="true"] { background: var(--accent); color: var(--bg) }
+.vctl .vplay { min-width: 2.6em }
+.vctl input[type="range"] { flex: 1; min-width: 4em; accent-color: var(--accent); cursor: pointer }
+.vctl .vtime { font-variant-numeric: tabular-nums; opacity: .85; white-space: nowrap }
+.vctl .vspeed { display: flex; gap: .15em; align-items: center }
+.vctl .vspeed span { opacity: .7; margin-right: .2em }
 .screen-title { display: flex; justify-content: space-between; align-items: center; gap: 1em; background: var(--accent); color: var(--bg); font-weight: 600; padding: .25em .25em .25em .7em }
 .screen-title .zback { background: var(--bg); padding: .05em .6em }
 .screen-body { flex: 1; min-height: 0; overflow: auto; padding: .6em .8em; color: var(--accent) }

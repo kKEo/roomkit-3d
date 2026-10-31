@@ -1,10 +1,11 @@
 /**
  * Records a scripted tour of the cinema scene with Playwright (headed Chromium, so the GPU draws it)
- * into tools/intro/out/footage.webm, and prints when each stop starts, for intro.html's captions.
+ * into tools/intro/out/footage.webm, and writes when each stop starts to out/marks.json, which
+ * intro.html reads to place its captions.
  * Usage: node tools/intro/footage.mjs [http://localhost:5180/]
  */
 import { chromium } from 'playwright';
-import { mkdir, rename } from 'node:fs/promises';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 
 const base = process.argv[2] || 'http://localhost:5180/';
 const out = new URL('./out/', import.meta.url).pathname;
@@ -14,7 +15,8 @@ const browser = await chromium.launch({ headless: false, args: ['--ignore-gpu-bl
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, recordVideo: { dir: out, size: { width: 1280, height: 720 } } });
 const page = await ctx.newPage();
 const t0 = Date.now();
-const mark = label => console.log(`${((Date.now() - t0) / 1000).toFixed(2)}s  ${label}`);
+const marks = {};
+const mark = label => { marks[label] = (Date.now() - t0) / 1000; console.log(`${marks[label].toFixed(2)}s  ${label}`); };
 const wait = ms => page.waitForTimeout(ms);
 
 await page.goto(`${base}?scene=cinema`, { waitUntil: 'load' });
@@ -38,10 +40,11 @@ await go('exits', 4000);
 await page.keyboard.press('Digit0');    // the whole hall
 mark('overview');
 await wait(4500);
-await go('welcome', 4500);
+await page.evaluate(() => { location.hash = 'welcome'; }); mark('welcome2'); await wait(4500);
 mark('end');
 const video = page.video();
 await ctx.close();
 await browser.close();
 await rename(await video.path(), `${out}footage.webm`);
+await writeFile(`${out}marks.json`, JSON.stringify(marks, null, 2));
 console.log('wrote', `${out}footage.webm`);

@@ -19,7 +19,7 @@ Two steps, both in this folder:
    frames with ffmpeg. `--preview 2,7,20` writes PNG stills at those seconds into `out/preview/` instead.
 
 Open `tools/intro/intro.html?play` on the dev server to watch the film in real time while editing it. The
-caption times in `intro.html` (`CAPTIONS`) follow the timings `footage.mjs` prints; adjust them if the tour changes.
-`out/` is ignored by git.
+captions in `intro.html` (`timeline()`) are placed from the stop times `footage.mjs` writes to `out/marks.json`,
+so a slower or faster recording keeps them in step. `out/` is ignored by git.
 
 A third script, `shots.mjs`, screenshots the stops of the scene (`node tools/intro/shots.mjs <dir> welcome,booth,…`) for a quick layout check without the GPU.

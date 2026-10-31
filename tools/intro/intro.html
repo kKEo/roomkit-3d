@@ -25,25 +25,32 @@ const DISPLAY = '"VT323", "IBM Plex Mono", monospace', BODY = '"IBM Plex Mono", 
 const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓ0123456789<>/=+*#';
 
 // ---- timeline -------------------------------------------------------------------------------
-const FOOT_IN = 7.4, FOOT_OUT = 43.4, SPEED = 1.25;     // the slice of the footage, and how fast it plays
+// the slice of the footage and how fast it plays; the stop times come from out/marks.json (footage.mjs)
+const SPEED = 1.25;
+let FOOT_IN = 7.4, FOOT_OUT = 43.4;
 const T = { title: 0, desc: 4.6, foot: 9.2 };
-T.features = T.foot + (FOOT_OUT - FOOT_IN) / SPEED;
-T.end = T.features + 4.4;
-const DURATION = T.end + 3.6;
-const FOOTAGE_SILENT_BEFORE = 0.5;    // the few seconds of loader at the start of the footage are skipped
+let DURATION = 0;
+let CAPTIONS = [];      // [footage time, text], filled from the marks
 
-// captions over the footage: [footage time, text]
-const CAPTIONS = [
-  [7.4, 'The camera flies in. Every visit starts on the big screen.'],
-  [9.0, 'Click any screen to zoom in. Esc steps back.'],
-  [14.3, 'A stop places objects and opens a panel: frames, benches, screens…'],
-  [18.8, 'Nine kinds of screen. Graphs, tables and consoles fed live from a URL.'],
-  [23.6, 'One hatch shader draws it all. No lights, no post-processing.'],
-  [27.6, 'An in-browser editor with live preview. Download the folder, ship it.'],
-  [31.6, 'Objects take click actions: these doors lead to other rooms.'],
-  [35.6, 'Press 0 for the whole hall, roof off.'],
-  [40.2, 'Scenes are JSON and Markdown. Ship content, not code.'],
-];
+/** The captions over the footage, each starting a little before the stop it describes. */
+function timeline(marks) {
+  FOOT_IN = marks.welcome - 1.0;
+  FOOT_OUT = marks.end - 1.3;
+  CAPTIONS = [
+    [FOOT_IN, 'The camera flies in. Every visit starts on the big screen.'],
+    [marks.zoom - 0.1, 'Click any screen to zoom in. Esc steps back.'],
+    [marks.features - 0.1, 'A stop places objects and opens a panel: frames, benches, screens…'],
+    [marks.booth - 0.1, 'Nine kinds of screen. Graphs, tables and consoles fed live from a URL.'],
+    [marks.machine - 0.1, 'One hatch shader draws it all. No lights, no post-processing.'],
+    [marks.build - 0.1, 'An in-browser editor with live preview. Download the folder, ship it.'],
+    [marks.exits - 0.1, 'Objects take click actions: these doors lead to other rooms.'],
+    [marks.overview - 0.2, 'Press 0 for the whole hall, roof off.'],
+    [marks.welcome2 - 0.2, 'Scenes are JSON and Markdown. Ship content, not code.'],
+  ];
+  T.features = T.foot + (FOOT_OUT - FOOT_IN) / SPEED;
+  T.end = T.features + 4.4;
+  DURATION = T.end + 3.6;
+}
 const FEATURES = [
   ['JSON scenes', 'one folder per room'],
   ['10+ object types', 'or ship your own as a module'],
@@ -273,9 +280,12 @@ async function seek(t) {
   }
   draw(t);
 }
-window.seek = seek; window.DURATION = DURATION; window.FPS = FPS;
+window.seek = seek; window.FPS = FPS;
 
 window.ready = (async () => {
+  const marks = await (await fetch('out/marks.json')).json();
+  timeline(marks);
+  window.DURATION = DURATION;
   await document.fonts.load(`20px ${DISPLAY}`); await document.fonts.load(`20px ${BODY}`); await document.fonts.load(`600 20px ${BODY}`);
   await new Promise(res => video.readyState >= 1 ? res() : video.addEventListener('loadedmetadata', res, { once: true }));
   return true;

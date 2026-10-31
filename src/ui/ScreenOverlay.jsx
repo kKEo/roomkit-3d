@@ -5,6 +5,7 @@ import { getSession } from '../scene/screenState.js';
 import { Terminal } from './screens/Terminal.jsx';
 import { Dashboard } from './screens/Dashboard.jsx';
 import { Form } from './blocks/index.jsx';
+import { VideoControls } from './screens/VideoControls.jsx';
 import { useLiveScreen } from '../data/live.js';
 
 const FormScreen = ({ config }) => <Form data={config.form ?? {}} />;
@@ -73,7 +74,12 @@ export function ScreenOverlay() {
           </header>
           <div className="screen-body"><Body config={screen} session={getSession(zoom.key, () => ({}))} ui={ui} /></div>
         </>
-      ) : back}
+      ) : (
+        <>
+          {back}
+          {screen.source === 'video' && <VideoControls screenKey={zoom.key} ui={ui} />}
+        </>
+      )}
     </div>
   );
 }

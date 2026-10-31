@@ -32,16 +32,12 @@
     { "type": "projector", "position": [0, 8.4, 13], "props": { "throw": 33, "width": 14, "height": 7.9, "drop": 1.4, "elevation": -3.4 },
       "actions": { "lens": { "type": "goTo", "poi": "welcome" } } },
 
-    { "type": "seats", "position": [-6.2, 0, -6], "props": { "count": 8 } },
-    { "type": "seats", "position": [6.2, 0, -6], "props": { "count": 8 } },
-    { "type": "seats", "position": [-6.2, 0, -3], "props": { "count": 8, "riser": 0.3 } },
-    { "type": "seats", "position": [6.2, 0, -3], "props": { "count": 8, "riser": 0.3 } },
-    { "type": "seats", "position": [-6.2, 0, 0], "props": { "count": 8, "riser": 0.6 } },
-    { "type": "seats", "position": [6.2, 0, 0], "props": { "count": 8, "riser": 0.6 } },
-    { "type": "seats", "position": [-6.2, 0, 3], "props": { "count": 8, "riser": 0.9 } },
-    { "type": "seats", "position": [6.2, 0, 3], "props": { "count": 8, "riser": 0.9 } },
-    { "type": "seats", "position": [-6.2, 0, 6], "props": { "count": 8, "riser": 1.2 } },
-    { "type": "seats", "position": [6.2, 0, 6], "props": { "count": 8, "riser": 1.2 } },
+    { "type": "seats", "position": [-4.2, 0, -5], "props": { "count": 4 } },
+    { "type": "seats", "position": [4.2, 0, -5], "props": { "count": 4 } },
+    { "type": "seats", "position": [-4.2, 0, -1], "props": { "count": 4, "riser": 0.45 } },
+    { "type": "seats", "position": [4.2, 0, -1], "props": { "count": 4, "riser": 0.45 } },
+    { "type": "seats", "position": [-4.2, 0, 3], "props": { "count": 4, "riser": 0.9 } },
+    { "type": "seats", "position": [4.2, 0, 3], "props": { "count": 4, "riser": 0.9 } },
 
     { "type": "bench", "position": [-14.6, 0, 8], "rotation": [0, 90, 0], "props": { "width": 4, "height": 0.5 } },
     { "type": "bench", "position": [14.6, 0, -4], "rotation": [0, -90, 0], "props": { "width": 3, "height": 0.5 } }

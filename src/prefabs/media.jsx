@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useWorld, PoiContext, ActionsContext } from '../scene/core.jsx';
 import { useStore } from '../state/store.js';
-import { getSession, sessionKey, registerScreen } from '../scene/screenState.js';
+import { getSession, sessionKey, registerScreen, registerVideo } from '../scene/screenState.js';
 import {
   createTextScreen, createGraphScreen, createStatsScreen, createOwnRain,
   createTerminalScreen, createDashboardScreen, createFormScreen,
@@ -33,16 +33,17 @@ function cover(texture, w, h) {
  * hls.js, fetched as its own chunk only then. Its segments must allow CORS, like any video texture,
  * and (through hls.js) come from allowed data origins, like the playlist itself.
  */
-function useMediaTexture(source, src, w, h) {
+function useMediaTexture(source, src, w, h, key) {
   const [texture, setTexture] = useState(null);
   useEffect(() => {
     if (!src || (source !== 'image' && source !== 'video')) return;
-    let tex = null, cancelled = false, video = null, hls = null;
+    let tex = null, cancelled = false, video = null, hls = null, unregister = null;
     const ready = t => { if (cancelled) { t.dispose(); return; } cover(t, w, h); tex = t; setTexture(t); };
     if (source === 'image') {
       new THREE.TextureLoader().load(src, ready, undefined, () => console.warn(`Could not load image ${src}`));
     } else {
       video = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, crossOrigin: 'anonymous' });
+      unregister = registerVideo(key, video);
       video.addEventListener('loadeddata', () => ready(new THREE.VideoTexture(video)), { once: true });
       video.addEventListener('error', () => console.warn(`Could not load video ${src}`), { once: true });
       if (!isHls(src) || video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -71,12 +72,13 @@ function useMediaTexture(source, src, w, h) {
     }
     return () => {
       cancelled = true;
+      unregister?.();
       hls?.destroy();
       tex?.dispose();
       if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
       setTexture(null);
     };
-  }, [source, src, w, h]);
+  }, [source, src, w, h, key]);
   return texture;
 }
 
@@ -160,7 +162,7 @@ export function ScreenSurface({ w, h, ...props }) {
   const session = useMemo(() => (INTERACTIVE_SOURCES.includes(source) ? getSession(key, () => ({})) : null), [key, source]);
   const { config: live, status } = useLiveScreen(config);
   const { source: _s, zoom: _z, id: _i, feed: _f, ...content } = live;
-  const media = useMediaTexture(source, live.src, w, h);
+  const media = useMediaTexture(source, live.src, w, h, key);
   const drawn = useCanvasScreen(source, content, session, status);
   const mesh = useRef(null);
   const [hovered, setHovered] = useState(false);

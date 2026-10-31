@@ -159,7 +159,7 @@ A misspelt part name is reported on the loading screen together with the names t
 
 ## Pictures and videos
 
-Put image and video files in the scene's `media/` folder and refer to them as `"media/name.jpg"`. Pictures are cropped to fill the frame without stretching. Videos play silently, on a loop. While a file is loading, or if it cannot be found, the screen shows the green rain instead.
+Put image and video files in the scene's `media/` folder and refer to them as `"media/name.jpg"`. Pictures are cropped to fill the frame without stretching. Videos play silently, on a loop. While a file is loading, or if it cannot be found, the screen shows the green rain instead. Zoomed into a video screen, visitors get a transport bar: pause and play, jump back to the start, 10 seconds back or forward, a scrubber, and the speed (¼×, ½×, 1×, 2×). `Space`, the arrow keys and `-`/`+` do the same.
 
 > **Tip.** JPEG, PNG, SVG and WebP pictures all work. For videos, MP4 (H.264) plays in every browser.
 

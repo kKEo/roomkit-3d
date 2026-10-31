@@ -6,6 +6,7 @@
  */
 const sessions = new Map();
 const screens = new Map();
+const videos = new Map();
 
 export const sessionKey = (sceneName, poiId, screenId) => `${sceneName}:${poiId}:${screenId}`;
 
@@ -22,6 +23,15 @@ export function registerScreen(key, getRecord) {
 
 /** The zoom-record builder of a mounted screen, or undefined. */
 export const findScreen = key => screens.get(key);
+
+/** A video screen announces its <video> element, so the zoomed-in overlay can steer playback. */
+export function registerVideo(key, el) {
+  videos.set(key, el);
+  return () => { if (videos.get(key) === el) videos.delete(key); };
+}
+
+/** The <video> element behind a mounted video screen, or undefined. */
+export const findVideo = key => videos.get(key);
 
 /** Forget every session (a different scene was loaded). */
 export function resetSessions() {
