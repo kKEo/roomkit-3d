@@ -10,6 +10,7 @@ import {
 } from '../scene/screens.js';
 import { SCREEN_SOURCES, INTERACTIVE_SOURCES, screenSchema, isHls } from './screenSchema.js';
 import { useLiveScreen } from '../data/live.js';
+import { guardData } from '../config/origins.js';
 
 export { SCREEN_SOURCES, INTERACTIVE_SOURCES };
 
@@ -29,7 +30,8 @@ function cover(texture, w, h) {
 /**
  * Loads an image or (muted, looping) video texture; null until ready or on failure. A video `src`
  * ending in `.m3u8` is an HLS stream: native where the browser plays HLS (Safari), else through
- * hls.js, fetched as its own chunk only then. Its segments must allow CORS, like any video texture.
+ * hls.js, fetched as its own chunk only then. Its segments must allow CORS, like any video texture,
+ * and (through hls.js) come from allowed data origins, like the playlist itself.
  */
 function useMediaTexture(source, src, w, h) {
   const [texture, setTexture] = useState(null);
@@ -50,7 +52,11 @@ function useMediaTexture(source, src, w, h) {
         import('hls.js/light').then(({ default: Hls }) => {
           if (cancelled) return;
           if (!Hls.isSupported()) { console.warn(`Cannot play the HLS stream ${src} in this browser`); return; }
-          hls = new Hls();
+          // the playlist names its segments (and variant playlists) itself: every one must be an allowed data origin too
+          hls = new Hls({
+            xhrSetup: (_xhr, url) => { guardData(url); },
+            fetchSetup: (ctx, init) => { guardData(ctx.url); return new Request(ctx.url, init); },
+          });
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (!data.fatal) return;
             console.warn(`HLS stream ${src} failed: ${data.details}`);

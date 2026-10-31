@@ -95,7 +95,7 @@ A special block is a fenced block (three backticks) whose first line names the b
 ```
 ````
 
-Without `action`, pressing the button only shows "This is a prototype — the message was not sent." With `action`, the answers are sent to that address. Whoever runs that address must accept them; ask your operator.
+Without `action`, pressing the button only shows "This is a prototype — the message was not sent." With `action`, the answers are sent to that address. Whoever runs that address must accept them, and your operator may limit which addresses are allowed; ask them. Live data (a `feed`) can never change the address a form sends to.
 
 **Live blocks.** `stats`, `cards`, `list` and `timeline` can fetch their items from a web address and keep them up to date. Write the block's body as `{ … }` with a `feed` instead of a list:
 

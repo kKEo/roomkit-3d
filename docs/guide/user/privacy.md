@@ -18,7 +18,7 @@ This page says what a Scene Rooms site sends over the network and what it keeps,
 
 ## What visitors send
 
-Only the contact form sends anything, and only when the visitor presses its button **and** the form has an `action` address. The answers go to that address only. Without an `action` the form sends nothing.
+Only the contact form sends anything, and only when the visitor presses its button **and** the form has an `action` address. The answers go to that address only, without cookies, and live data cannot change the address. Without an `action` the form sends nothing.
 
 The address bar shows which stop the visitor is at (`#contact`). It stays in their browser history like any other address.
 

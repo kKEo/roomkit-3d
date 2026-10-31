@@ -76,7 +76,7 @@ Each entry of `screens` configures that screen alone:
 | `min`, `max` | `graph` | the range `values` are drawn in; default the data's own range (bars start at 0) |
 | `readout` | `graph` | title-bar text instead of the computed one (latest wave value, mean of the bars, number of contacts) |
 | `stats` | `stats` | up to 8 `{ "value", "label", "unit"?, "delta"? }`, the same items as the panel's `stats` block, drawn as big numbers; a `delta` starting with `+` (or a positive number) shows ▲, with `-` ▼. A changed value flashes |
-| `color` | all canvas-drawn sources | CSS colour for this screen only (and its zoomed-in overlay); default `theme.accent` |
+| `color` | all canvas-drawn sources | CSS colour for this screen only (and its zoomed-in overlay): `#hex`, `rgb()`/`hsl()` or a colour name, nothing else (it reaches a style, and a feed may set it); default `theme.accent` |
 | `prompt` | `terminal` | text before the input, default `"> "` |
 | `lines` | `terminal` | banner shown until the first command |
 | `commands` | `terminal` | `{ "name": "one line" \| ["several", "lines"] }`; names are matched lower-case. Built in: `help`, `clear`, `goto <n\|id>`, `exit` |

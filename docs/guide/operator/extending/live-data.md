@@ -22,6 +22,8 @@ Give a screen config (a desk's `screen`, a control desk's `screens[]`, a cinema 
 
 **What a feed must answer with.** For a screen, an object with any of the screen's keys except `source`, `id`, `zoom` and `feed` (for example `{ "rows": [...] }`, `{ "values": [3, 5, 8] }`, `{ "stats": [...] }`, `{ "src": "now.jpg" }`). For a block, its `data` (an array of items). Unknown keys are an error, as in the config files. If the API's shape is different, add a transform.
 
+A feed may change a form screen's `fields`, labels and `submit`, but never its `action`: an `action` in a feed's answer is an error, and the one written in the config (or none) is kept. Data decides what visitors see; only the scene decides where what they type is sent.
+
 **Merge order.** The keys written in the config are placeholders: each answer is merged over them, and replaces the previous answer. A relative `src` in an answer is resolved against the feed's URL.
 
 ## Transforms
@@ -77,7 +79,9 @@ Data is not code, so a feed may read from any host that allows it with CORS: the
 VITE_DATA_ORIGINS=https://api.example.com,https://cdn.example.com npm run build
 ```
 
-Then only the page's origin, the scenes' origin and the listed ones are fetched, and any other URL (including a `src` in an answer) fails with `blocked: <origin> is not an allowed data origin`. Transform modules are code and follow `VITE_PREFAB_ORIGINS`.
+Then only the page's origin, the scenes' origin and the listed ones are fetched, and any other URL (including a `src` in an answer, a form's `action`, and every playlist and segment an HLS stream names) fails with `blocked: <origin> is not an allowed data origin`. A JSON feed that redirects to a blocked origin fails too (`redirected and blocked: …`); a stream, an image or a video that redirects cannot be checked by the browser's APIs, so list only hosts you trust not to forward elsewhere. Transform modules are code and follow `VITE_PREFAB_ORIGINS`.
+
+These checks run in the page's JavaScript. The boundary the browser itself enforces is a Content-Security-Policy: see [Deploying › Content-Security-Policy](../deploy/deploy.md#content-security-policy) for a policy built from the same three settings.
 
 ## Live video
 

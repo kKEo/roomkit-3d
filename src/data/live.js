@@ -5,28 +5,33 @@ import { guardData } from '../config/origins.js';
 import { useStore } from '../state/store.js';
 import { useFeed } from './useFeed.js';
 
-const checked = new WeakMap(); // feed value → liveScreenSchema result, so a value is validated once
+// feed snapshot → liveScreenSchema result, so a value is validated once per snapshot (the hub makes a new
+// snapshot for every answer; keying on the value itself would miss a transform that mutates and returns the same object)
+const checked = new WeakMap();
 
 /**
  * A screen's config with its feed's latest value merged over it, and the status to show:
  * "static" (no feed), "loading", "ok" or "error" (an error with a value is stale data).
  * A value that is not valid screen fields is an error and the static config is shown;
- * a relative `src` in a value resolves against the feed's URL and must pass `guard`.
+ * a relative `src` in a value resolves against the feed's URL and must pass `guard`;
+ * a `form` in a value cannot change the `action` the scene gave the form.
  */
 export function mergeLive(config, snap, feedUrl, guard = guardData) {
   if (!config.feed) return { config, status: 'static', error: null };
   const { status, value, error } = snap;
   if (value === undefined) return { config, status, error };
-  let r = value && typeof value === 'object' ? checked.get(value) : undefined;
+  let r = checked.get(snap);
   if (!r) {
     r = liveScreenSchema.safeParse(value);
-    if (value && typeof value === 'object') checked.set(value, r);
+    checked.set(snap, r);
   }
   if (!r.success) {
     const why = r.error.issues.map(i => `${i.path.join('.') || 'value'}: ${i.message}`).join('; ');
     return { config, status: 'error', error: `the feed's value is not screen fields — ${why}` };
   }
   let live = r.data;
+  // a feed's form is merged over the author's, which alone decides where the form submits
+  if (live.form) live = { ...live, form: { ...config.form, ...live.form, ...(config.form?.action != null ? { action: config.form.action } : {}) } };
   if (typeof live.src === 'string') {
     try {
       const src = feedUrl && isRelative(live.src) ? new URL(live.src, feedUrl).href : live.src;

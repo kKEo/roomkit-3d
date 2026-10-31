@@ -16,6 +16,14 @@ describe('blockSchema', () => {
     expect(r.data.fields[0].type).toBe('text');
   });
 
+  it('a form field may ask the browser for contact details, never for cards or passwords', () => {
+    const form = fields => blockSchema.safeParse({ type: 'form', data: { fields } }).success;
+    expect(form([{ name: 'n', autocomplete: 'name' }, { name: 'e', type: 'email', autocomplete: 'email' }, { name: 'o', autocomplete: 'off' }])).toBe(true);
+    expect(form([{ name: 'c', autocomplete: 'cc-number' }])).toBe(false);
+    expect(form([{ name: 'p', autocomplete: 'current-password' }])).toBe(false);
+    expect(form([{ name: 'p', autocomplete: 'one-time-code' }])).toBe(false);
+  });
+
   it('lists every type', () => {
     expect(BLOCK_TYPES).toEqual(['markdown', 'heading', 'stats', 'cards', 'list', 'timeline', 'form']);
   });

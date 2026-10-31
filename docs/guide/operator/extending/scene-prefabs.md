@@ -116,4 +116,4 @@ A scene prefab is JavaScript running with the page's privileges, so trust is sco
 VITE_PREFAB_ORIGINS=https://content.example.com,https://cdn.example.com npm run build   # or `*`
 ```
 
-A cross-origin host must send `Access-Control-Allow-Origin` on the module and on every model or texture it fetches, serve `.js` as `text/javascript` (a SPA fallback that answers `index.html` breaks the import), and your Content-Security-Policy's `script-src` must include it.
+A cross-origin host must send `Access-Control-Allow-Origin` on the module and on every model or texture it fetches, serve `.js` as `text/javascript` (a SPA fallback that answers `index.html` breaks the import), and your Content-Security-Policy's `script-src` must include it. That CSP is the check the browser enforces; the app's own origin check is a convenience on top of it, so do send one (see [Deploying › Content-Security-Policy](../deploy/deploy.md#content-security-policy)). Anyone who can write to an allowed module origin can run code in your page.

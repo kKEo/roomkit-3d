@@ -179,6 +179,29 @@ describe('feed hub', () => {
     expect(hub.get(spec)).toMatchObject({ status: 'error', error: 'blocked' });
   });
 
+  it('drops a stream message over maxBytes as an error and keeps the last value', async () => {
+    const small = createHub({ fetchJson, EventSource: FakeES, warn, now: () => 1000, maxBytes: 20 });
+    const spec = { stream: 'https://a/sse' };
+    small.subscribe(spec, () => {});
+    const es = FakeES.all[0];
+    es.open();
+    es.send({ v: 1 });
+    expect(small.get(spec)).toMatchObject({ status: 'ok', value: { v: 1 } });
+    es.send({ v: 'x'.repeat(100) });
+    expect(small.get(spec)).toMatchObject({ status: 'error', value: { v: 1 } });
+    expect(small.get(spec).error).toContain('too large');
+    es.send({ v: 2 });
+    expect(small.get(spec)).toMatchObject({ status: 'ok', value: { v: 2 } });
+  });
+
+  it('hands the guard to fetchJson, so redirects are checked too', async () => {
+    hub.subscribe({ url: 'https://a/x.json' }, () => {});
+    await flush();
+    const guard = fetchJson.mock.calls[0][2];
+    expect(typeof guard).toBe('function');
+    expect(() => guard('https://evil.example/y.json')).toThrow('blocked');
+  });
+
   it('prune forgets unsubscribed feeds only', async () => {
     const a = { url: 'https://a/1.json' }, b = { url: 'https://a/2.json' };
     hub.subscribe(a, () => {})();
@@ -208,6 +231,12 @@ describe('feedSpec', () => {
     expect(feedSpec({ url: 'a', transform: 'nodes' }, ctx)).toMatchObject({ transform: ctx.transforms.nodes.fn, transformUrl: 'https://site/t.js#nodes' });
     expect(feedSpec({ url: 'a', transform: 'nope' }, ctx).error).toMatchObject({ status: 'error', error: 'unknown transform "nope"' });
   });
+
+  it('only declared transforms count, not Object.prototype\'s', () => {
+    for (const name of ['constructor', 'toString', 'hasOwnProperty', 'valueOf']) {
+      expect(feedSpec({ url: 'a', transform: name }, ctx).error?.error).toBe(`unknown transform "${name}"`);
+    }
+  });
 });
 
 describe('guardData and fetchJson', () => {
@@ -236,5 +265,35 @@ describe('guardData and fetchJson', () => {
     await expect(fetchJson('https://a/x.json')).rejects.toThrow('HTTP 404');
     respond('{bad');
     await expect(fetchJson('https://a/x.json')).rejects.toThrow('not JSON');
+  });
+
+  it('fetchJson stops reading a body that grows past MAX_BYTES, declared length or not', async () => {
+    const { fetchJson, MAX_BYTES } = await import('../src/data/feeds.js');
+    let pulled = 0, cancelled = false;
+    const chunk = new Uint8Array(1024 * 1024).fill(0x20); // 1 MB of spaces
+    const stream = new ReadableStream({
+      pull(ctrl) { pulled++; if (pulled > 8) ctrl.close(); else ctrl.enqueue(chunk); },
+      cancel() { cancelled = true; },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(stream, { status: 200, headers: { 'content-type': 'application/json' } })));
+    await expect(fetchJson('https://a/big.json')).rejects.toThrow('response too large');
+    expect(pulled).toBeLessThanOrEqual(Math.ceil(MAX_BYTES / chunk.length) + 2);
+    expect(cancelled).toBe(true);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"a":1}', { status: 200, headers: { 'content-type': 'application/json', 'content-length': String(MAX_BYTES + 1) } })));
+    await expect(fetchJson('https://a/big.json')).rejects.toThrow('response too large');
+  });
+
+  it('fetchJson applies the guard to where a redirect lands', async () => {
+    const { fetchJson } = await import('../src/data/feeds.js');
+    const redirected = (url, body = '{"a":1}') => {
+      const res = new Response(body, { status: 200, headers: { 'content-type': 'application/json' } });
+      Object.defineProperties(res, { redirected: { value: true }, url: { value: url } });
+      vi.stubGlobal('fetch', vi.fn(async () => res));
+    };
+    const guard = url => { if (url.startsWith('https://evil')) throw new Error('blocked: https://evil.example is not an allowed data origin'); return url; };
+    redirected('https://evil.example/x.json');
+    await expect(fetchJson('https://a/x.json', undefined, guard)).rejects.toThrow('redirected and blocked: https://evil.example');
+    redirected('https://a/moved.json');
+    expect(await fetchJson('https://a/x.json', undefined, guard)).toEqual({ a: 1 });
   });
 });

@@ -40,7 +40,7 @@ Inside `content.blocks`:
 | `cards` | `data: [{ title, text?, meta? }]`, and/or `feed` | two-column card grid (one column under 760 px) |
 | `list` | `data: [{ title, text?, icon? = "/" }]`, and/or `feed` | icon list |
 | `timeline` | `data: [{ title, text }]`, and/or `feed` | vertical timeline |
-| `form` | `data: { fields: [{ name, label, type? = "text" \| "email" \| "textarea", autocomplete?, required?, rows? }], submit?, action? }` | form; with `action` it POSTs the fields as JSON and shows `ui.formSent` / `ui.formFailed`; without it shows `ui.formPrototype` |
+| `form` | `data: { fields: [{ name, label, type? = "text" \| "email" \| "textarea", autocomplete?, required?, rows? }], submit?, action? }` | form; with `action` it POSTs the fields as JSON (no cookies; the origin must pass `VITE_DATA_ORIGINS`) and shows `ui.formSent` / `ui.formFailed`; without it shows `ui.formPrototype`. `autocomplete` takes contact-detail tokens only (`AUTOCOMPLETE` in `src/ui/blocks/schema.js`): never cards or passwords |
 
 A `{ markdown: path }` content is turned into a single `markdown` block at load time. Blocks in `content.blocks` are validated at load time (`src/ui/blocks/schema.js`); fenced blocks inside Markdown are validated when the panel renders.
 

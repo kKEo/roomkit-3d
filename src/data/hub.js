@@ -17,7 +17,8 @@
  *
  * Each response or message replaces the value. A failure keeps the last good value and marks the
  * snapshot `error` (a "stale" value); polling backs off up to 5 minutes. Each distinct failure is
- * warned once per source.
+ * warned once per source. `guard(url)` is asked before every request (and, by `fetchJson`, about
+ * where a redirect lands); a stream message longer than `maxBytes` is dropped as an error.
  */
 
 /** What a feed shows before anything has been asked for. */
@@ -34,7 +35,7 @@ const CLOSED = 2; // EventSource.CLOSED
 export const backoff = (refresh, fails) => Math.min(300, Math.max(refresh ?? 5, 5) * 2 ** (fails - 1));
 
 export function createHub({
-  fetchJson, EventSource, guard = url => url, visibility = null,
+  fetchJson, EventSource, guard = url => url, visibility = null, maxBytes = Infinity,
   now = Date.now, warn = console.warn, setTimer = setTimeout, clearTimer = clearTimeout,
 }) {
   const sources = new Map();
@@ -126,7 +127,7 @@ export function createHub({
     const ctrl = s.ctrl = new AbortController();
     const current = () => seq === s.seq && s.views.size > 0;
     try {
-      const json = await fetchJson(guard(s.url), ctrl.signal);
+      const json = await fetchJson(guard(s.url), ctrl.signal, guard);
       if (!current()) return;
       s.fails = 0;
       data(s, json, 'fetch');
@@ -147,6 +148,7 @@ export function createHub({
     es.onopen = () => { s.esFails = 0; };
     es.onmessage = msg => {
       if (s.es !== es) return;
+      if (typeof msg.data !== 'string' || msg.data.length > maxBytes) { sourceError(s, new Error(`a stream message is too large (over ${maxBytes} characters)`)); return; }
       let json;
       try { json = JSON.parse(msg.data); } catch { sourceError(s, new Error('a stream message is not JSON')); return; }
       data(s, json, 'message');

@@ -14,6 +14,13 @@ export const isHls = src => typeof src === 'string' && /\.m3u8([?#]|$)/i.test(sr
 const line = z.union([z.string(), z.number()]).transform(String);
 
 /**
+ * A CSS colour a screen config (or a feed) may give: `#hex`, `rgb()`/`hsl()` with plain numbers, or a
+ * colour name. It ends up in a canvas `fillStyle` and the overlay's `--accent`, so nothing else is let through.
+ */
+export const CSS_COLOR = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\(\s*[\d.%\s,/-]+\s*\)|[a-z]{3,30})$/i;
+const color = z.string().regex(CSS_COLOR, 'a colour is #hex, rgb()/hsl() or a colour name');
+
+/**
  * One screen's configuration. Every key but `source` is optional; which ones a source reads
  * is listed in the prefab reference. `id` keeps the screen's zoom/session state stable.
  * With `feed`, the other fields are placeholders until the first response arrives.
@@ -25,7 +32,7 @@ export const screenSchema = z.strictObject({
   title: z.string().optional(),
   lines: z.array(line).optional(),
   graph: z.enum(GRAPH_KINDS).optional(),
-  color: z.string().optional(),
+  color: color.optional(),
   prompt: z.string().optional(),
   commands: z.record(z.string(), z.union([line, z.array(line)])).optional(),
   rows: z.array(z.record(z.string(), z.any())).optional(),
@@ -52,9 +59,14 @@ export const screenSchema = z.strictObject({
 
 /**
  * What a feed may set on a screen: any field but `source`, `feed`, `id` and `zoom`, all optional.
- * Still strict, so a misspelt key in a feed response is reported rather than ignored.
+ * Still strict, so a misspelt key in a feed response is reported rather than ignored. A feed may change
+ * a form's fields and labels but never its `action`: data decides what a form shows, the scene author
+ * decides where it submits (src/data/live.js keeps the author's).
  */
-export const liveScreenSchema = screenSchema.omit({ source: true, feed: true, id: true, zoom: true }).partial();
+export const liveScreenSchema = screenSchema
+  .omit({ source: true, feed: true, id: true, zoom: true })
+  .extend({ form: formSchema.omit({ action: true }).optional() })
+  .partial();
 
 /** A bare source name or a full screen config, normalised to the config. */
 export const screenOrSource = z.union([z.enum(SCREEN_SOURCES).transform(source => screenSchema.parse({ source })), screenSchema]);

@@ -9,12 +9,24 @@ import { feedSchema } from '../../data/feedSchema.js';
 
 const text = z.union([z.string(), z.number()]).transform(String);
 
+/**
+ * The `autocomplete` tokens a form field may ask the browser for: contact details only. Payment and
+ * credential tokens (`cc-*`, `*-password`, `one-time-code`) are not offered, so a form can never invite
+ * the browser to fill in a card number or a password.
+ */
+export const AUTOCOMPLETE = [
+  'on', 'off', 'name', 'honorific-prefix', 'given-name', 'additional-name', 'family-name', 'honorific-suffix', 'nickname',
+  'email', 'tel', 'tel-country-code', 'tel-national', 'url', 'organization', 'organization-title', 'username',
+  'street-address', 'address-line1', 'address-line2', 'address-line3', 'address-level1', 'address-level2', 'postal-code', 'country', 'country-name',
+  'bday', 'language', 'sex', 'impp',
+];
+
 export const formSchema = z.strictObject({
   fields: z.array(z.strictObject({
     name: z.string().min(1),
     label: z.string().optional(),
     type: z.enum(['text', 'email', 'tel', 'url', 'number', 'textarea']).default('text'),
-    autocomplete: z.string().optional(),
+    autocomplete: z.enum(AUTOCOMPLETE).optional(),
     required: z.boolean().optional(),
     rows: z.number().int().positive().optional(),
   })).default([]),

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../state/store.js';
+import { guardData } from '../../config/origins.js';
 import { deltaDirection } from './schema.js';
 
 const ARROW = { up: '▲', down: '▼', flat: '•' };
@@ -53,7 +54,10 @@ export function Timeline({ data }) {
   );
 }
 
-/** { fields: [{ name, label, type, autocomplete }], submit, action? } — POSTs JSON to `action` if given. */
+/**
+ * { fields: [{ name, label, type, autocomplete }], submit, action? } — POSTs JSON to `action` if given.
+ * `action` must be an allowed data origin (`VITE_DATA_ORIGINS`), and nothing but the fields is sent: no cookies.
+ */
 export function Form({ data }) {
   const ui = useStore(s => s.scene.ui);
   const [status, setStatus] = useState('');
@@ -64,10 +68,14 @@ export function Form({ data }) {
     const form = e.currentTarget; // null after the await, so keep a reference
     const body = Object.fromEntries(new FormData(form));
     try {
-      const res = await fetch(data.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const url = guardData(data.action);
+      const res = await fetch(url, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       setStatus(res.ok ? ui.formSent : ui.formFailed);
       if (res.ok) form.reset();
-    } catch { setStatus(ui.formFailed); }
+    } catch (err) {
+      console.warn(`Form ${data.action}: ${err?.message ?? err}`);
+      setStatus(ui.formFailed);
+    }
   };
   return (
     <form onSubmit={onSubmit}>

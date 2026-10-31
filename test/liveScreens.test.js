@@ -38,6 +38,29 @@ describe('mergeLive', () => {
     expect(mergeLive(config, ok({ source: 'text' }), null, allow).status).toBe('error');
   });
 
+  it('validates every snapshot, even when a transform hands back the same (mutated) object', () => {
+    const value = { title: 'v1' };
+    expect(mergeLive(config, ok(value), null, allow).config.title).toBe('v1');
+    value.title = 'v2';
+    expect(mergeLive(config, ok(value), null, allow).config.title).toBe('v2');
+    value.bogus = 1;
+    expect(mergeLive(config, ok(value), null, allow).status).toBe('error');
+  });
+
+  it('a feed may change a form\'s fields but never where it submits', () => {
+    const form = { source: 'form', feed: { url: 'x' }, form: { fields: [{ name: 'a' }], submit: 'Go', action: 'https://me.example/in' } };
+    const r = mergeLive(form, ok({ form: { fields: [{ name: 'b', label: 'B' }] } }), null, allow);
+    expect(r.status).toBe('ok');
+    expect(r.config.form).toEqual({ fields: [{ name: 'b', label: 'B', type: 'text' }], submit: 'Go', action: 'https://me.example/in' });
+    // an action in the value is a shape error (the static config shows), not a new destination
+    const bad = mergeLive(form, ok({ form: { fields: [], action: 'https://evil.example/c' } }), null, allow);
+    expect(bad.status).toBe('error');
+    expect(bad.config).toBe(form);
+    // a form without an action stays a prototype whatever the feed sends
+    const proto = { source: 'form', feed: { url: 'x' }, form: { fields: [] } };
+    expect(mergeLive(proto, ok({ form: { fields: [{ name: 'c' }] } }), null, allow).config.form.action).toBeUndefined();
+  });
+
   it('resolves a relative src against the feed URL and applies the guard', () => {
     const img = { source: 'image', feed: { url: 'x' } };
     expect(mergeLive(img, ok({ src: 'pics/a.png' }), 'https://api.example/feeds/now.json', allow).config.src).toBe('https://api.example/feeds/pics/a.png');
@@ -89,6 +112,15 @@ describe('graph and stats screen fields', () => {
     expect(g.readout).toBe('7');
     const s = screenSchema.parse({ source: 'stats', stats: [{ value: 99.9, label: 'Uptime', unit: '%', delta: '+0.1' }] });
     expect(s.stats[0]).toEqual({ value: '99.9', label: 'Uptime', unit: '%', delta: '+0.1' });
+  });
+
+  it('a colour is a hex, rgb()/hsl() or a name, nothing a feed could smuggle into a style', () => {
+    for (const c of ['#ffb000', '#FFF', '#b80f7c80', 'rgb(255, 176, 0)', 'rgba(0,16,7,.74)', 'hsl(40 100% 50% / 0.5)', 'transparent', 'rebeccapurple']) {
+      expect(screenSchema.safeParse({ color: c }).success, c).toBe(true);
+    }
+    for (const c of ['red; background: url(https://x/t)', 'url(x)', 'var(--y)', '#ggg', 'rgb(1,2,3) !important', '']) {
+      expect(screenSchema.safeParse({ color: c }).success, c).toBe(false);
+    }
   });
 
   it('rejects radar points outside the circle and more than 8 stats', () => {

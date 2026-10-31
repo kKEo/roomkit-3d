@@ -13,7 +13,7 @@ export function feedSpec(feed, { resolveUrl = u => u, transforms = {} } = {}) {
   const abs = u => (u && isRelative(u) ? resolveUrl(u) : u);
   const spec = { url: abs(feed.url), stream: abs(feed.stream), refresh: feed.refresh };
   if (!feed.transform) return spec;
-  const t = transforms[feed.transform];
+  const t = Object.hasOwn(transforms, feed.transform) ? transforms[feed.transform] : null; // not `constructor` & co.
   if (!t) return { error: Object.freeze({ ...IDLE, status: 'error', error: `unknown transform "${feed.transform}"` }) };
   return { ...spec, transform: t.fn, transformUrl: t.url };
 }

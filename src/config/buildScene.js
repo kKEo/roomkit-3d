@@ -74,7 +74,7 @@ export async function buildScene({ name, read, resolveUrl, loadModule }) {
  * "Invalid key in record".
  */
 async function loadDeclared(decl, { key, what, label, load }) {
-  const extra = {}, errors = [];
+  const extra = Object.create(null), errors = []; // no prototype: a name like "constructor" can only be a declared one
   if (decl == null) return { extra, errors };
   const line = (name, msg) => `${label} › ${key}${name == null ? '' : '.' + name}: ${msg}`;
   if (typeof decl !== 'object' || Array.isArray(decl)) { errors.push(line(null, `must be a map of ${what} name → module path or URL`)); return { extra, errors }; }

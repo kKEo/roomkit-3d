@@ -57,4 +57,34 @@ Scene prefab and transform modules must be served as `text/javascript` (a SPA fa
 
 The default theme loads fonts from Google Fonts (`theme.fontsUrl`). Set it to `""` per scene to make the site fully self-contained.
 
-A scene's live feeds and HLS video URLs are requested by the visitor's browser from whatever hosts the scene names; the app sends no cookies or credentials with feeds. To keep feeds to known hosts, build with `VITE_DATA_ORIGINS` (comma-separated origins): then only the page's origin, the scenes' origin and those are fetched. Data hosts must send `Access-Control-Allow-Origin`, and a Content-Security-Policy needs them in `connect-src` (feeds and streams) and `media-src` / `img-src` (video and images). hls.js is a separate chunk in `dist/assets/` (`hls.light-*.js`), fetched only when a scene plays an HLS stream in a browser without native HLS. See the content guide's [privacy page](../../user/privacy.md).
+A scene's live feeds and HLS video URLs are requested by the visitor's browser from whatever hosts the scene names; the app sends no cookies or credentials with feeds, and accepts at most 2 MB per answer or stream message. To keep feeds to known hosts, build with `VITE_DATA_ORIGINS` (comma-separated origins): then only the page's origin, the scenes' origin and those are fetched, for feeds, for the media and HLS segments a feed or playlist names, and for a form's `action`; a JSON feed that redirects elsewhere is refused too. Data hosts must send `Access-Control-Allow-Origin`, and a Content-Security-Policy needs them in `connect-src` (feeds, streams and forms) and `media-src` / `img-src` (video and images); see [Content-Security-Policy](#content-security-policy) below. hls.js is a separate chunk in `dist/assets/` (`hls.light-*.js`), fetched only when a scene plays an HLS stream in a browser without native HLS. See the content guide's [privacy page](../../user/privacy.md).
+
+## Content-Security-Policy
+
+The origin rules above (`VITE_PREFAB_ORIGINS`, `VITE_DATA_ORIGINS`) are checked by the app's own JavaScript (`src/config/origins.js`). The boundary the **browser** enforces is a Content-Security-Policy, so send one as a response header from the web server (a `<meta http-equiv="Content-Security-Policy">` in `dist/index.html` and `dist/edit.html` works too, but cannot carry `frame-ancestors`). Build it from the same settings. With the app and its scenes on one host, and feeds from `https://api.example.com`:
+
+```
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+  connect-src 'self' https://api.example.com;
+  img-src 'self' data: blob: https://api.example.com;
+  media-src 'self' blob: https://api.example.com;
+  worker-src 'self' blob:;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  base-uri 'self';
+  form-action 'none';
+  frame-ancestors 'self';
+```
+
+| Directive | What to list | Why |
+| --- | --- | --- |
+| `script-src` | the page, the origin of `VITE_SCENES_BASE`, every `VITE_PREFAB_ORIGINS` entry. Never `'unsafe-eval'` or `*` | scene prefab and transform modules are `import()`ed; this directive decides which hosts may run code in your page, whatever the app's own check says |
+| `connect-src` | the page, the scenes' origin, every `VITE_DATA_ORIGINS` entry | scene files, feeds, streams, HLS playlists and segments, and form `action`s. Without `VITE_DATA_ORIGINS`, every host a scene's feeds name must be here, or the browser refuses it |
+| `img-src`, `media-src` | the same data origins, plus `data:` and `blob:` | image and video screens, a `src` a feed hands back, textures and hls.js buffers |
+| `worker-src` | `'self' blob:` | hls.js demuxes in a Web Worker |
+| `style-src`, `font-src` | `'unsafe-inline'`; the Google Fonts hosts while scenes keep the default `theme.fontsUrl` | React sets inline `style` attributes (overlay geometry, accent colours); a scene with `"fontsUrl": ""` needs no font hosts |
+| `form-action` | `'none'` | forms submit with `fetch` and never navigate |
+
+A policy that is too tight shows up as `Refused to …` errors in the console, a scene that does not load, or a feed marked `!`. Roll it out with `Content-Security-Policy-Report-Only` first, then switch to the enforcing header. Remember that whoever can write to the scenes' origin can ship modules that run in your page: treat that host like the app's own.
