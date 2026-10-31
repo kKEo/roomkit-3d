@@ -26,7 +26,8 @@ export function EditorApp() {
   const [addType, setAddType] = useState('desk');
   // the prefab types the last good build knew: built-ins plus the scene's own
   const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
-  // bumped by "Reload prefabs": the scene's prefab modules are re-imported under a new `?v=`
+  const hasTransforms = useStore(s => Object.keys(s.scene?.transforms ?? {}).length > 0);
+  // bumped by "Reload modules": the scene's prefab and transform modules are re-imported under a new `?v=`
   const [bust, setBust] = useState(0);
   // media paths resolve against the scene the editor started from (new scenes have no media yet)
   const base = useRef(null);
@@ -100,8 +101,8 @@ export function EditorApp() {
           </select>
           <button type="button" className="btn ghost" onClick={onAddObject} disabled={!files}>Add to {target === 'scene.json' ? 'decor' : target.replace(/^poi\//, '')}</button>
           <button type="button" className="btn ghost" onClick={onAddPoi} disabled={!files}>New point of interest</button>
-          {Object.keys(registry.extra).length > 0 && (
-            <button type="button" className="btn ghost" onClick={() => setBust(b => b + 1)} title="Import the scene's prefab modules again">Reload prefabs</button>
+          {(Object.keys(registry.extra).length > 0 || hasTransforms) && (
+            <button type="button" className="btn ghost" onClick={() => setBust(b => b + 1)} title="Import the scene's prefab and transform modules again">Reload modules</button>
           )}
         </div>
         <ul className="editor-files">

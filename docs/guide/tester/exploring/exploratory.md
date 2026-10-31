@@ -61,6 +61,23 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Resize the window while zoomed | the overlay stays on the screen's edges |
 | Desk monitor, cinema screen, a framed picture | they zoom too, with only the Back button over them |
 
+## Live data
+
+Run `make dev` and open stop 07 of the default room. Its node table, FLEET numbers, NODE LOAD bars and the panel's second `stats` row read `public/scenes/neo-room/data/nodes.json` every 15 s.
+
+| Try | Expect |
+| --- | --- |
+| Load stop 07 and watch the network tab | one request for `data/nodes.json` every 15 s, not one per screen |
+| Change a `load` or a `status` in `nodes.json` and wait up to 15 s | all four update; the bars ease to the new heights; the STATUS and NETWORK screens keep animating (nothing restarts) |
+| Zoom into the node table while editing the file | the overlay's rows follow the file |
+| Break `nodes.json` (delete the closing brace) | within 15 s a `!` appears on the live screens' title bars, "not updating" in the zoomed overlay and under the panel numbers; the last data stays; the console shows one `Feed …: not JSON` line, not one per retry |
+| Restore the file | the marks disappear on the next retry (up to about 30 s with backoff) |
+| Switch to another browser tab for a minute, then back | no requests while hidden; one request right after returning |
+| In the editor, set a screen to `{ "source": "stats", "feed": { "stream": "/__feeds/ticker" } }` | the numbers tick once a second |
+| In the editor, name a transform that does not exist in a screen's `feed` | the error list shows `… .feed.transform: unknown transform "…"` |
+| A `video` screen with a public `.m3u8` test stream, in Chrome, Firefox and Safari | it plays in all three (natively in Safari and recent Chrome, through hls.js elsewhere: an `hls.light` chunk appears in the network tab) |
+| A screen reader on the Control panel | the live numbers are not announced on every refresh |
+
 ## Markers and labels
 
 | Try | Expect |

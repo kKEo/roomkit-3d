@@ -65,12 +65,17 @@ Each entry of `screens` configures that screen alone:
 
 | Key | Used by | Notes |
 | --- | --- | --- |
-| `source` | all | `"rain"` (default), `"image"`, `"video"`, `"text"`, `"graph"`, or the interactive `"terminal"`, `"dashboard"`, `"form"`; anything else falls back to rain with a console warning |
-| `src` | `image`, `video` | file path, resolved against the scene folder |
+| `source` | all | `"rain"` (default), `"image"`, `"video"`, `"text"`, `"graph"`, `"stats"`, or the interactive `"terminal"`, `"dashboard"`, `"form"`; anything else falls back to rain with a console warning |
+| `src` | `image`, `video` | file path, resolved against the scene folder. A video `src` ending in `.m3u8` is an HLS live stream (see below) |
 | `label` | `rain` | caption in the middle of this screen's **own** rain; without `label` and `color` the screen shows the shared rain with the POI's `screenLabel` |
-| `title` | `text`, `graph` | text in the title bar |
+| `title` | all canvas-drawn sources | text in the title bar |
 | `lines` | `text` | array of strings, typed out at about 45 characters per second, then repeated after 5 s (shown at once with reduced motion); about 7 lines fit |
-| `graph` | `graph` | `"wave"` (scrolling signal, default), `"bars"` (16 live levels) or `"radar"` (sweep with fading contacts); the title bar shows a live readout |
+| `graph` | `graph` | `"wave"` (signal, default), `"bars"` (levels) or `"radar"` (sweep with fading contacts); the title bar shows a readout. Without `values`/`points` it animates demo data |
+| `values` | `graph` | numbers (up to 256): one bar each for `bars`, the series for `wave` (its last 120 points). Bars ease toward new values |
+| `points` | `graph` (`radar`) | blips `{ "angle": degrees clockwise from the top, "distance": 0–1, "label"? }`, up to 64; a label shows while its blip glows |
+| `min`, `max` | `graph` | the range `values` are drawn in; default the data's own range (bars start at 0) |
+| `readout` | `graph` | title-bar text instead of the computed one (latest wave value, mean of the bars, number of contacts) |
+| `stats` | `stats` | up to 8 `{ "value", "label", "unit"?, "delta"? }`, the same items as the panel's `stats` block, drawn as big numbers; a `delta` starting with `+` (or a positive number) shows ▲, with `-` ▼. A changed value flashes |
 | `color` | all canvas-drawn sources | CSS colour for this screen only (and its zoomed-in overlay); default `theme.accent` |
 | `prompt` | `terminal` | text before the input, default `"> "` |
 | `lines` | `terminal` | banner shown until the first command |
@@ -80,7 +85,9 @@ Each entry of `screens` configures that screen alone:
 | `filters` | `dashboard` | fields that get a chip group (All + each distinct value) |
 | `value` | `dashboard` | numeric field drawn as a bar, scaled to the largest value in `rows` |
 | `form` | `form` | `{ fields, submit, action }`, the same shape as the panel's `form` block |
+| `feed` | all | live data for this screen: a URL, or `{ url, refresh, stream, transform }`. Its values are merged over the keys above as they arrive; see [Live data](../extending/live-data.md) |
 | `zoom` | all | `false` makes this screen not clickable |
+| `id` | all | names the screen: keeps its interactive state and is the hotspot a scene binds an action to (default `scr0`, `scr1`, … on a control desk) |
 
 ```json
 "screens": [
@@ -99,7 +106,13 @@ Placement (`top` = upper edge of the screen wall): focus `[0, (1.65 + top) / 2, 
 
 Every `ScreenSurface` inside a POI's objects is clickable unless its `zoom` is `false`. Screens in `decor` are not: `PoiObjects` (`src/scene/Experience.jsx`) provides the POI id through `PoiContext`, and decor has none. The first click on a screen of another POI calls `goTo` for that POI; a click on a screen of the current POI zooms into it (see [Navigation and the camera](../internals/camera.md#zooming-into-a-screen)).
 
-The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI index and the screen's `id` (the control desk passes `scr0`, `scr1`, …). The state lives until the page reloads; it is not saved anywhere.
+The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI index and the screen's `id` (the control desk passes `scr0`, `scr1`, … unless a screen has its own `id`). The state lives until the page reloads; it is not saved anywhere.
+
+#### Live screens and streams
+
+A screen with a `feed` shows its own keys as placeholders, then the feed's values merged over them, refreshed in place (the canvas is not rebuilt, so typing and animation carry on). Its title bar shows a blinking `…` until the first answer and a `!` while the feed fails; the last good data stays. Zoomed in, a live dashboard or terminal shows the same live data and "not updating" when the feed fails. See [Live data](../extending/live-data.md).
+
+A `video` screen whose `src` ends in `.m3u8` plays an HLS live stream: natively where the browser supports it (Safari, recent Chrome), otherwise through hls.js, which is downloaded only then. The stream's playlist and segments must be served with CORS headers, like any video drawn in WebGL. Each stream runs its own decoder; keep to one or two per scene.
 
 ### serverRack
 
@@ -153,7 +166,8 @@ A screen in a frame, with an optional stage and speakers. Origin: **wall surface
 | `height` | `5.6` | |
 | `elevation` | `4.3` | height of the screen's centre |
 | `source` | `"rain"` | `"rain"`, `"image"` or `"video"` |
-| `src` | `null` | media file for `source` |
+| `src` | `null` | media file for `source` (an `.m3u8` URL plays as an HLS live stream) |
+| `screen` | `null` | a full screen config, as for a [control desk screen](#controldesk) (`"stats"`, `"graph"`, a `feed`, …); when given it replaces `source` and `src` |
 | `zoom` | `true` | `false` makes the screen not clickable |
 | `stage` | `true` | 2.6 m deep floor stage |
 | `speakers` | `true` | at `±(w/2 + 1.4)` |

@@ -15,7 +15,7 @@ function PanelContent({ index }) {
       {poi.content.blocks.map((b, i) => {
         if (b.type === 'markdown') return <Markdown key={i} text={b.text ?? b.data ?? ''} />;
         if (b.type === 'heading') return <ScrambleHeading key={i}>{b.text ?? b.data}</ScrambleHeading>;
-        return <Block key={i} type={b.type} data={b.data} />;
+        return <Block key={i} type={b.type} data={b.data} feed={b.feed} />;
       })}
       {N > 1 && (
         <div className="pager">

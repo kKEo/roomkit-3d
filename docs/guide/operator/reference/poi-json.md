@@ -36,10 +36,12 @@ Inside `content.blocks`:
 | --- | --- | --- |
 | `markdown` | `text` (or `data`) | GFM Markdown; fenced `stats`/`cards`/`list`/`timeline`/`form` blocks inside it render as components |
 | `heading` | `text` (or `data`) | scrambled H1 |
-| `stats` | `data: [{ value, label }]` | row of figures |
-| `cards` | `data: [{ title, text?, meta? }]` | two-column card grid (one column under 760 px) |
-| `list` | `data: [{ title, text?, icon? = "/" }]` | icon list |
-| `timeline` | `data: [{ title, text }]` | vertical timeline |
+| `stats` | `data: [{ value, label, unit?, delta? }]`, and/or `feed` | row of figures; `unit` small after the value, `delta` like `"+4%"` shown as ▲/▼ |
+| `cards` | `data: [{ title, text?, meta? }]`, and/or `feed` | two-column card grid (one column under 760 px) |
+| `list` | `data: [{ title, text?, icon? = "/" }]`, and/or `feed` | icon list |
+| `timeline` | `data: [{ title, text }]`, and/or `feed` | vertical timeline |
 | `form` | `data: { fields: [{ name, label, type? = "text" \| "email" \| "textarea", autocomplete?, required?, rows? }], submit?, action? }` | form; with `action` it POSTs the fields as JSON and shows `ui.formSent` / `ui.formFailed`; without it shows `ui.formPrototype` |
 
 A `{ markdown: path }` content is turned into a single `markdown` block at load time. Blocks in `content.blocks` are validated at load time (`src/ui/blocks/schema.js`); fenced blocks inside Markdown are validated when the panel renders.
+
+`stats`, `cards`, `list` and `timeline` take a `feed` (a URL, or `{ url, refresh, stream, transform }`) to load their `data` live; a `data` given too is shown until the first answer. In Markdown, write the fence body as an object: ```` ```stats ```` then `{ "feed": "data/kpi.json", "data": [...] }`. See [Live data](../extending/live-data.md).

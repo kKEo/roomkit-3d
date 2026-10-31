@@ -10,11 +10,13 @@ This page follows a scene from its folder to the `scene` and `pois` objects the 
 
 The scenes base URL is `./scenes/` next to the page (it follows Vite's `base`), unless the build sets `VITE_SCENES_BASE`; see [Build and deploy](../deploy/deploy.md#serving-scenes-from-elsewhere).
 
-## Scene prefabs
+## Scene prefabs and transforms
 
 Before anything is validated, `scene.json › prefabs` (type → module path or URL) is read from the raw file and each module is imported with `loadModule` (`import()` in the browser, behind the origin check in `loadScene.js`; a file import in the tests). Its `meta(META_SDK)` is called and the result normalised like a built-in's (`normalisePrefab` in `src/prefabs/registry.js`). The built-ins plus these form the scene's **registry** (`createRegistry`), and `makeSchemas(registry)` in `src/config/schema.js` produces the object, POI and scene schemas that know these types; a registry is made per build, so two scenes may use the same custom type name. Each failure (a type name that is invalid or built-in, a module that does not load or has no `meta`, a schema without defaults) is a line `scene.json › prefabs.<type>: …`; objects of that type then fail as unknown types. The result's `scene` carries `registry` and `prefabs` (type → resolved URL) for the renderer and the editor. See [Scene-shipped prefabs](../extending/scene-prefabs.md).
 
-`prefabs` is the one key whose default (`{}`) comes from the schema rather than from `SCENE_DEFAULTS`.
+`scene.json › transforms` (name → module path or URL, `#export` optional) is loaded the same way and at the same time, by the same `loadDeclared` helper: each becomes `{ url, fn }` in `scene.transforms`. Failures are lines `scene.json › transforms.<name>: …`. After validation, `checkFeeds` walks the decor, every POI's objects and its `content.blocks` for feed configs (they carry a tag from `feedSchema`, so a scene prefab's own props count too) and reports a `transform` the scene does not declare. The built scene also carries `resolveUrl`, which feeds use at runtime to resolve their relative URLs. See [Live data](../extending/live-data.md).
+
+`prefabs` and `transforms` are the two keys whose default (`{}`) comes from the schema rather than from `SCENE_DEFAULTS`.
 
 ## Scene file
 

@@ -11,6 +11,7 @@ This page defines the project-specific terms used in this guide.
 | **decor** | Objects in `scene.json` that are not POIs: rendered, not navigable. |
 | **fat line** | A `LineSegments2` outline with a constant pixel width (`thick`, `mid`, `glow`). |
 | **fill** | Which hatch material a solid uses: `main`, `fine`, `room` or `hit`. |
+| **feed** | A screen's or block's live data source: `{ url, refresh, stream, transform }`, run by the hub in `src/data/hub.js`. See [Live data](../extending/live-data.md). |
 | **focus** | Prefab-local point the auto-placed camera looks at. |
 | **hatch** | The shader that draws light as accent-coloured line patterns. |
 | **nav** | Store field `{ index, duration, nonce }`; changing it starts a camera transit. |
@@ -21,6 +22,7 @@ This page defines the project-specific terms used in this guide.
 | **runtime** | Mutable object in `src/state/store.js` for per-frame values shared with DOM overlays. |
 | **scene folder** | `public/scenes/<name>/`; every relative path in a scene's files resolves against it. |
 | **shown / current** | Store indices: `current` is where the camera is or is going; `shown` is whose panel is open (−1 during flights). |
+| **transform** | A function in a scene-shipped module, declared in `scene.json › transforms`, that turns a feed's response into screen fields or block data. |
 | **transit** | One camera flight inside `CameraRig`: curve, duration, start time, roll direction. |
 | **view offset** | `camera.setViewOffset` shift that keeps the subject clear of the panel. |
 | **WorldContext** | React context inside the canvas: `{ mats, rain, room, theme }`. |

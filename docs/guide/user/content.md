@@ -97,6 +97,17 @@ A special block is a fenced block (three backticks) whose first line names the b
 
 Without `action`, pressing the button only shows "This is a prototype — the message was not sent." With `action`, the answers are sent to that address. Whoever runs that address must accept them; ask your operator.
 
+**Live blocks.** `stats`, `cards`, `list` and `timeline` can fetch their items from a web address and keep them up to date. Write the block's body as `{ … }` with a `feed` instead of a list:
+
+````markdown
+```stats
+{ "feed": { "url": "data/kpi.json", "refresh": 60 },
+  "data": [{ "value": "–", "label": "visitors today" }] }
+```
+````
+
+The address answers with the same list you would write in the block. `data` is optional: it shows until the first answer arrives. If the address stops answering, the last items stay with a small "not updating" note. The settings of a `feed` are the same as for [live screens](objects.md#live-screens).
+
 ![The Projects panel with a cards block: four cards in a two-by-two grid, each with a title, a line of text and a small meta line](images/projects.png)
 
 *A `cards` block in the Projects panel.*

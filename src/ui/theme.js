@@ -11,6 +11,7 @@ export function applyTheme(scene) {
     '--text': t.text,
     '--text-dim': t.textDim,
     '--accent': t.accent,
+    '--highlight': t.highlight,
     '--accent-ink': t.accentInk,
     '--glow': `0 0 14px ${rgba(t.accent, 0.35)}`,
     '--display': t.fonts.display,

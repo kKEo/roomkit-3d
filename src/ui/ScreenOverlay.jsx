@@ -5,9 +5,11 @@ import { getSession } from '../scene/screenState.js';
 import { Terminal } from './screens/Terminal.jsx';
 import { Dashboard } from './screens/Dashboard.jsx';
 import { Form } from './blocks/index.jsx';
+import { useLiveScreen } from '../data/live.js';
 
 const FormScreen = ({ config }) => <Form data={config.form ?? {}} />;
 const KINDS = { terminal: Terminal, dashboard: Dashboard, form: FormScreen };
+const NO_SCREEN = {};
 
 /**
  * DOM layer pinned over the screen the camera is zoomed into. The camera faces the screen
@@ -19,6 +21,8 @@ export function ScreenOverlay() {
   const ui = useStore(s => s.scene.ui);
   const exitZoom = useStore(s => s.exitZoom);
   const ref = useRef(null);
+  // the screen's live config: same feed (and hub entry) as the screen itself, so no extra request
+  const { config: screen, status } = useLiveScreen(zoom?.screen ?? NO_SCREEN);
 
   useEffect(() => {
     if (!zoom) return;
@@ -52,18 +56,22 @@ export function ScreenOverlay() {
   }, [zoom]);
 
   if (!zoom) return null;
-  const Body = KINDS[zoom.screen.source];
+  const Body = KINDS[screen.source];
   const back = <button type="button" className="zback" onClick={exitZoom} aria-label={ui.zoomBack}>← {ui.zoomBack} <kbd>Esc</kbd></button>;
   return (
     <div
-      key={zoom.key} ref={ref} role="dialog" aria-label={zoom.screen.title || ui.zoomScreen}
+      key={zoom.key} ref={ref} role="dialog" aria-label={screen.title || ui.zoomScreen}
       className={`screen-ui${Body ? ' live' : ''}`}
-      style={zoom.screen.color ? { '--accent': zoom.screen.color } : undefined}
+      style={screen.color ? { '--accent': screen.color } : undefined}
     >
       {Body ? (
         <>
-          <header className="screen-title"><span>{zoom.screen.title}</span>{back}</header>
-          <div className="screen-body"><Body config={zoom.screen} session={getSession(zoom.key, () => ({}))} ui={ui} /></div>
+          <header className="screen-title">
+            <span>{screen.title}</span>
+            {status === 'error' && <small className="feed-stale" title={ui.feedError}>{ui.feedStale}</small>}
+            {back}
+          </header>
+          <div className="screen-body"><Body config={screen} session={getSession(zoom.key, () => ({}))} ui={ui} /></div>
         </>
       ) : back}
     </div>

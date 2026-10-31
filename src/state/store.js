@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { reducedMotion } from '../lib/env.js';
 import { resetSessions } from '../scene/screenState.js';
+import { feeds } from '../data/feeds.js';
 import { runAction } from '../actions/registry.js';
 import { loadGfx, saveGfx, GFX_DEFAULTS } from '../lib/gfx.js';
 
@@ -52,7 +53,7 @@ export const useStore = create((set, get) => ({
   setLoaded: (scene, pois) => {
     const prev = get();
     const fresh = prev.scene?.name !== scene.name;
-    if (fresh) resetSessions();
+    if (fresh) { resetSessions(); feeds.prune(); }
     const keep = id => (!fresh && pois.some(p => p.id === id) ? id : null);
     set({
       status: 'ready', error: null, scene, pois,

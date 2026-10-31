@@ -76,13 +76,33 @@ A `controlDesk` takes a list of screens. They fill the wall left to right, top r
 
 | A screen with… | Shows |
 | --- | --- |
-| `"source": "graph"` | a live chart under a `title`: `"graph": "wave"` (a moving signal), `"bars"` (bouncing levels) or `"radar"` (a sweeping radar) |
+| `"source": "graph"` | a chart under a `title`: `"graph": "wave"` (a moving signal), `"bars"` (levels) or `"radar"` (a sweeping radar). Without numbers of your own it moves on its own; with `"values": [12, 40, 33]` it draws yours (see below) |
+| `"source": "stats"` | big numbers with labels, like the `stats` block: `"stats": [{ "value": "99.9", "unit": "%", "label": "uptime", "delta": "+0.2" }]`, up to eight |
 | `"source": "text"` | a `title` bar and your `lines`, typed out like a terminal, again and again |
 | `"source": "image"` or `"video"` | the file in `src`, as for frames |
 | `"source": "rain"` with a `label` | its own green rain with your words in the middle |
 | nothing (`{}`) | the room's shared rain, with this stop's screen label |
 
 Add `"color": "#ffb000"` to any graph, text or rain screen to give that one screen its own colour. Six screens in three columns make two rows; eight screens in four columns make two rows of four.
+
+A graph can show your own numbers: `"values"` for `bars` (one bar each) and `wave` (a line through them), `"min"` and `"max"` for the scale, and `"readout"` for the text in its title bar. A radar takes `"points"`: `{ "angle": 45, "distance": 0.6, "label": "ship" }`, with the angle in degrees clockwise from the top and the distance from the centre (0 to 1).
+
+## Live screens
+
+A screen can fetch what it shows from a web address and keep it up to date, so a table, a graph or a row of numbers follows real data. Add a `feed`:
+
+```json
+{ "source": "stats", "title": "TODAY", "feed": { "url": "data/today.json", "refresh": 30 } }
+```
+
+- `url` is a file in the scene folder or a full `https://…` address that answers with the screen's settings, for example `{ "stats": [...] }` or `{ "rows": [...] }`.
+- `refresh` fetches it again every so many seconds. Leave it out to fetch once.
+- `stream` is an address that pushes updates as they happen (Server-Sent Events). Ask your operator if you have one.
+- `transform` names a small function your operator wrote, for data that does not come in the screen's own shape. The example room's control desk uses one to turn `data/nodes.json` into its table, numbers and bars.
+
+What you write next to `feed` shows until the first answer arrives. While the data is loading, the screen's title bar shows a blinking `…`. If the address stops answering, the last data stays and the title bar shows a `!`.
+
+> **Note.** An address on another website only works if that site allows it (operators call this CORS). If a live screen shows a `!`, ask the site's owner or your operator.
 
 ## Screens you can use
 
@@ -142,3 +162,7 @@ A misspelt part name is reported on the loading screen together with the names t
 Put image and video files in the scene's `media/` folder and refer to them as `"media/name.jpg"`. Pictures are cropped to fill the frame without stretching. Videos play silently, on a loop. While a file is loading, or if it cannot be found, the screen shows the green rain instead.
 
 > **Tip.** JPEG, PNG, SVG and WebP pictures all work. For videos, MP4 (H.264) plays in every browser.
+
+**Live video.** A `video` screen can also play a live stream: give its address ending in `.m3u8` (HLS, the format most streaming services offer) as `src`. On a cinema screen, write it as `"source": "video", "src": "https://…/live.m3u8"`. The streaming service must allow your site to play it. One or two streams per room is plenty; each one costs the visitor's computer some work.
+
+A cinema screen can show any kind of screen, not only pictures and videos: give it a whole screen as `"screen"`, for example `"screen": { "source": "stats", "feed": "data/today.json" }`.

@@ -26,5 +26,9 @@ This page is the runbook: routine changes after go-live and the known ways the s
 | Colours much darker than the theme | colour management was re-enabled | see [Rendering](../internals/rendering.md) |
 | A screen shows rain instead of an image or video | media 404, wrong type or CORS | console warning names the file; add `Access-Control-Allow-Origin` for other hosts |
 | A panel block is red | JSON error or unknown block type in that block | fix the content; the red text says what |
+| A screen's title bar shows a `!`, or a panel block says "not updating" | its feed failed: unreachable, no CORS header, not JSON, HTML instead of JSON, a transform that throws, or an answer with unknown keys | the console has one line `Feed <url>: <reason>`; fix the host or the transform. The last good data stays, and the feed retries with backoff |
+| A live screen never leaves the blinking `…` | the feed has not answered yet: a slow host, or a stream that never sends a message | open the feed URL in the browser; check the network tab for the request |
+| `blocked: … is not an allowed data origin` | the build sets `VITE_DATA_ORIGINS` and the feed's host is not listed | add the origin and rebuild, or move the data |
+| A video screen with an `.m3u8` stays on rain | HLS playlist or segments without CORS headers, or the stream is down | the console names the stream and the hls.js error |
 | Labels drift away from the diamonds | changed view-offset or camera code without updating `src/ui/Labels.jsx` | labels project with `runtime.camera`, so they must run after `CameraRig` has updated it |
 | Room freezes after editing `src/state/store.js` in dev | hot reload replaced the store under a mounted canvas | reload the page; this does not happen in production |

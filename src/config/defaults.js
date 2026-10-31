@@ -40,6 +40,9 @@ export const SCENE_DEFAULTS = {
   effects: { ease: 'quint', parallax: 0.8, warp: 12, particles: 520, panelOffset: 0.16, markers: true },
   ui: {
     loading: 'Initializing room',
+    feedLoading: 'Loading live data…',
+    feedError: 'Live data could not be loaded',
+    feedStale: 'not updating',
     loadError: 'Could not load the scene',
     unsupported: 'This browser cannot show the room',
     unsupportedHint: 'The room is drawn with WebGL 2, which this browser does not support or has turned off. Open the page in a current Chrome, Edge, Firefox or Safari, with hardware acceleration enabled.',

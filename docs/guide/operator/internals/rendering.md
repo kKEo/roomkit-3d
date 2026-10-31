@@ -80,12 +80,14 @@ Fat lines keep a constant pixel width. `LineSegments2.onBeforeRender` sets the m
 `ScreenSurface` (`src/prefabs/media.jsx`) is the one screen component every prefab uses. It picks its texture in this order:
 
 1. an image or video texture once loaded (`source: "image" | "video"`);
-2. a screen-owned canvas from `src/scene/screens.js`: `createTextScreen` (`"text"`), `createGraphScreen` (`"graph"`: wave, bars or radar), or `createOwnRain` (`"rain"` with a `label` or `color`). Each owns a 512 × 288 `CanvasTexture`, redrawn about 20 times a second in `useFrame` and disposed on unmount;
+2. a screen-owned canvas from `src/scene/screens.js`: `createTextScreen` (`"text"`), `createGraphScreen` (`"graph"`: wave, bars or radar, from `values`/`points` or demo data), `createStatsScreen` (`"stats"`), or `createOwnRain` (`"rain"` with a `label` or `color`). Each owns a 512 × 288 `CanvasTexture`, stepped about 20 times a second in `useFrame` and disposed on unmount;
 3. otherwise the shared rain.
+
+A drawer is created once per screen and source; new content (a live feed's answer, an edit in the editor) reaches it through `update(config, status)`, so the canvas is not recreated and its animation carries on. `status` (`"static"`, `"loading"`, `"ok"`, `"error"`) puts a mark in the title bar: a blinking `…` while loading, a `!` on failure. See [Live data](../extending/live-data.md).
 
 The interactive sources draw a preview from their shared state: `createTerminalScreen` (log tail, prompt and the text being typed), `createDashboardScreen` (one bar per filtered row; active filters and `n/total` in the title bar) and `createFormScreen` (field boxes and the submit button, drawn once).
 
-Canvas screens cost one texture upload per redraw, so a wall of six adds six small uploads about 20 times a second. That is fine on desktop GPUs; keep walls modest on low-end phones. Media are scaled to "cover" the plane. Videos are created muted, looping and inline with `crossOrigin = 'anonymous'`; images use three's `TextureLoader`, which defaults to `anonymous` too.
+Canvas screens cost one texture upload per redraw, so a wall of six adds six small uploads about 20 times a second. That is fine on desktop GPUs; keep walls modest on low-end phones. Media are scaled to "cover" the plane. Videos are created muted, looping and inline with `crossOrigin = 'anonymous'`; an `.m3u8` source plays natively where the browser supports HLS, else through hls.js (`hls.js/light`, imported on demand). Images use three's `TextureLoader`, which defaults to `anonymous` too.
 
 ## The zoomed-in screen overlay
 
@@ -97,6 +99,8 @@ Canvas screens cost one texture upload per redraw, so a wall of six adds six sma
 | `dashboard` | `src/ui/screens/Dashboard.jsx`: search, chip groups, table with value bars |
 | `form` | the panel's `Form` block (`src/ui/blocks/index.jsx`) |
 | anything else | no body, only the Back button over the close-up |
+
+The overlay reads the screen's live config through the same feed as the screen (`useLiveScreen` in `src/data/live.js`), so a live dashboard's rows update while zoomed in; while the feed fails the title bar says `ui.feedStale`.
 
 The overlay component and the canvas drawer share one plain object per screen (`getSession(key)` in `src/scene/screenState.js`). The component writes to it in effects; the drawer reads it on every redraw. That is why the 3D screen shows the filters and typed lines after the visitor steps back.
 

@@ -1,17 +1,11 @@
 import { buildScene } from './buildScene.js';
 import { ConfigError } from './schema.js';
 import { preloadPrefabs } from '../prefabs/preload.js';
+import { scenesBase, guardOrigin } from './origins.js';
+
+export { scenesBase, guardOrigin, guardData } from './origins.js';
 
 export const SCENE_NAME = /^[a-z0-9][a-z0-9-_]*$/i;
-
-/**
- * Where scene folders live. `VITE_SCENES_BASE` (build-time; absolute, or relative to the page)
- * lets one deployed viewer serve scenes published elsewhere; the default is `./scenes/` next to the app.
- */
-export function scenesBase() {
-  const base = import.meta.env.VITE_SCENES_BASE || `${import.meta.env.BASE_URL}scenes/`;
-  return new URL(base.endsWith('/') ? base : `${base}/`, location.href);
-}
 
 export function sceneNameFromUrl() {
   return new URLSearchParams(location.search).get('scene');
@@ -27,19 +21,7 @@ async function fetchText(url) {
   return res.text();
 }
 
-/**
- * Where a scene's own prefab modules may come from. A scene prefab is JavaScript that runs with the
- * page's privileges, so by default only the scenes' own origin (and the page's) is trusted;
- * `VITE_PREFAB_ORIGINS` (build-time, comma-separated origins, or `*`) widens that.
- */
-export function guardOrigin(url) {
-  const origin = new URL(url, location.href).origin;
-  const allowed = (import.meta.env.VITE_PREFAB_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (origin === location.origin || origin === scenesBase().origin || allowed.includes('*') || allowed.includes(origin)) return url;
-  throw new Error(`blocked: ${origin} is not an allowed prefab origin (see VITE_PREFAB_ORIGINS)`);
-}
-
-/** Imports a scene's own prefab module by URL; Vite leaves the URL alone (`@vite-ignore`), the browser fetches it. */
+/** Imports a scene's own module (a prefab or a transform) by URL; Vite leaves the URL alone (`@vite-ignore`), the browser fetches it. */
 export const importModule = url => import(/* @vite-ignore */ guardOrigin(url));
 
 /** Loads the scene named by `?scene=` (or the default from scenes/index.json) over HTTP. */

@@ -107,7 +107,7 @@ export function ControlDesk({ props }) {
         return (
           <group key={`scr${k}`} {...onArc(R, Rs, (c - (cols - 1) / 2) * colAngle, y)}>
             <Solid args={[sw + 0.08, sh + 0.08, 0.06]} fill="fine" line="mid" />
-            <ScreenSurface {...screen} id={`scr${k}`} w={sw} h={sh} position={[0, 0, 0.035]} />
+            <ScreenSurface {...screen} id={screen.id ?? `scr${k}`} w={sw} h={sh} position={[0, 0, 0.035]} />
           </group>
         );
       })}

@@ -21,6 +21,7 @@
   - [Adding a prefab](extending/prefab.md)
   - [Adding a content block](extending/block.md)
   - [Scene-shipped prefabs](extending/scene-prefabs.md)
+  - [Live data](extending/live-data.md)
 - [Part V: Operations](operations/README.md)
   - [Commands](operations/commands.md)
   - [Monitoring](operations/monitoring.md)

@@ -1,10 +1,22 @@
 import { useState } from 'react';
 import { useStore } from '../../state/store.js';
+import { deltaDirection } from './schema.js';
+
+const ARROW = { up: '▲', down: '▼', flat: '•' };
 
 export function Stats({ data }) {
   return (
     <div className="stats" style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}>
-      {data.map((s, i) => <div key={i}><strong>{s.value}</strong><span>{s.label}</span></div>)}
+      {data.map((s, i) => {
+        const dir = s.delta != null ? deltaDirection(s.delta) : null;
+        return (
+          <div key={i}>
+            <strong>{s.value}{s.unit && <small>{s.unit}</small>}</strong>
+            <span>{s.label}</span>
+            {dir && <em className={`delta ${dir}`}>{ARROW[dir]} {s.delta}</em>}
+          </div>
+        );
+      })}
     </div>
   );
 }

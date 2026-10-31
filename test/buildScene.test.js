@@ -203,3 +203,85 @@ describe('buildScene with scene prefabs', () => {
     expect(e.lines).toHaveLength(2);
   });
 });
+
+describe('buildScene with transforms and feeds', () => {
+  const nodes = json => ({ rows: json.nodes });
+  const modules = {
+    'scene://x/data/feeds.js': { nodes, transform: j => j },
+    'scene://x/data/broken.js': { other: 1 },
+  };
+  const loadModule = async url => {
+    if (url in modules) return modules[url];
+    throw new Error('Failed to fetch');
+  };
+  const sceneWith = (extra) => json({ title: 'T', poi: ['poi/a.json'], ...extra });
+  const poiWith = (objects, content = { blocks: [{ type: 'heading', text: 'A' }] }) =>
+    json({ id: 'a', label: 'A', objects, camera: { position: [0, 2, 5], target: [0, 1, 0] }, marker: { position: [0, 3, 0] }, content });
+  const run = (sceneJson, poiJson, opts = {}) => buildScene({
+    name: 'x', resolveUrl, loadModule, ...opts,
+    read: readerFromMap(new Map([['scene.json', sceneJson], ['poi/a.json', poiJson]])),
+  });
+
+  it('loads named and default exports, keeps feeds on screens and blocks, and exposes resolveUrl', async () => {
+    const { scene, pois } = await run(
+      sceneWith({ transforms: { nodes: 'data/feeds.js#nodes', plain: 'data/feeds.js' } }),
+      poiWith(
+        [{ type: 'desk', props: { screen: { source: 'dashboard', feed: { url: 'data/n.json', refresh: 10, transform: 'nodes' } } } }],
+        { blocks: [{ type: 'stats', feed: 'data/kpi.json' }] },
+      ),
+    );
+    expect(scene.transforms.nodes.url).toBe('scene://x/data/feeds.js#nodes');
+    expect(scene.transforms.nodes.fn).toBe(nodes);
+    expect(scene.transforms.plain.url).toBe('scene://x/data/feeds.js#transform');
+    expect(scene.resolveUrl('a.json')).toBe('scene://x/a.json');
+    const feed = pois[0].objects[0].props.screen.feed;
+    expect(feed).toMatchObject({ url: 'data/n.json', refresh: 10, transform: 'nodes' });
+    expect(pois[0].content.blocks[0]).toMatchObject({ type: 'stats', feed: { url: 'data/kpi.json' } });
+  });
+
+  it('a scene without transforms has an empty map', async () => {
+    const { scene } = await run(sceneWith({}), poiWith([{ type: 'pedestal' }]));
+    expect(scene.transforms).toEqual({});
+  });
+
+  it.each([
+    [{ bad: 'data/broken.js#nodes' }, 'transforms.bad: scene://x/data/broken.js: module has no "nodes" function export'],
+    [{ bad: 'data/broken.js' }, 'transforms.bad: scene://x/data/broken.js: module has no "transform" function export'],
+    [{ bad: 'data/missing.js' }, 'transforms.bad: could not load scene://x/data/missing.js: Failed to fetch'],
+    [{ bad: 'data/feeds.js#' }, 'transforms.bad: write "path/to/module.js" or "path/to/module.js#exportName"'],
+    [{ Bad: 'data/feeds.js' }, 'transforms.Bad: a transform name is letters, digits and "_", starting with a lowercase letter'],
+  ])('reports %j', async (transforms, line) => {
+    const e = await fails(run(sceneWith({ transforms }), poiWith([{ type: 'pedestal' }])));
+    expect(e.lines).toEqual([`x/scene.json › ${line}`]);
+  });
+
+  it('without loadModule, declared transforms are a config error', async () => {
+    const e = await fails(run(sceneWith({ transforms: { nodes: 'data/feeds.js' } }), poiWith([{ type: 'pedestal' }]), { loadModule: undefined }));
+    expect(e.lines).toEqual(['x/scene.json › transforms.nodes: this build cannot load scene transforms']);
+  });
+
+  it('reports a feed whose transform is not declared, with its full path, in POIs, blocks and decor', async () => {
+    const e = await fails(run(
+      sceneWith({ transforms: { nodes: 'data/feeds.js#nodes' }, decor: [{ type: 'cinemaScreen', props: { screen: { source: 'text', feed: { url: 'k.json', transform: 'kpi' } } } }] }),
+      poiWith(
+        [{ type: 'controlDesk', props: { screens: [{}, { source: 'graph', feed: { url: 'g.json', transform: 'series' } }] } }],
+        { blocks: [{ type: 'list', feed: { url: 'l.json', transform: 'items' } }] },
+      ),
+    ));
+    expect(e.lines).toEqual(expect.arrayContaining([
+      'x/scene.json › decor.0.props.screen.feed.transform: unknown transform "kpi" (known: nodes)',
+      'x/poi/a.json › objects.0.props.screens.1.feed.transform: unknown transform "series" (known: nodes)',
+      'x/poi/a.json › content.blocks.0.feed.transform: unknown transform "items" (known: nodes)',
+    ]));
+  });
+
+  it('says so when a scene declares no transforms at all', async () => {
+    const e = await fails(run(sceneWith({}), poiWith([{ type: 'desk', props: { screen: { source: 'text', feed: { url: 't.json', transform: 'x' } } } }])));
+    expect(e.lines).toEqual(['x/poi/a.json › objects.0.props.screen.feed.transform: unknown transform "x" (none declared in scene.json › transforms)']);
+  });
+
+  it('a cinema screen takes a full screen config instead of source/src', async () => {
+    const { pois } = await run(sceneWith({}), poiWith([{ type: 'cinemaScreen', props: { screen: { source: 'image', src: 'media/a.png' } } }]));
+    expect(pois[0].objects[0].props.screen.src).toBe('scene://x/media/a.png');
+  });
+});

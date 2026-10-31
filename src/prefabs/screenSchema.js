@@ -1,17 +1,22 @@
 import { z } from 'zod';
-import { formSchema } from '../ui/blocks/schema.js';
+import { formSchema, statItem } from '../ui/blocks/schema.js';
+import { feedSchema } from '../data/feedSchema.js';
 
 /** Screen sources a `ScreenSurface` can show (see src/prefabs/media.jsx). */
-export const SCREEN_SOURCES = ['rain', 'image', 'video', 'text', 'graph', 'terminal', 'dashboard', 'form'];
+export const SCREEN_SOURCES = ['rain', 'image', 'video', 'text', 'graph', 'stats', 'terminal', 'dashboard', 'form'];
 /** Sources with a DOM overlay you can use once zoomed in. */
 export const INTERACTIVE_SOURCES = ['terminal', 'dashboard', 'form'];
 export const GRAPH_KINDS = ['wave', 'bars', 'radar'];
+
+/** An HLS live stream (`.m3u8`) for a video screen: played natively (Safari) or with hls.js, loaded on demand. */
+export const isHls = src => typeof src === 'string' && /\.m3u8([?#]|$)/i.test(src);
 
 const line = z.union([z.string(), z.number()]).transform(String);
 
 /**
  * One screen's configuration. Every key but `source` is optional; which ones a source reads
  * is listed in the prefab reference. `id` keeps the screen's zoom/session state stable.
+ * With `feed`, the other fields are placeholders until the first response arrives.
  */
 export const screenSchema = z.strictObject({
   source: z.enum(SCREEN_SOURCES).default('rain'),
@@ -28,9 +33,28 @@ export const screenSchema = z.strictObject({
   filters: z.array(z.string()).optional(),
   value: z.string().optional(),
   form: formSchema.optional(),
+  /** graph data: bars (one per value) or the wave's series; without it the graph animates demo data */
+  values: z.array(z.number()).max(256).optional(),
+  /** radar blips: `angle` in degrees clockwise from the top, `distance` from the centre (0–1) */
+  points: z.array(z.strictObject({ angle: z.number(), distance: z.number().min(0).max(1), label: z.string().optional() })).max(64).optional(),
+  /** the value range a graph scales `values` to; default the data's own range (bars from 0) */
+  min: z.number().optional(),
+  max: z.number().optional(),
+  /** the text in a graph's title bar, instead of the value it computes */
+  readout: line.optional(),
+  /** the numbers of a stats screen (up to 8) */
+  stats: z.array(statItem).max(8).optional(),
   zoom: z.boolean().default(true),
   id: z.string().optional(),
+  /** live data: the screen's fields are merged from it over the ones given here (src/data/feedSchema.js) */
+  feed: feedSchema.optional(),
 });
+
+/**
+ * What a feed may set on a screen: any field but `source`, `feed`, `id` and `zoom`, all optional.
+ * Still strict, so a misspelt key in a feed response is reported rather than ignored.
+ */
+export const liveScreenSchema = screenSchema.omit({ source: true, feed: true, id: true, zoom: true }).partial();
 
 /** A bare source name or a full screen config, normalised to the config. */
 export const screenOrSource = z.union([z.enum(SCREEN_SOURCES).transform(source => screenSchema.parse({ source })), screenSchema]);

@@ -18,6 +18,6 @@ describe('scene prefab contract (public/scenes/loft/prefabs/lamp.js)', () => {
   });
 
   it('META_SDK carries no React or three.js', () => {
-    expect(Object.keys(META_SDK).sort()).toEqual(['SCREEN_SOURCES', 'SHAPES', 'screenOrSource', 'screenSchema', 'z']);
+    expect(Object.keys(META_SDK).sort()).toEqual(['SCREEN_SOURCES', 'SHAPES', 'feedSchema', 'screenOrSource', 'screenSchema', 'z']);
   });
 });

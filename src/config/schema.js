@@ -4,6 +4,7 @@ import { EASE_NAMES } from '../lib/easing.js';
 import { blockSchema } from '../ui/blocks/schema.js';
 import { actionSchema } from '../actions/registry.js';
 import { SCENE_DEFAULTS } from './defaults.js';
+import { transformsDeclSchema } from '../data/feedSchema.js';
 
 const vec3 = z.tuple([z.number(), z.number(), z.number()]);
 const vec2 = z.tuple([z.number(), z.number()]);
@@ -127,6 +128,8 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
     ui: uiSchema,
     // the scene's own prefab modules; defaulted here rather than in SCENE_DEFAULTS, see buildScene
     prefabs: prefabsDeclSchema.default({}),
+    // functions that turn live feed responses into screen fields or block data; also defaulted here
+    transforms: transformsDeclSchema.default({}),
     decor: z.array(objectSchema),
     poi: z.array(z.string()).min(1, 'list at least one POI file'),
   });

@@ -6,6 +6,9 @@ This page lists every word of the interface a scene can replace through `scene.j
 | --- | --- | --- |
 | `loading` | `Initializing room` | loading screen (see the note below) |
 | `loadError` | `Could not load the scene` | heading above the error list |
+| `feedLoading` | `Loading live data…` | a live panel block before its first answer |
+| `feedError` | `Live data could not be loaded` | a live panel block whose feed failed with nothing to show; tooltip of the zoomed screen's "not updating" note |
+| `feedStale` | `not updating` | next to a live block or in a zoomed screen's title bar while its feed fails (the last data stays) |
 | `unsupported` | `This browser cannot show the room` | heading of the screen shown when the browser has no WebGL 2 |
 | `unsupportedHint` | `The room is drawn with WebGL 2, which this browser does not support …` | text under `unsupported` |
 | `kicker` | `{n} of {total}` | above the panel title; `{n}` and `{total}` are zero-padded |

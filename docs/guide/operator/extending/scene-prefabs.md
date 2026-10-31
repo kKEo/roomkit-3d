@@ -61,6 +61,7 @@ Keep `meta` free of anything browser-only: the test suite imports every scene's 
 | `z` | zod, for the props schema |
 | `screenSchema`, `screenOrSource`, `SCREEN_SOURCES` | the screen config schemas, to give a prop a screen like `desk` does |
 | `SHAPES` | the names `Solid` accepts as `shape` |
+| `feedSchema` | the schema of a live `feed` (a URL or `{ url, refresh, stream, transform }`), to give a prop live data; a screen config from `screenSchema` already accepts one (see [Live data](live-data.md)) |
 
 `component(sdk)` receives all of the above plus:
 

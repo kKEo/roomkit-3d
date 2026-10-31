@@ -13,6 +13,7 @@ This page says what a Scene Rooms site sends over the network and what it keeps,
 | What | From where | Can you change it? |
 | --- | --- | --- |
 | The app itself, scene files, pictures and videos | the server hosting your site | Yes. A picture or video given as a full `https://…` address is loaded from that other site instead. |
+| Live data and live video | whatever addresses the scene's screens and blocks name in a `feed` or a stream `src` | Yes. Those sites see the visitor's address each time the data refreshes, like any web request. No cookies or logins are sent with live data. Your operator can limit which sites may be used. |
 | Fonts | Google Fonts (`fonts.googleapis.com`), unless the scene says otherwise | Yes. Set `"fontsUrl": ""` in the scene's `theme` to load no web fonts. The text then uses the visitor's own monospace font. Google sees the visitor's address when fonts load. |
 
 ## What visitors send

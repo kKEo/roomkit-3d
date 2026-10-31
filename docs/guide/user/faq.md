@@ -28,6 +28,8 @@ The message lists every problem it found, one per line, as `file › place: prob
 
 **My picture doesn't show; the frame has green rain instead.** The picture could not be loaded. Check that the file is in the scene's `media/` folder and the path is `media/name.jpg`. Capitals matter on most servers.
 
+**A screen's title bar shows a `!`, or a panel block says "not updating".** Its live data could not be loaded: the address is wrong, the site is down, or it does not allow your site to read it. The last data stays on show. Check the address in the `feed`; for another website, ask its owner or your operator. See [Live screens](objects.md#live-screens).
+
 **The camera is inside a wall, or something blocks the view.** The automatic camera does not know about other objects. Add a `camera` with your own `position` and `target`. See [Placing a point of interest](points-of-interest.md).
 
 **My object is half inside the floor or the wall.** Floor objects need height `0`. Wall objects need the wall's exact position, for example `15` for a 30-metre-wide room, and the right rotation.

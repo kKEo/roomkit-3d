@@ -11,6 +11,12 @@
   "camera": {
     "intro": { "position": [0, 6.5, 27], "target": [0, 3, 0], "duration": 3200 }
   },
+  "transforms": {
+    "nodes": "data/transforms.js#nodes",
+    "nodeStats": "data/transforms.js#nodeStats",
+    "fleetSummary": "data/transforms.js#fleetSummary",
+    "loadSeries": "data/transforms.js#loadSeries"
+  },
   "decor": [
     { "type": "door", "position": [8.5, 0, -15] }
   ],

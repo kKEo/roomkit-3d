@@ -1,0 +1,15 @@
+{
+  "updated": "2026-10-31T09:00:00Z",
+  "fleet": "kKEo",
+  "trend": { "load": "+3" },
+  "nodes": [
+    { "name": "zion-01", "region": "south", "status": "online", "load": 46 },
+    { "name": "zion-02", "region": "south", "status": "online", "load": 71 },
+    { "name": "neb-07", "region": "east", "status": "degraded", "load": 93 },
+    { "name": "neb-08", "region": "east", "status": "online", "load": 22 },
+    { "name": "mega-3", "region": "north", "status": "offline", "load": 0 },
+    { "name": "mega-4", "region": "north", "status": "online", "load": 58 },
+    { "name": "osiris", "region": "west", "status": "degraded", "load": 61 },
+    { "name": "logos", "region": "west", "status": "online", "load": 34 }
+  ]
+}

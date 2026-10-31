@@ -23,7 +23,7 @@
           { "source": "graph", "graph": "radar", "title": "PERIMETER" },
           { "source": "rain", "label": "uplink // secure", "color": "#b80f7c" },
           { "source": "image", "src": "media/floorplan.svg" },
-          { "source": "image", "src": "media/floorplan.svg" },
+          { "source": "stats", "title": "FLEET", "feed": { "url": "data/nodes.json", "refresh": 15, "transform": "nodeStats" } },
           { "source": "rain", "label": "uplink // secure", "color": "#b80fcc" },
           { "source": "terminal", "title": "CONSOLE", "lines": [
             "operator console v0.9",
@@ -35,7 +35,8 @@
             "ping": "pong"
           } },
           { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#f0b000" },
-          { "source": "dashboard", "title": "NODES", "filters": ["region", "status"], "value": "load", "rows": [
+          { "source": "dashboard", "title": "NODES", "filters": ["region", "status"], "value": "load",
+            "feed": { "url": "data/nodes.json", "refresh": 15, "transform": "nodes" }, "rows": [
             { "node": "zion-01", "region": "south", "status": "online", "load": 42 },
             { "node": "zion-02", "region": "south", "status": "online", "load": 77 },
             { "node": "neb-07", "region": "east", "status": "degraded", "load": 91 },
@@ -51,7 +52,8 @@
             ],
             "submit": "File report"
           } },
-          { "source": "graph", "graph": "bars", "title": "LOAD", "color": "#ffb000" }
+          { "source": "graph", "graph": "bars", "title": "NODE LOAD", "color": "#ffb000",
+            "feed": { "url": "data/nodes.json", "refresh": 15, "transform": "loadSeries" } }
         ]
       }
     }

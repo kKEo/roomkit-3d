@@ -15,6 +15,7 @@ This page lists every key of a scene's `scene.json`. Every key is optional excep
 | `effects` | object | below | |
 | `ui` | object | English strings | see [Interface strings](ui-strings.md) |
 | `prefabs` | object | `{}` | the scene's own object types: type name → module path (relative to the scene folder) or URL; see [Scene-shipped prefabs](../extending/scene-prefabs.md) |
+| `transforms` | object | `{}` | functions that turn live feed responses into screen fields or block data: name → module path (relative to the scene folder) or URL, with `#exportName` to pick an export (default `transform`); see [Live data](../extending/live-data.md) |
 | `decor` | object[] | `[]` | non-interactive objects, same shape as [POI objects](poi-json.md) |
 | `poi` | string[] | — | **required**; at least one path relative to the scene folder; the order is the navigation order. Number keys reach the first nine |
 

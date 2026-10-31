@@ -49,8 +49,12 @@ The value may be absolute or relative to the page, and ends up in the bundle, so
 
 Everything in `dist/scenes/` is read at runtime, so content authors can change, add or remove POI files, Markdown and media on the server directly, and a scene can ship its own object types as modules in its folder (`scene.json › prefabs`, see [Scene-shipped prefabs](../extending/scene-prefabs.md)). A rebuild is needed only for code changes, new built-in prefab types and new block types. Keep `public/scenes/` in the repository as the source of truth, and copy it to the server with the rest of `dist/`.
 
-Scene prefab modules must be served as `text/javascript` (a SPA fallback that answers `index.html` for unknown paths breaks the import). By default they may come only from the page's origin or the scenes' origin; `VITE_PREFAB_ORIGINS` (a comma-separated list of origins, or `*`) allows others at build time, and such a host needs `Access-Control-Allow-Origin` on the module and on the models and textures it loads.
+Live data needs no rebuild either: screens and panel blocks with a `feed` fetch it while the room is open, and transform modules (`scene.json › transforms`) live in the scene folder like prefab modules. See [Live data](../extending/live-data.md).
+
+Scene prefab and transform modules must be served as `text/javascript` (a SPA fallback that answers `index.html` for unknown paths breaks the import). By default they may come only from the page's origin or the scenes' origin; `VITE_PREFAB_ORIGINS` (a comma-separated list of origins, or `*`) allows others at build time, and such a host needs `Access-Control-Allow-Origin` on the module and on the models and textures it loads.
 
 ## External requests
 
-The default theme loads fonts from Google Fonts (`theme.fontsUrl`). Set it to `""` per scene to make the site fully self-contained. See the content guide's [privacy page](../../user/privacy.md).
+The default theme loads fonts from Google Fonts (`theme.fontsUrl`). Set it to `""` per scene to make the site fully self-contained.
+
+A scene's live feeds and HLS video URLs are requested by the visitor's browser from whatever hosts the scene names; the app sends no cookies or credentials with feeds. To keep feeds to known hosts, build with `VITE_DATA_ORIGINS` (comma-separated origins): then only the page's origin, the scenes' origin and those are fetched. Data hosts must send `Access-Control-Allow-Origin`, and a Content-Security-Policy needs them in `connect-src` (feeds and streams) and `media-src` / `img-src` (video and images). hls.js is a separate chunk in `dist/assets/` (`hls.light-*.js`), fetched only when a scene plays an HLS stream in a browser without native HLS. See the content guide's [privacy page](../../user/privacy.md).

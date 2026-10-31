@@ -22,8 +22,15 @@ Vivamus sagittis lacus vel augue laoreet rutrum. Every screen on this wall is co
   { "icon": "$", "title": "Console", "text": "Type help, status, goto 1 — source \"terminal\"." },
   { "icon": "≡", "title": "Nodes", "text": "Filter by region, status or text — source \"dashboard\"." },
   { "icon": "✎", "title": "Report", "text": "A form you fill in up close — source \"form\"." },
-  { "icon": "▮", "title": "Load", "text": "Live levels in amber — style \"bars\" with a colour." }
+  { "icon": "▮", "title": "Load", "text": "Live levels in amber — style \"bars\" with a colour." },
+  { "icon": "#", "title": "Fleet", "text": "Big live numbers from a feed — source \"stats\"." }
 ]
+```
+
+The fleet numbers below, the node table, the fleet screen and the node load bars all read one live feed, `data/nodes.json`, every 15 seconds. Edit that file and watch them change.
+
+```stats
+{ "feed": { "url": "data/nodes.json", "refresh": 15, "transform": "fleetSummary" } }
 ```
 
 Donec ullamcorper nulla non metus auctor fringilla. Sed posuere consectetur est at lobortis.

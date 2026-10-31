@@ -13,7 +13,8 @@ This page describes the three example scenes that ship with Scene Rooms and some
 - one stop with several objects and a hand-placed camera (`poi/02-projects.json`);
 - a stop with no camera at all, placed automatically (`poi/03-archive.json`);
 - a panel written inside the point-of-interest file instead of Markdown (`poi/05-services.json`);
-- a control desk where every screen shows something different: graphs, typed text, a picture, its own rain, and a console, a filterable table and a form you can use up close (`poi/07-control.json`).
+- a control desk where every screen shows something different: graphs, typed text, a picture, its own rain, and a console, a filterable table and a form you can use up close (`poi/07-control.json`);
+- live data: the node table, the FLEET numbers, the NODE LOAD bars and the numbers in the Control panel all read `data/nodes.json` every 15 seconds. Edit that file and watch them change.
 
 **Amber Gallery** (`public/scenes/gallery/`). A smaller amber room with two framed pictures and a cinema screen showing a poster. Open it with `?scene=gallery`. Look here to see:
 
@@ -42,5 +43,6 @@ This page describes the three example scenes that ship with Scene Rooms and some
 | Product tour: one stop per feature, a video on the big screen | `cinemaScreen` with `source: "video"`, `primitive` |
 | Team page: a wardrobe "archive" of past projects, a timeline of the company | `wardrobe`, `timeline` blocks |
 | Event page: programme on the screen, sign-up form at the desk | `list` and `form` blocks |
+| Live status board: service health, sales figures or a stream from the stage | `controlDesk` with `stats`, `dashboard` and graph screens fed from a `feed`; `cinemaScreen` with an `.m3u8` video |
 
 > **Note.** A room is meant for a handful of stops (up to nine). For long text, such as documentation, link out to a normal web page from a panel.
