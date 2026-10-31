@@ -77,6 +77,14 @@ describe('buildScene', () => {
     ]));
   });
 
+  it('accepts camera.start naming a POI and rejects an unknown one', async () => {
+    const withStart = start => json({ title: 'T', room: { width: 10, height: 4, depth: 12 }, camera: { start }, poi: ['poi/a.json', 'poi/b.json'] });
+    const { scene } = await build({ 'scene.json': withStart('b') });
+    expect(scene.camera.start).toBe('b');
+    const e = await fails(build({ 'scene.json': withStart('nope') }));
+    expect(e.lines).toEqual(['x/scene.json › camera.start: no POI has the id "nope"']);
+  });
+
   it('labels scene.json problems', async () => {
     let e = await fails(buildScene({ name: 'x', read: readerFromMap(new Map()), resolveUrl }));
     expect(e.lines).toEqual(['x/scene.json: file not found']);

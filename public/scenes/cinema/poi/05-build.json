@@ -1,0 +1,21 @@
+{
+  "id": "build",
+  "label": "Build yours",
+  "kicker": "the editor desk",
+  "objects": [
+    { "type": "desk", "position": [12.5, 0, 9.5], "rotation": [0, -90, 0],
+      "props": { "screen": { "source": "terminal", "title": "ROOMKIT", "id": "editor",
+        "lines": ["roomkit shell", "a room is a folder of JSON and Markdown", "type help and press Enter"],
+        "commands": {
+          "help": ["tree     — what a scene folder holds", "objects  — the built-in object types", "screens  — what a screen can show", "edit     — how to open the editor"],
+          "tree": ["scenes/cinema/", "  scene.json      room, theme, camera, decor", "  poi/*.json      one stop each", "  content/*.md    the panels", "  media/          pictures and video", "  data/           feeds and transforms", "  prefabs/        your own object types"],
+          "objects": "pedestal, pictureFrame, wardrobe, cinemaScreen, desk, controlDesk, serverRack, door, bench, primitive — plus any the scene ships",
+          "screens": "rain, image, video, text, graph, stats, terminal, dashboard, form — all with an optional live feed",
+          "edit": ["open edit.html?scene=cinema", "change anything, watch it live, download the folder"]
+        } } } },
+    { "type": "pedestal", "position": [12.5, 0, 15], "props": { "shape": "torusKnot", "height": 2.6, "size": 1.0 } }
+  ],
+  "camera": { "position": [5.5, 2.9, 9.5], "target": [12.5, 1.7, 9.5] },
+  "marker": { "position": [12.5, 3.6, 9.5] },
+  "content": { "markdown": "content/build.md" }
+}

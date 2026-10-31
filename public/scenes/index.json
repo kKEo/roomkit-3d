@@ -1,4 +1,1 @@
-{
-  "default": "neo-room",
-  "scenes": ["neo-room", "gallery", "loft"]
-}
+{ "default": "cinema", "scenes": ["cinema", "neo-room", "gallery", "loft"] }

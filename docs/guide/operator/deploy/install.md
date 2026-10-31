@@ -19,7 +19,7 @@ make dev             # runs npm install when needed, then the Vite dev server at
 
 Without `make`: `npm install`, then `npm run dev`. All targets are listed in [Commands](../operations/commands.md).
 
-Open the printed address. The default scene, `neo-room`, flies in. Try `?scene=gallery` for the second example.
+Open the printed address. The default scene, `cinema`, flies in and lands on its big screen. Try `?scene=neo-room`, `?scene=gallery` and `?scene=loft` for the other examples.
 
 The dev server reloads the page when you change files in `public/scenes/`. Changes in `src/` hot-reload. A hot reload of `src/state/store.js` resets the store under a mounted canvas; reload the page if the room freezes after editing that file.
 

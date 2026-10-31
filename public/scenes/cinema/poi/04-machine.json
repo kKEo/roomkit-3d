@@ -1,0 +1,10 @@
+{
+  "id": "machine",
+  "label": "Machine room",
+  "kicker": "east wall",
+  "objects": [
+    { "type": "serverRack", "position": [14.6, 0, -11], "rotation": [0, -90, 0],
+      "props": { "count": 4, "height": 5.2, "ceiling": 10 } }
+  ],
+  "content": { "markdown": "content/machine.md" }
+}

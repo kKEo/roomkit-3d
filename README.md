@@ -5,7 +5,7 @@ A walkable 3D room built from configuration files. The camera flies between **po
 Built with React 19, React Three Fiber 9 and three.js.
 
 ```bash
-make dev           # install if needed, then http://localhost:5173  (try ?scene=gallery, ?scene=loft and #contact)
+make dev           # install if needed, then http://localhost:5173  (try ?scene=neo-room, ?scene=gallery, ?scene=loft)
                    # the editor with live preview: http://localhost:5173/edit.html?scene=loft
 make check         # lint, unit tests (every scene in public/scenes/ is built) and the production build
 make serve         # production build in dist/, served at http://localhost:4173
@@ -14,6 +14,8 @@ make               # every target
 ```
 
 Authors edit a scene in the browser (`edit.html`), download the folder and drop it into `scenes/`; visitors get the view-only room at `?scene=<folder>`. Rooms can be any polygon (`room.footprint`), and objects can carry click `actions`.
+
+The default scene, `cinema`, is the GitHub Pages home page: it opens on a cinema screen playing a short intro film. The film is rendered from the app itself by `tools/intro/` (`make intro-video`, needs ffmpeg and Playwright's Chromium); see [`tools/intro/README.md`](tools/intro/README.md).
 
 ## Documentation
 

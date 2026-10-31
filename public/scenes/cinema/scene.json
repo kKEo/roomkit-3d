@@ -1,0 +1,57 @@
+{
+  "title": "RoomKit 3D — Cinema",
+  "brand": "RoomKit/3D",
+  "room": {
+    "width": 32,
+    "height": 10,
+    "depth": 40,
+    "grid": { "floor": 2, "ceiling": 4 },
+    "wallPanels": 4,
+    "pillars": [[-14.6, 2], [14.6, 2], [-14.6, 14], [14.6, 14]],
+    "lights": [[0, 9.4, -4], [-10, 9.4, 6], [10, 9.4, 6], [0, 9.4, 16]]
+  },
+  "theme": { "fog": [22, 80] },
+  "camera": {
+    "intro": { "position": [0, 14, 48], "target": [0, 5, -20], "duration": 3600 },
+    "start": "welcome"
+  },
+  "effects": { "particles": 700 },
+  "ui": {
+    "loading": "Opening the cinema",
+    "hint": "[←][→] or mouse wheel — next stop, [1]–[{keys}] stops, [0] whole hall, click a marker, [W][A][S][D] fly, click a screen to zoom"
+  },
+  "prefabs": { "seats": "prefabs/seats.js", "projector": "prefabs/projector.js" },
+  "transforms": {
+    "showtimes": "data/transforms.js#showtimes",
+    "houseStats": "data/transforms.js#houseStats",
+    "houseSummary": "data/transforms.js#houseSummary",
+    "occupancy": "data/transforms.js#occupancy",
+    "board": "data/transforms.js#board"
+  },
+  "decor": [
+    { "type": "projector", "position": [0, 8.4, 13], "props": { "throw": 33, "width": 14, "height": 7.9, "drop": 1.4, "elevation": -3.4 },
+      "actions": { "lens": { "type": "goTo", "poi": "welcome" } } },
+
+    { "type": "seats", "position": [-6.2, 0, -6], "props": { "count": 8 } },
+    { "type": "seats", "position": [6.2, 0, -6], "props": { "count": 8 } },
+    { "type": "seats", "position": [-6.2, 0, -3], "props": { "count": 8, "riser": 0.3 } },
+    { "type": "seats", "position": [6.2, 0, -3], "props": { "count": 8, "riser": 0.3 } },
+    { "type": "seats", "position": [-6.2, 0, 0], "props": { "count": 8, "riser": 0.6 } },
+    { "type": "seats", "position": [6.2, 0, 0], "props": { "count": 8, "riser": 0.6 } },
+    { "type": "seats", "position": [-6.2, 0, 3], "props": { "count": 8, "riser": 0.9 } },
+    { "type": "seats", "position": [6.2, 0, 3], "props": { "count": 8, "riser": 0.9 } },
+    { "type": "seats", "position": [-6.2, 0, 6], "props": { "count": 8, "riser": 1.2 } },
+    { "type": "seats", "position": [6.2, 0, 6], "props": { "count": 8, "riser": 1.2 } },
+
+    { "type": "bench", "position": [-14.6, 0, 8], "rotation": [0, 90, 0], "props": { "width": 4, "height": 0.5 } },
+    { "type": "bench", "position": [14.6, 0, -4], "rotation": [0, -90, 0], "props": { "width": 3, "height": 0.5 } }
+  ],
+  "poi": [
+    "poi/01-welcome.json",
+    "poi/02-features.json",
+    "poi/03-booth.json",
+    "poi/04-machine.json",
+    "poi/05-build.json",
+    "poi/06-exits.json"
+  ]
+}

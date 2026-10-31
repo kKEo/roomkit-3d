@@ -1,0 +1,18 @@
+{
+  "id": "exits",
+  "label": "Other rooms",
+  "kicker": "south wall",
+  "objects": [
+    { "type": "door", "position": [3.5, 0, 20], "rotation": [0, 180, 0],
+      "actions": { "door": { "type": "openUrl", "url": "?scene=neo-room", "newTab": false } } },
+    { "type": "door", "position": [7, 0, 20], "rotation": [0, 180, 0],
+      "actions": { "door": { "type": "openUrl", "url": "?scene=gallery", "newTab": false } } },
+    { "type": "door", "position": [10.5, 0, 20], "rotation": [0, 180, 0],
+      "actions": { "door": { "type": "openUrl", "url": "?scene=loft", "newTab": false } } },
+    { "type": "door", "position": [14, 0, 20], "rotation": [0, 180, 0],
+      "actions": { "door": { "type": "openUrl", "url": "docs/", "newTab": true } } }
+  ],
+  "camera": { "position": [7.5, 3.6, 8.5], "target": [8.5, 2.4, 20] },
+  "marker": { "position": [8.75, 5.4, 19.6] },
+  "content": { "markdown": "content/exits.md" }
+}

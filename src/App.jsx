@@ -55,7 +55,7 @@ export function Viewer() {
     const t = setTimeout(() => {
       setIntro(true);
       const st = useStore.getState();
-      st.goTo(poiIdFromHash(), reducedMotion ? 500 : st.scene.camera.intro.duration);
+      st.goTo(poiIdFromHash() ?? st.scene.camera.start ?? null, reducedMotion ? 500 : st.scene.camera.intro.duration);
     }, reducedMotion ? 100 : 650);
     return () => clearTimeout(t);
   }, [live]);

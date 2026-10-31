@@ -1,0 +1,30 @@
+{
+  "id": "booth",
+  "label": "Booth",
+  "kicker": "projection booth",
+  "screenLabel": "booth // live",
+  "objects": [
+    { "type": "controlDesk", "position": [-7, 0, 17.5], "rotation": [0, 180, 0],
+      "props": { "columns": 3, "radius": 4.2, "arc": 70, "chairs": 2, "screens": [
+        { "source": "stats", "title": "HOUSE", "id": "house",
+          "feed": { "url": "data/showtimes.json", "refresh": 20, "transform": "houseStats" } },
+        { "source": "text", "title": "NOW SHOWING", "id": "now",
+          "feed": { "url": "data/showtimes.json", "refresh": 20, "transform": "board" } },
+        { "source": "graph", "graph": "bars", "title": "OCCUPANCY", "id": "occupancy", "color": "#ffb000",
+          "feed": { "url": "data/showtimes.json", "refresh": 20, "transform": "occupancy" } },
+        { "source": "dashboard", "title": "PROGRAMME", "id": "programme", "filters": ["screen", "status"], "value": "seats",
+          "feed": { "url": "data/showtimes.json", "refresh": 20, "transform": "showtimes" } },
+        { "source": "terminal", "title": "PROJECTIONIST", "id": "console",
+          "lines": ["projection console v1.0", "type help and press Enter"],
+          "commands": {
+            "help": ["status   — projector state", "reel     — what is on the big screen", "scenes   — other rooms to visit", "clear    — wipe the screen"],
+            "status": ["lamp ........ OK", "focus ....... OK", "reel ........ intro.mp4 (loop)", "audience .... you"],
+            "reel": "RoomKit 3D intro, 36 s, looping on the main screen",
+            "scenes": ["?scene=neo-room  — the kKEo studio", "?scene=gallery   — amber gallery", "?scene=loft      — cyan L-shaped loft"],
+            "whoami": "visitor"
+          } },
+        { "source": "rain", "label": "reel // uplink", "color": "#b80f7c", "id": "uplink" }
+      ] } }
+  ],
+  "content": { "markdown": "content/booth.md" }
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="'IBM Plex Mono', Menlo, monospace">
+  <rect width="1200" height="800" fill="#02120a"/>
+  <rect x="40" y="40" width="1120" height="720" fill="none" stroke="#00ff66" stroke-width="6"/>
+  <rect x="64" y="64" width="1072" height="672" fill="none" stroke="#1f7a46" stroke-width="2"/>
+  <text x="100" y="170" fill="#5fa877" font-size="40">02 // SCREENS</text>
+  <text x="100" y="300" fill="#b8ffcc" font-size="118" font-weight="bold">NINE KINDS</text>
+  <text x="100" y="400" fill="#b8ffcc" font-size="118" font-weight="bold">OF SCREEN</text>
+  <text x="100" y="520" fill="#00ff66" font-size="44">video · image · rain · text · graph</text>
+  <text x="100" y="585" fill="#00ff66" font-size="44">stats · terminal · dashboard · form</text>
+  <text x="100" y="700" fill="#5fa877" font-size="34">click any of them to zoom in</text>
+</svg>

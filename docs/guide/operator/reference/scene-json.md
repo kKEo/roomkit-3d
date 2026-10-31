@@ -72,6 +72,7 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `intro.duration` | number > 0 | `3200` | ms for the first flight |
 | `overview.position` | `[x, y, z]` | computed | the whole-room view: where the app opens (with no `#poi` in the address), and where `0` and the logo go. Default `[0, height + 0.22·size, depth/2 + 0.28·size]`, with `size = max(width, depth)`: outside the front wall and above the ceiling, so the room shows like a model with the roof off |
 | `overview.target` | `[x, y, z]` | computed | default `[0, 0, −0.06·depth]`; give both keys or neither |
+| `start` | POI id or `null` | `null` | the stop the page opens on when the address has no `#poi`, instead of the overview; the `cinema` example lands on its screen. Must name an existing POI |
 
 ## effects
 

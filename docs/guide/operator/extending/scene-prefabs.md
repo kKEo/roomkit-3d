@@ -2,7 +2,7 @@
 
 A scene folder can bring its own object types. The viewer imports them at runtime, next to the scene's JSON and media, so a new kind of object needs **no rebuild and no redeploy of the app**. This page is the contract such a prefab follows; [Adding a prefab](prefab.md) is the other route, compiling one into the app.
 
-The example shipped with the `loft` scene is `public/scenes/loft/prefabs/lamp.js`.
+The example shipped with the `loft` scene is `public/scenes/loft/prefabs/lamp.js`; the `cinema` scene ships two more, `prefabs/seats.js` (a row of seats, placed many times as `decor`) and `prefabs/projector.js` (an animated reel and a line-drawn light cone).
 
 ## Declaring one
 

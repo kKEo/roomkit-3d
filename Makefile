@@ -13,7 +13,7 @@ VITE_PORT   = $(if $(PORT),-- --port $(PORT))
 MDBOOK_PORT = $(if $(PORT),--port $(PORT))
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build serve test lint check docs docs-check docs-serve docs-site-serve all clean
+.PHONY: help install dev build serve test lint check docs docs-check docs-serve docs-site-serve intro-video all clean
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -66,3 +66,9 @@ all: build docs ## Build the app and the docs
 
 clean: ## Remove build output (dist/, site/)
 	rm -rf dist $(SITE)
+
+INTRO_URL ?= http://localhost:5180/
+
+intro-video: node_modules ## Re-render the cinema intro film (public/scenes/cinema/media/intro.mp4): needs ffmpeg, `npx playwright install chromium`, and a dev server at INTRO_URL
+	node tools/intro/footage.mjs $(INTRO_URL)
+	node tools/intro/render.mjs $(INTRO_URL)

@@ -63,6 +63,7 @@ export async function buildScene({ name, read, resolveUrl, loadModule }) {
     if (seen.has(p.id)) errors.push(`${label(p.file)} › id: duplicate id "${p.id}"`);
     seen.add(p.id);
   }
+  if (scene.camera.start != null && !seen.has(scene.camera.start)) errors.push(`${label('scene.json')} › camera.start: no POI has the id "${scene.camera.start}"`);
   if (errors.length) throw new ConfigError(errors);
   return { scene, pois };
 }

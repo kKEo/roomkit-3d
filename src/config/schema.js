@@ -116,6 +116,8 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
       fovPortrait: z.number(),
       intro: z.strictObject({ position: vec3, target: vec3, duration: positive }),
       overview: z.strictObject({ position: vec3, target: vec3 }).optional(),
+      /** the POI the page opens on when the address has no `#poi`; default the overview */
+      start: z.string().min(1).nullable().optional(),
     }),
     effects: z.strictObject({
       ease: z.enum(EASE_NAMES),

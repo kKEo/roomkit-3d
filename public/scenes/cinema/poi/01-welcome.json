@@ -1,0 +1,13 @@
+{
+  "id": "welcome",
+  "label": "Now showing",
+  "kicker": "the big screen",
+  "objects": [
+    { "type": "cinemaScreen", "position": [0, 0, -20],
+      "props": { "width": 14, "height": 7.9, "elevation": 5.0,
+        "screen": { "source": "video", "src": "media/intro.mp4", "id": "main" } } }
+  ],
+  "camera": { "position": [0, 5.0, 2.0], "target": [0, 4.6, -20] },
+  "marker": { "position": [0, 9.4, -19] },
+  "content": { "markdown": "content/welcome.md" }
+}

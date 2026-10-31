@@ -1,0 +1,11 @@
+{
+  "house": "RoomKit Cinema",
+  "trend": { "seats": "+6%" },
+  "screens": [
+    { "screen": "main", "title": "RoomKit 3D — intro", "status": "showing", "seats": 80, "sold": 64, "starts": "now" },
+    { "screen": "booth", "title": "Live data tour", "status": "next", "seats": 40, "sold": 31, "starts": "19:30" },
+    { "screen": "wall", "title": "Features reel", "status": "next", "seats": 40, "sold": 12, "starts": "20:15" },
+    { "screen": "loft", "title": "Cyan Loft", "status": "later", "seats": 60, "sold": 9, "starts": "21:00" },
+    { "screen": "gallery", "title": "Amber Gallery", "status": "later", "seats": 60, "sold": 22, "starts": "21:45" }
+  ]
+}

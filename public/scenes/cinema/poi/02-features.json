@@ -1,0 +1,16 @@
+{
+  "id": "features",
+  "label": "Features",
+  "kicker": "west wall",
+  "objects": [
+    { "type": "pictureFrame", "position": [-16, 4.2, -4], "rotation": [0, 90, 0],
+      "props": { "width": 3.6, "height": 2.4, "image": "media/poster-scenes.svg" } },
+    { "type": "pictureFrame", "position": [-16, 4.2, -8.5], "rotation": [0, 90, 0],
+      "props": { "width": 3.6, "height": 2.4, "image": "media/poster-screens.svg" } },
+    { "type": "pictureFrame", "position": [-16, 4.2, -13], "rotation": [0, 90, 0],
+      "props": { "width": 3.6, "height": 2.4, "image": "media/poster-live.svg" } }
+  ],
+  "camera": { "position": [-5.5, 4.0, -8.5], "target": [-16, 3.9, -8.5] },
+  "marker": { "position": [-15.2, 6.6, -8.5] },
+  "content": { "markdown": "content/features.md" }
+}
