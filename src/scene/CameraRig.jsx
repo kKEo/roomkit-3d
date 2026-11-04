@@ -79,7 +79,8 @@ export function CameraRig() {
   const vel = useRef(new V3()).current; // free-fly velocity
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
-  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false, resumeFree = false }) {
+  // `reverse`: play the flight profile backwards in time (the way back from a screen mirrors the way in)
+  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false, resumeFree = false, reverse = false }) {
     const b = base.current;
     const p0 = b.pos.clone();
     const dist = p0.distanceTo(p1);
@@ -96,7 +97,7 @@ export function CameraRig() {
       start: performance.now(),
       dur: dur || (reducedMotion ? 450 : Math.min(2800, Math.max(1500, 1300 + dist * 55))),
       roll: arc ? Math.sign(new V3().crossVectors(f0, f1).y) || 1 : 0,
-      warp: arc, poi, zoomed, resumeFree, shown: false,
+      warp: arc, poi, zoomed, resumeFree, reverse, shown: false,
     };
     runtime.transiting = true;
     runtime.zoomReady = false;
@@ -127,7 +128,8 @@ export function CameraRig() {
       const view = back ? null : viewOf(nav?.id);
       const p1 = back ? back.pos : new V3(...view.position), t1 = back ? back.tgt : new V3(...view.target);
       returnPose.current = null;
-      startTransit(p1, t1, { dur: reducedMotion ? 300 : 1000, arc: false, resumeFree: !!useStore.getState().takeAfterZoom()?.free });
+      // the zoom flight played backwards: same straight line, same timing, facing the screen until the last part
+      startTransit(p1, t1, { dur: reducedMotion ? 300 : 900, arc: false, reverse: true, resumeFree: !!useStore.getState().takeAfterZoom()?.free });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nav, zoom, scene]);
@@ -144,9 +146,12 @@ export function CameraRig() {
     const tr = transit.current;
     if (tr) {
       const t = Math.min(1, (performance.now() - tr.start) / tr.dur);
-      posAt(tr, EASE[settings.ease](t), b.pos);
-      // the gaze leads the motion: rotation finishes before the flight does
-      b.tgt.lerpVectors(tr.t0, tr.t1, EASE.cubic(Math.min(1, t * 1.3)));
+      // the gaze leads the motion: rotation finishes before the flight does; played in reverse, the camera keeps
+      // facing where it was looking and turns only in the last part, the mirror image of the way in
+      const ease = tr.reverse ? 1 - EASE[settings.ease](1 - t) : EASE[settings.ease](t);
+      const gaze = tr.reverse ? 1 - EASE.cubic(Math.min(1, (1 - t) * 1.3)) : EASE.cubic(Math.min(1, t * 1.3));
+      posAt(tr, ease, b.pos);
+      b.tgt.lerpVectors(tr.t0, tr.t1, gaze);
       const bell = Math.sin(Math.PI * t);
       if (tr.warp) {
         warpFov = bell * settings.warp;
