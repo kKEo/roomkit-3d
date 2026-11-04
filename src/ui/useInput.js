@@ -9,6 +9,7 @@ export function poiIdFromHash() {
 
 // free fly, by physical key position so other keyboard layouts get the same shape
 const FLY_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE']);
+const ARROW_DIR = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
 
 /**
  * Keyboard, wheel, swipe, pointer (for parallax) and #hash navigation; Esc leaves a zoomed-in screen.
@@ -30,19 +31,23 @@ export function useInput(stageRef, enabled) {
       }
       const tag = (e.target.tagName || '').toLowerCase();
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (st().zoom) {
-        // zoomed in: the arrows move between the POI's screens as laid out on the wall. A video keeps ← → for
-        // seeking and an input keeps every arrow for its caret; PageUp / PageDown stand in for ← → there.
-        if (tag === 'textarea') return;
+        // zoomed in: the arrows move between the POI's screens as laid out on the wall. Where the screen itself
+        // takes the arrows (a video seeks with ← →, an input or textarea keeps them for its caret), Ctrl/⌘ + arrow
+        // moves instead, always; PageUp / PageDown also stand in for ← → outside a textarea.
+        if (e.altKey) return;
+        const arrow = ARROW_DIR[e.key];
         const video = st().zoom.screen?.source === 'video';
-        const dir = e.key === 'PageDown' ? 'right' : e.key === 'PageUp' ? 'left'
-          : typing ? null
-          : e.key === 'ArrowDown' ? 'down' : e.key === 'ArrowUp' ? 'up'
-          : !video && e.key === 'ArrowRight' ? 'right' : !video && e.key === 'ArrowLeft' ? 'left' : null;
+        let dir = null;
+        if (e.metaKey || e.ctrlKey) dir = arrow;
+        else if (tag === 'textarea') return;
+        else if (e.key === 'PageDown') dir = 'right';
+        else if (e.key === 'PageUp') dir = 'left';
+        else if (arrow && !typing && !(video && (arrow === 'left' || arrow === 'right'))) dir = arrow;
         if (dir) { e.preventDefault(); st().zoomMove(dir); }
         return;
       }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (typing) return;
       if (e.key === ' ' && tag !== 'button') { e.preventDefault(); st().zoomIn(); return; }
       const { fly } = runtime;

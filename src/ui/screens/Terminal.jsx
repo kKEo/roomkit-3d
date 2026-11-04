@@ -39,6 +39,7 @@ export function Terminal({ config, session, ui }) {
 
   const onKeyDown = e => {
     const h = history.current;
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // Ctrl/⌘ + arrow moves to another screen (useInput)
     if (!h.length || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
     at.current = e.key === 'ArrowUp' ? (at.current < 0 ? h.length - 1 : Math.max(0, at.current - 1)) : at.current < 0 ? -1 : at.current + 1;
