@@ -20,7 +20,7 @@ Put these at height `0`.
 | `wardrobe` | A two-door wardrobe with clothes and boxes inside. Its doors swing open while its panel is shown. | `width`, `height`, `depth`. `openOnFocus`: `false` keeps it shut. |
 | `pedestal` | A low stand with a slowly turning shape floating above it, wrapped in rings. | `shape`: `icosahedron`, `dodecahedron`, `octahedron`, `box`, `sphere`, `cone`, `torusKnot` and more. `height` of the floating shape. |
 | `controlDesk` | A curved control-centre console with operator chairs and a wall of screens behind it. Every screen can show something different (see below). | `screens`: one entry per screen. `columns`: screens per row (3). `segments`, `radius`, `arc`: the shape of the desk. `chairs`: how many. |
-| `serverRack` | A row of server cabinets with blinking lights and cables to the ceiling. | `count` of cabinets. `cables`: `false` to remove the cables. |
+| `serverRack` | A row of server cabinets with blinking lights and cables to the ceiling, behind a bi-fold door that folds open to both sides while its panel is shown. | `count` of cabinets. `cables`: `false` to remove the cables. `openOnFocus`: `false` keeps the door shut. |
 | `bench` | A plain block to sit on, or use as a plinth. | `width`, `height`, `depth`. |
 
 ## Things that hang on a wall
@@ -144,7 +144,7 @@ Any object can react to a click. Add `actions` next to its `props`, naming the p
   "actions": { "frame": { "type": "goTo", "poi": "studio" } } }
 ```
 
-The part lights up when the mouse is over it. What you can click, per object: `pictureFrame` → `frame` and `image`; `desk` → `screen` and `chair`; `door` → `door`; `bench` → `bench`; `pedestal` → `solid`; `wardrobe` → `doors`; `serverRack` → `rack`; `cinemaScreen` → `screen`; `controlDesk` → each screen by its `id` (or `scr0`, `scr1`, …); `primitive` → `shape`.
+The part lights up when the mouse is over it. What you can click, per object: `pictureFrame` → `frame` and `image`; `desk` → `screen` and `chair`; `door` → `door`; `bench` → `bench`; `pedestal` → `solid`; `wardrobe` → `doors`; `serverRack` → `rack` and `doors`; `cinemaScreen` → `screen`; `controlDesk` → each screen by its `id` (or `scr0`, `scr1`, …); `primitive` → `shape`.
 
 What a click can do:
 

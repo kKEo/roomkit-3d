@@ -116,14 +116,18 @@ A `video` screen whose `src` ends in `.m3u8` plays an HLS live stream: natively 
 
 ### serverRack
 
-A row of 1.05 m cabinets with blinking LEDs, a cable tray and cables to the ceiling. Origin: floor centre of the row.
+A row of 1.05 m cabinets with blinking LEDs, a cable tray and cables to the ceiling, behind a four-panel centre-opening bi-fold door in a frame. Origin: floor centre of the row. The door folds open while its POI's panel is shown, like the wardrobe's: each side's outer panel swings out on the frame and its inner panel folds back onto it, so the pairs stack at the edges.
 
 | Prop | Default | Notes |
 | --- | --- | --- |
-| `count` | `4` | cabinets, 1.1 m apart along x |
+| `count` | `4` | cabinets, 1.1 m apart along x; the door spans them all |
 | `height` | `5.2` | |
 | `cables` | `true` | tray and cables |
 | `ceiling` | `null` | where the cables end; `null` = `room.height` |
+| `openOnFocus` | `true` | `false` keeps the door shut |
+| `openAngle` | `85` | degrees the outer panels swing out (0–90); `90` folds each pair flat |
+
+Hotspots: `rack` (the cabinets) and `doors` (all four panels).
 
 Placement: focus `[0, 2.8, 0]`, distance `9.2`, cam y `3.1`, marker `[0, h + 0.7, 1.4]`.
 

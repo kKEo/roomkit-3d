@@ -37,7 +37,7 @@ The built-in interactions use the same actions: a marker click and the terminal'
 | `pedestal` | `solid` | the floating shape |
 | `pictureFrame` | `frame`, `image` | the frame board, the picture (when `image` is set) |
 | `primitive` | `shape` | the shape |
-| `serverRack` | `rack` | the cabinets |
+| `serverRack` | `rack`, `doors` | the cabinets; the four bi-fold door panels |
 | `wardrobe` | `doors` | both doors |
 
 ## Screens and the default click
