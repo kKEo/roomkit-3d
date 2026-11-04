@@ -40,10 +40,10 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `formSent` | `Message sent. Thank you!` | form POST succeeded |
 | `formFailed` | `Sending failed — please try again.` | form POST failed |
 | `canvasLabel` | `3D room with {total} areas` | accessible name of the canvas |
-| `zoomHint` | `[←][→] next screen, [Esc] back to the room` | bottom hint while zoomed into a screen |
+| `zoomHint` | `[←][→][↑][↓] other screens, [Esc] back to the room` | bottom hint while zoomed into a screen |
 | `flyHint` | `[W][A][S][D] fly, [Q][E] down / up, [Shift] slower, middle-drag — look, wheel — forward / back, [0] whole room` | bottom hint while flying freely |
 | `zoomBack` | `Back` | Back button on a zoomed-in screen |
-| `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [↑][↓] next screen, [Esc] back to the room` | bottom hint while zoomed into a video screen |
+| `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [↑][↓] [PageUp][PageDown] other screens, [Esc] back to the room` | bottom hint while zoomed into a video screen |
 | `videoPlay`, `videoPause` | `Play`, `Pause` | the play/pause button of a zoomed-in video (label and tooltip) |
 | `videoRestart`, `videoBack`, `videoForward` | `From the start`, `10 s back`, `10 s forward` | tooltips of the transport buttons |
 | `videoSpeed` | `Speed` | label before the speed buttons (¼×, ½×, 1×, 2×) |

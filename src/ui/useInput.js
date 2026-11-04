@@ -32,13 +32,15 @@ export function useInput(stageRef, enabled) {
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (st().zoom) {
-        // zoomed in: step between the POI's screens; a video keeps ← → for seeking, an input keeps the arrows for its caret
-        const video = st().zoom.screen?.source === 'video';
-        const fwd = ['PageDown', ...(typing ? [] : ['ArrowDown', ...(video ? [] : ['ArrowRight'])])];
-        const back = ['PageUp', ...(typing ? [] : ['ArrowUp', ...(video ? [] : ['ArrowLeft'])])];
+        // zoomed in: the arrows move between the POI's screens as laid out on the wall. A video keeps ← → for
+        // seeking and an input keeps every arrow for its caret; PageUp / PageDown stand in for ← → there.
         if (tag === 'textarea') return;
-        if (fwd.includes(e.key)) { e.preventDefault(); st().zoomStep(1); }
-        else if (back.includes(e.key)) { e.preventDefault(); st().zoomStep(-1); }
+        const video = st().zoom.screen?.source === 'video';
+        const dir = e.key === 'PageDown' ? 'right' : e.key === 'PageUp' ? 'left'
+          : typing ? null
+          : e.key === 'ArrowDown' ? 'down' : e.key === 'ArrowUp' ? 'up'
+          : !video && e.key === 'ArrowRight' ? 'right' : !video && e.key === 'ArrowLeft' ? 'left' : null;
+        if (dir) { e.preventDefault(); st().zoomMove(dir); }
         return;
       }
       if (typing) return;

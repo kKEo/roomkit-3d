@@ -105,14 +105,14 @@ describe('zoom and markers', () => {
     const screen = (key, x, poi = 'a', zoom = true) => ({ key, poi, screen: { source: 'image', zoom }, center: [x, 2, 0], normal: [0, 0, 1], up: [0, 1, 0], w: 1, h: 1 });
     const mount = recs => { const offs = recs.map(r => registerScreen(r.key, () => r)); return () => offs.forEach(f => f()); };
 
-    it('zoomIn takes the screen the POI camera faces, only once the camera has arrived', () => {
-      const off = mount([screen('r', 3), screen('m', 0.2), screen('l', -3)]);
+    it('zoomIn takes the top-left screen, only once the camera has arrived', () => {
+      const off = mount([screen('r', 3), screen('m', 0.2), screen('l', -3), { ...screen('low', -3), center: [-3, 0.5, 0] }]);
       st().goTo('a');
       st().zoomIn();
       expect(st().zoom).toBe(null);
       st().showPanel('a');
       st().zoomIn();
-      expect(st().zoom?.key).toBe('m');
+      expect(st().zoom?.key).toBe('l');
       off();
     });
 
@@ -127,21 +127,29 @@ describe('zoom and markers', () => {
       off();
     });
 
-    it('zoomStep walks the screens left to right and wraps', () => {
-      const off = mount([screen('r', 3), screen('m', 0), screen('l', -3)]);
+    it('zoomMove follows the arrow along the wall and stops at its edges', () => {
+      const off = mount([screen('r', 3), screen('m', 0), screen('l', -3), { ...screen('under', 0), center: [0, 0.5, 0] }]);
       st().goTo('a'); st().showPanel('a'); st().zoomIn();
-      st().zoomStep(1);
-      expect(st().zoom.key).toBe('r');
-      st().zoomStep(1);
       expect(st().zoom.key).toBe('l');
-      st().zoomStep(-1);
+      st().zoomMove('left');
+      expect(st().zoom.key).toBe('l');
+      st().zoomMove('right');
+      expect(st().zoom.key).toBe('m');
+      st().zoomMove('down');
+      expect(st().zoom.key).toBe('under');
+      st().zoomMove('down');
+      expect(st().zoom.key).toBe('under');
+      st().zoomMove('up');
+      st().zoomMove('right');
+      expect(st().zoom.key).toBe('r');
+      st().zoomMove('right');
       expect(st().zoom.key).toBe('r');
       expect(st().current).toBe('a');
       off();
     });
 
-    it('zoomStep does nothing when not zoomed', () => {
-      st().goTo('a'); st().zoomStep(1);
+    it('zoomMove does nothing when not zoomed', () => {
+      st().goTo('a'); st().zoomMove('right');
       expect(st().zoom).toBe(null);
     });
   });
