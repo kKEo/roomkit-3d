@@ -42,7 +42,7 @@ The built-in interactions use the same actions: a marker click and the terminal'
 
 ## Screens and the default click
 
-A screen inside a POI is clickable by default (unless its `zoom` is `false`): a click zooms straight into it, from the current POI, from another POI (which then becomes the current one, so leaving the screen lands there) or from free flight. Binding an action to the screen's hotspot replaces that default, everywhere, including `decor`. To keep the zoom and add nothing, bind `{ "type": "zoom" }`.
+A screen inside a POI is clickable by default (unless its `zoom` is `false`): a click zooms straight into it, from the current POI, from another POI (shown as current while zoomed) or from free flight; leaving the screen returns the camera to where it was. Binding an action to the screen's hotspot replaces that default, everywhere, including `decor`. To keep the zoom and add nothing, bind `{ "type": "zoom" }`.
 
 ## Adding an action type
 

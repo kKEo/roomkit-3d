@@ -48,7 +48,8 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Try | Expect |
 | --- | --- |
 | Hover any screen of the current stop | pointer cursor; the screen brightens slightly |
-| Click a screen of another stop (e.g. the cinema screen from stop 01) | the camera flies straight to that screen; the top bar, the `#hash` and `Esc` now belong to that stop |
+| Click a screen of another stop (e.g. the cinema screen from stop 01) | the camera flies straight to that screen; the top bar and the `#hash` show that stop while up close |
+| `Esc` after that | the camera flies back to exactly where it was before the click; the top bar and `#hash` show stop 01 again. From free flight (WASD), `Esc` returns to the spot and flying resumes |
 | Click a screen of the current stop | a straight, short flight; the screen fills most of the view; panel, diamonds and labels disappear; the hint says `Esc` goes back |
 | Console: `help`, `status`, `foo`, `↑` | command list; status lines; `command not found: foo`; `↑` recalls the last command |
 | Console: `goto 1` | leaves the screen and flies to stop 01 |

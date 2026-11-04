@@ -71,7 +71,7 @@ describe('goTo and navigation', () => {
     expect(st().nav.nonce).toBe(2);
   });
 
-  it('ignores a flight to where the visitor already is, except to leave a zoomed screen', () => {
+  it('ignores a flight to where the visitor already is, except from a zoomed screen, which it leaves for the POI\'s view', () => {
     st().goTo('a'); st().showPanel('a');
     st().goTo('a');
     expect(st().nav.nonce).toBe(1);
@@ -79,7 +79,8 @@ describe('goTo and navigation', () => {
     expect(st().zoom).not.toBe(null);
     st().goTo('a');
     expect(st().zoom).toBe(null);
-    expect(st().nav.nonce).toBe(1);
+    expect(st().zoomReturn).toBe(null);
+    expect(st().nav.nonce).toBe(2);
   });
 
   it('does nothing without POIs', () => {
@@ -100,29 +101,48 @@ describe('zoom and markers', () => {
     expect(st().zoom).toBe(z);
   });
 
-  it('zoomTo a screen of another POI makes that POI current, so leaving the screen lands there', () => {
+  it('zoomTo a screen of another POI makes that POI current meanwhile, and exitZoom brings the visitor back', () => {
     st().goTo('a'); st().showPanel('a');
-    const n = st().nav.nonce;
+    const nav = st().nav;
     st().zoomTo({ key: 'kb', poi: 'b' });
     expect(st().zoom?.key).toBe('kb');
     expect(st().current).toBe('b');
     expect(st().shown).toBe('b');
-    expect(st().nav).toMatchObject({ id: 'b', nonce: n + 1 });
+    expect(st().nav).toBe(nav); // no POI flight: the camera goes straight to the screen (CameraRig)
+    expect(st().zoomReturn).toEqual({ current: 'a', shown: 'a', free: false });
+    // another screen while zoomed keeps the original return point
+    st().zoomTo({ key: 'kb2', poi: 'b' });
+    expect(st().zoomReturn).toEqual({ current: 'a', shown: 'a', free: false });
     st().exitZoom();
     expect(st().zoom).toBe(null);
-    expect(st().current).toBe('b');
-    // a screen of the current POI leaves the flight alone
-    st().zoomTo({ key: 'kb2', poi: 'b' });
-    expect(st().nav.nonce).toBe(n + 1);
+    expect(st().zoomReturn).toBe(null);
+    expect(st().current).toBe('a');
+    expect(st().shown).toBe('a');
+    expect(st().afterZoom).toBe(null);
+    expect(st().nav).toBe(nav);
   });
 
-  it('zoomTo from free flight lands the visitor at the screen\'s POI', () => {
+  it('zoomTo from free flight pauses it, and exitZoom hands the camera back once it has flown back', () => {
     st().goTo('a'); st().showPanel('a'); st().freeFly();
     st().zoomTo({ key: 'ka', poi: 'a' });
     expect(st().free).toBe(false);
     expect(st().current).toBe('a');
     expect(st().shown).toBe('a');
-    expect(st().nav?.id).toBe('a');
+    expect(st().zoomReturn).toEqual({ current: null, shown: null, free: true });
+    st().exitZoom();
+    expect(st().current).toBe(null);
+    expect(st().free).toBe(false); // not yet: the camera is still on its way back
+    expect(st().takeAfterZoom()).toEqual({ free: true });
+    expect(st().takeAfterZoom()).toBe(null);
+    st().freeFly();
+    expect(st().free).toBe(true);
+  });
+
+  it('exitZoom without a zoom does nothing', () => {
+    st().goTo('a'); st().showPanel('a');
+    st().exitZoom();
+    expect(st().current).toBe('a');
+    expect(st().shown).toBe('a');
   });
 
   describe('keyboard zoom', () => {

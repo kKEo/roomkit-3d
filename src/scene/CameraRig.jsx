@@ -74,11 +74,12 @@ export function CameraRig() {
   }
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
+  const returnPose = useRef(null); // where the camera was when a screen was zoomed into: where Esc takes it back
   const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
   const vel = useRef(new V3()).current; // free-fly velocity
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
-  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false }) {
+  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false, resumeFree = false }) {
     const b = base.current;
     const p0 = b.pos.clone();
     const dist = p0.distanceTo(p1);
@@ -95,7 +96,7 @@ export function CameraRig() {
       start: performance.now(),
       dur: dur || (reducedMotion ? 450 : Math.min(2800, Math.max(1500, 1300 + dist * 55))),
       roll: arc ? Math.sign(new V3().crossVectors(f0, f1).y) || 1 : 0,
-      warp: arc, poi, zoomed, shown: false,
+      warp: arc, poi, zoomed, resumeFree, shown: false,
     };
     runtime.transiting = true;
     runtime.zoomReady = false;
@@ -108,8 +109,9 @@ export function CameraRig() {
     const prev = last.current;
     last.current = { nav, zoom };
     if (zoom && zoom !== prev.zoom) {
-      // a new screen wins over a new POI flight (a screen of another POI sets both): fly straight to the screen,
-      // backing off along its normal until it fills ~82% of the view
+      // fly straight to the screen, backing off along its normal until it fills ~82% of the view; the first
+      // screen of a zoom remembers where the camera was (mid-flight or free flight included) for the way back
+      if (!prev.zoom) returnPose.current = { pos: base.current.pos.clone(), tgt: base.current.tgt.clone() };
       const { size } = getThree();
       const fov = (size.width < size.height ? scene.camera.fovPortrait : scene.camera.fov) * DEG;
       const tan = Math.tan(fov / 2), aspect = size.width / size.height;
@@ -119,9 +121,13 @@ export function CameraRig() {
     } else if (nav && nav !== prev.nav) {
       const view = viewOf(nav.id);
       startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
-    } else if (!zoom && prev.zoom && nav) {
-      const view = viewOf(nav.id);
-      startTransit(new V3(...view.position), new V3(...view.target), { dur: reducedMotion ? 300 : 1000, arc: false });
+    } else if (!zoom && prev.zoom) {
+      // back to where the visitor was before the screen (the store has already restored which POI that was)
+      const back = returnPose.current;
+      const view = back ? null : viewOf(nav?.id);
+      const p1 = back ? back.pos : new V3(...view.position), t1 = back ? back.tgt : new V3(...view.target);
+      returnPose.current = null;
+      startTransit(p1, t1, { dur: reducedMotion ? 300 : 1000, arc: false, resumeFree: !!useStore.getState().takeAfterZoom()?.free });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nav, zoom, scene]);
@@ -148,7 +154,10 @@ export function CameraRig() {
       }
       runtime.progress = t;
       if (t > 0.8 && !tr.shown && tr.poi != null) { tr.shown = true; st.showPanel(tr.poi); }
-      if (t >= 1) { transit.current = null; runtime.transiting = false; runtime.zoomReady = tr.zoomed; }
+      if (t >= 1) {
+        transit.current = null; runtime.transiting = false; runtime.zoomReady = tr.zoomed;
+        if (tr.resumeFree) st.freeFly(); // back from a screen to where the visitor was flying: hand the camera back
+      }
     }
 
     if (st.free) {

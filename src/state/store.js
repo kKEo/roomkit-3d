@@ -36,6 +36,8 @@ export const useStore = create((set, get) => ({
   gfx: loadGfx(),  // rendering preferences of this browser, see src/lib/gfx.js
   nav: null,       // { id (null = overview), duration, nonce } — consumed by CameraRig
   zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
+  zoomReturn: null, // { current, shown, free } from before the zoom: what exitZoom restores (the camera pose is CameraRig's)
+  afterZoom: null, // { free: true } while the camera flies back from a screen to resume free flight on arrival
   free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
   confirm: null,   // an `openUrl` action waiting for the visitor's yes (the same object the scene binds, so a prefab can tell it is its own)
 
@@ -59,7 +61,7 @@ export const useStore = create((set, get) => ({
     const keep = id => (!fresh && pois.some(p => p.id === id) ? id : null);
     set({
       status: 'ready', error: null, scene, pois,
-      current: keep(prev.current), shown: keep(prev.shown), hover: null, zoom: null, free: !fresh && prev.free,
+      current: keep(prev.current), shown: keep(prev.shown), hover: null, zoom: null, zoomReturn: null, afterZoom: null, free: !fresh && prev.free,
       nav: fresh ? null : prev.nav,
       markersVisible: fresh ? scene.effects.markers : prev.markersVisible,
       settings: fresh ? {
@@ -76,8 +78,9 @@ export const useStore = create((set, get) => ({
     const { pois, current, shown, nav } = get();
     if (!pois.length) return;
     const id = get().resolve(target);
-    if (id === current && (id == null ? nav : shown === id)) { if (get().zoom) get().exitZoom(); return; }
-    set({ current: id, shown: null, started: true, zoom: null, free: false, confirm: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
+    // already there: nothing to do, unless zoomed into a screen, when "go to this POI" means its own view
+    if (id === current && (id == null ? nav : shown === id) && !get().zoom) return;
+    set({ current: id, shown: null, started: true, zoom: null, zoomReturn: null, afterZoom: null, free: false, confirm: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
     setHash(id);
   },
   /** Take the camera by hand: leaves the current POI (and any flight to it) where the camera is now. */
@@ -98,23 +101,35 @@ export const useStore = create((set, get) => ({
     set(s => ({ markersVisible: !s.markersVisible, hover: null }));
   },
   /**
-   * Zoom into a screen (its zoom record). A screen of another POI, or one clicked while flying freely, makes
-   * that POI the current one in the same step: the camera flies straight to the screen, and leaving it
-   * lands at that POI, with its panel and #hash.
+   * Zoom into a screen (its zoom record) from wherever the visitor is: a POI, mid-flight or free flight. The
+   * camera flies straight to the screen (CameraRig). The screen's POI becomes the current one meanwhile
+   * (top bar, #hash, Space), and where the visitor came from is kept in `zoomReturn`, so leaving the screen
+   * takes them back there, not to the POI's view. Moving between screens while zoomed keeps that origin.
    */
   zoomTo: rec => {
-    const { zoom, current, free, nav } = get();
+    const { zoom, current, shown, free } = get();
     if (zoom?.key === rec.key) return;
     setCursor('');
-    const away = rec.poi != null && (rec.poi !== current || free);
+    const zoomReturn = zoom ? get().zoomReturn : { current, shown, free };
     set({
-      zoom: rec, hover: null, optionsOpen: false,
-      ...(rec.poi != null ? { shown: rec.poi } : {}),
-      ...(away ? { current: rec.poi, started: true, free: false, confirm: null, nav: { id: rec.poi, nonce: (nav?.nonce || 0) + 1 } } : {}),
+      zoom: rec, zoomReturn, hover: null, optionsOpen: false, free: false, confirm: null,
+      ...(rec.poi != null ? { current: rec.poi, shown: rec.poi, started: true } : {}),
     });
-    if (away) setHash(rec.poi);
+    if (rec.poi != null && rec.poi !== current) setHash(rec.poi);
   },
-  exitZoom: () => set({ zoom: null }),
+  /** Leave the zoomed screen: back to where the visitor was (`zoomReturn`); free flight resumes once the camera is back (`afterZoom`). */
+  exitZoom: () => {
+    const { zoom, zoomReturn } = get();
+    if (!zoom) return;
+    const back = zoomReturn ?? {};
+    set({
+      zoom: null, zoomReturn: null, afterZoom: back.free ? { free: true } : null,
+      ...(zoomReturn ? { current: back.current, shown: back.shown ?? back.current } : {}),
+    });
+    if (zoomReturn) setHash(back.current);
+  },
+  /** CameraRig takes what to restore once the camera is back from a screen (and clears it). */
+  takeAfterZoom: () => { const a = get().afterZoom; if (a) set({ afterZoom: null }); return a; },
   /** Zoom into the top-left screen of the current POI (Space); nothing while flying, zoomed or in transit. */
   zoomIn: () => {
     const { current, shown, zoom, free, pois } = get();

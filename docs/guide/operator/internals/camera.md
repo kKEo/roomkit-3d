@@ -15,15 +15,15 @@ When `nav` changes, `CameraRig` builds a transit from the camera's current base 
 
 ## Zooming into a screen
 
-Clicking a screen of the current POI calls `zoomTo(rec)` in the store. `rec` holds the screen's world centre, normal, up vector and size, read from the mesh's `matrixWorld`, plus its config. `CameraRig` watches `nav` and `zoom` together:
+Clicking a screen (of any POI, from anywhere) calls `zoomTo(rec)` in the store. `rec` holds the screen's world centre, normal, up vector and size, read from the mesh's `matrixWorld`, plus its config. `CameraRig` watches `nav` and `zoom` together, `zoom` first:
 
 | Change | Flight |
 | --- | --- |
-| `nav` changed | the POI flight above (it also clears `zoom`) |
-| `zoom` set | straight line to `center + normal × d`, looking at `center`; `d = max(h/2 ÷ tan(fov/2), w/2 ÷ (tan(fov/2) × aspect)) ÷ 0.82`, so the screen fills about 82 % of the view. 900 ms (300 ms with reduced motion), no warp, no roll, no panel |
-| `zoom` cleared, `nav` unchanged | straight line back to the current POI's camera, 1000 ms (300 ms) |
+| `zoom` set | straight line from wherever the camera is to `center + normal × d`, looking at `center`; `d = max(h/2 ÷ tan(fov/2), w/2 ÷ (tan(fov/2) × aspect)) ÷ 0.82`, so the screen fills about 82 % of the view. 900 ms (300 ms with reduced motion), no warp, no roll, no panel. The first screen of a zoom saves the camera's pose as `returnPose` |
+| `nav` changed | the POI flight above (`goTo` also clears `zoom` and the return point) |
+| `zoom` cleared | straight line back to `returnPose`, 1000 ms (300 ms); on arrival `freeFly()` if the visitor was flying before |
 
-When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, parallax, the idle bob and the panel view offset ease to zero (at `6 × dt`), so the camera holds still and the DOM overlay stays pinned. `exitZoom()` comes from `Esc`, the overlay's Back button, a click on empty space (`onPointerMissed` on the canvas) or the terminal's `exit`.
+When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, parallax, the idle bob and the panel view offset ease to zero (at `6 × dt`), so the camera holds still and the DOM overlay stays pinned. `exitZoom()` comes from `Esc`, the overlay's Back button, a click on empty space (`onPointerMissed` on the canvas) or the terminal's `exit`. It flies the camera straight back to the pose it had when the first screen of the zoom was entered (`returnPose` in `CameraRig`, captured from `base` so a mid-flight or free-flight pose counts), while the store restores `current` / `shown` from `zoomReturn`; if the visitor was flying freely, `afterZoom` makes the rig call `freeFly()` on arrival. A `goTo` while zoomed (top bar, terminal `goto`) is a normal POI flight instead and drops the return point.
 
 ## Free fly
 
@@ -63,6 +63,6 @@ Parallax and the idle bob ease to zero exactly as when zoomed, so the camera onl
 | `Esc` | `exitZoom()`, else close Options | handled before the input check, so it also works while typing in an overlay |
 | `Space` | `zoomIn()` | once the camera has arrived at a POI (`shown === current`): zooms into the POI's top-left zoomable screen (top row first, then left to right as seen from the POI camera; `firstScreen` in `src/lib/screenOrder.js`); ignored on the overview, while flying or over a button |
 | `←` `→` `↑` `↓` while zoomed | `zoomMove(dir)` | the nearest zoomable screen of the same POI in that direction on the wall (`moveScreen`: `←` `→` stay in the row, `↑` `↓` in the column, rows and columns being screens whose centres differ by less than half a screen; the edge of the wall stops the move, no wrapping). Where the screen takes the arrows itself (a video seeks with `←` `→`; an input or textarea keeps every arrow for its caret, the terminal `↑` `↓` for its history), `Ctrl`/`⌘` + arrow moves to the neighbouring screen regardless; `PageUp` / `PageDown` also stand in for `←` / `→` outside a textarea. `Alt` + arrow is left to the browser |
-| click on a screen | `goTo(poi)`, or `zoomTo` if the POI is current | R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
+| click on a screen | `zoomTo(rec)` | from anywhere: the screen's POI becomes current while zoomed, and `zoomReturn` remembers where the visitor was. R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
 
 While zoomed, every other key is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom. The screens a POI offers come from the registry in `src/scene/screenState.js` (`screensOf(poi)`): every mounted `ScreenSurface` registers its zoom-record builder, and screens with `zoom: false` are skipped.
