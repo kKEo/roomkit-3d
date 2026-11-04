@@ -23,7 +23,7 @@ A hotspot with an action shows a hand cursor and a glowing outline on hover, and
 | `togglePanel` | — | hides or shows the content panel (the `H` key) |
 | `emit` | `name`, `detail` (any JSON) | dispatches `new CustomEvent("scene-rooms:<name>", { detail })` on `window`, with the current POI id added to `detail`; for a page that embeds the viewer |
 
-The built-in interactions use the same actions: a marker click and a screen click on another POI dispatch `goTo`, and the terminal's `goto` command does too.
+The built-in interactions use the same actions: a marker click and the terminal's `goto` command dispatch `goTo`; a screen click zooms (`zoomTo` in the store), which also makes the screen's POI the current one.
 
 ## Hotspots by prefab
 
@@ -42,7 +42,7 @@ The built-in interactions use the same actions: a marker click and a screen clic
 
 ## Screens and the default click
 
-A screen inside a POI is clickable by default (unless its `zoom` is `false`): the first click on a screen of another POI flies there, a click on a screen of the current POI zooms in. Binding an action to the screen's hotspot replaces that default, everywhere, including `decor`. To keep the zoom and add nothing, bind `{ "type": "zoom" }`.
+A screen inside a POI is clickable by default (unless its `zoom` is `false`): a click zooms straight into it, from the current POI, from another POI (which then becomes the current one, so leaving the screen lands there) or from free flight. Binding an action to the screen's hotspot replaces that default, everywhere, including `decor`. To keep the zoom and add nothing, bind `{ "type": "zoom" }`.
 
 ## Adding an action type
 

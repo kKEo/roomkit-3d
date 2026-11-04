@@ -180,7 +180,7 @@ export function ScreenSurface({ w, h, ...props }) {
   recordRef.current = record;
   useEffect(() => registerScreen(key, () => recordRef.current()), [key]);
 
-  // clickable: inside a POI by default (fly there, then zoom in), or wherever an action is bound
+  // clickable: inside a POI by default (zoom straight in, whichever POI the visitor is at), or wherever an action is bound
   const selectable = !zoomed && (action ? true : zoom && poi != null);
   // handlers go away while zoomed in, so no pointer-out will arrive to clear the hover
   useEffect(() => { if (!selectable) setHovered(false); }, [selectable]);
@@ -195,8 +195,7 @@ export function ScreenSurface({ w, h, ...props }) {
         // a bare { type: 'zoom' } means this very screen
         if (action.type === 'zoom' && !action.screen) st.zoomTo(record());
         else st.dispatch(action);
-      } else if (st.current !== poi) st.dispatch({ type: 'goTo', poi });
-      else st.zoomTo(record());
+      } else st.zoomTo(record()); // straight to this screen, also from another POI (the store makes that POI current)
     },
   } : {};
 

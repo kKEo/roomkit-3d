@@ -57,7 +57,7 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 
 | To… | Do this |
 | --- | --- |
-| Step up to a screen | Click it, or press `Space` once you have arrived at a stop to step up to its first screen (the top-left one). If it belongs to another stop, the first click takes you to that stop and the second one steps up to the screen |
+| Step up to a screen | Click it, or press `Space` once you have arrived at a stop to step up to its first screen (the top-left one). A screen of another stop works the same: one click flies you straight to it, and that stop becomes the current one, so stepping back leaves you there |
 | Switch to the screen next to it | Press the arrow key pointing at it: `→` `←` along a row, `↑` `↓` between rows. At the end of a row or column nothing happens. On a video `←` `→` seek, and in a text box the arrows move the cursor, so use `PageDown` / `PageUp` for right / left there. You can also click the neighbouring screen at the edge of the view |
 | Use it | Type commands, filter a table or fill in a form, depending on the screen (see [Objects you can place](objects.md#screens-you-can-use)) |
 | Step back | Press `Esc`, click **← Back** in the screen's corner, or click anywhere outside the screen |

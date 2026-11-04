@@ -107,17 +107,18 @@ export function CameraRig() {
   useEffect(() => {
     const prev = last.current;
     last.current = { nav, zoom };
-    if (nav && nav !== prev.nav) {
-      const view = viewOf(nav.id);
-      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
-    } else if (zoom && zoom !== prev.zoom) {
-      // back off along the screen normal until the screen fills ~82% of the view
+    if (zoom && zoom !== prev.zoom) {
+      // a new screen wins over a new POI flight (a screen of another POI sets both): fly straight to the screen,
+      // backing off along its normal until it fills ~82% of the view
       const { size } = getThree();
       const fov = (size.width < size.height ? scene.camera.fovPortrait : scene.camera.fov) * DEG;
       const tan = Math.tan(fov / 2), aspect = size.width / size.height;
       const d = Math.max(zoom.h / 2 / tan, zoom.w / 2 / (tan * aspect)) / 0.82;
       const c = new V3(...zoom.center);
       startTransit(c.clone().addScaledVector(new V3(...zoom.normal), d), c, { dur: reducedMotion ? 300 : 900, arc: false, zoomed: true });
+    } else if (nav && nav !== prev.nav) {
+      const view = viewOf(nav.id);
+      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
     } else if (!zoom && prev.zoom && nav) {
       const view = viewOf(nav.id);
       startTransit(new V3(...view.position), new V3(...view.target), { dur: reducedMotion ? 300 : 1000, arc: false });

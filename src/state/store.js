@@ -97,10 +97,22 @@ export const useStore = create((set, get) => ({
     if (get().markersVisible) setCursor('');
     set(s => ({ markersVisible: !s.markersVisible, hover: null }));
   },
+  /**
+   * Zoom into a screen (its zoom record). A screen of another POI, or one clicked while flying freely, makes
+   * that POI the current one in the same step: the camera flies straight to the screen, and leaving it
+   * lands at that POI, with its panel and #hash.
+   */
   zoomTo: rec => {
-    if (get().zoom?.key === rec.key) return;
+    const { zoom, current, free, nav } = get();
+    if (zoom?.key === rec.key) return;
     setCursor('');
-    set({ zoom: rec, hover: null, optionsOpen: false });
+    const away = rec.poi != null && (rec.poi !== current || free);
+    set({
+      zoom: rec, hover: null, optionsOpen: false,
+      ...(rec.poi != null ? { shown: rec.poi } : {}),
+      ...(away ? { current: rec.poi, started: true, free: false, confirm: null, nav: { id: rec.poi, nonce: (nav?.nonce || 0) + 1 } } : {}),
+    });
+    if (away) setHash(rec.poi);
   },
   exitZoom: () => set({ zoom: null }),
   /** Zoom into the top-left screen of the current POI (Space); nothing while flying, zoomed or in transit. */

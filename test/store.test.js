@@ -100,6 +100,31 @@ describe('zoom and markers', () => {
     expect(st().zoom).toBe(z);
   });
 
+  it('zoomTo a screen of another POI makes that POI current, so leaving the screen lands there', () => {
+    st().goTo('a'); st().showPanel('a');
+    const n = st().nav.nonce;
+    st().zoomTo({ key: 'kb', poi: 'b' });
+    expect(st().zoom?.key).toBe('kb');
+    expect(st().current).toBe('b');
+    expect(st().shown).toBe('b');
+    expect(st().nav).toMatchObject({ id: 'b', nonce: n + 1 });
+    st().exitZoom();
+    expect(st().zoom).toBe(null);
+    expect(st().current).toBe('b');
+    // a screen of the current POI leaves the flight alone
+    st().zoomTo({ key: 'kb2', poi: 'b' });
+    expect(st().nav.nonce).toBe(n + 1);
+  });
+
+  it('zoomTo from free flight lands the visitor at the screen\'s POI', () => {
+    st().goTo('a'); st().showPanel('a'); st().freeFly();
+    st().zoomTo({ key: 'ka', poi: 'a' });
+    expect(st().free).toBe(false);
+    expect(st().current).toBe('a');
+    expect(st().shown).toBe('a');
+    expect(st().nav?.id).toBe('a');
+  });
+
   describe('keyboard zoom', () => {
     // three screens on the far wall (z = 0) of POI "a", registered out of order; seen from +z, "right" is +x
     const screen = (key, x, poi = 'a', zoom = true) => ({ key, poi, screen: { source: 'image', zoom }, center: [x, 2, 0], normal: [0, 0, 1], up: [0, 1, 0], w: 1, h: 1 });
