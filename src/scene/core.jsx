@@ -22,11 +22,13 @@ export const SlotContext = createContext(null);
 
 /**
  * Pointer handlers for a named hotspot: a hand cursor, `hot` while hovered, and the bound
- * action dispatched on click (not on a drag). Empty when the scene binds nothing to it.
+ * action dispatched on click (not on a drag). Empty when the scene binds nothing to it, and in the editor's select mode.
  */
 export function useHotspot(name) {
   const actions = useContext(ActionsContext);
-  const action = name ? actions[name] : undefined;
+  // in the editor's select mode a click picks the whole object instead (src/prefabs/index.jsx)
+  const picking = useStore(s => s.edit?.mode === 'select');
+  const action = name && !picking ? actions[name] : undefined;
   const [hot, setHot] = useState(false);
   useEffect(() => { if (!action) setHot(false); }, [action]);
   if (!action) return { hot: false, handlers: {} };

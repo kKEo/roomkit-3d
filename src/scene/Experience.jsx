@@ -10,6 +10,7 @@ import { CameraRig } from './CameraRig.jsx';
 import { Telemetry } from './Telemetry.jsx';
 import { Markers } from './Markers.jsx';
 import { PlacedObject } from '../prefabs/index.jsx';
+import { EditMarks } from './EditMarks.jsx';
 
 /** Shader time + Matrix-rain refresh (captioned with the current POI). */
 function Ticker({ world }) {
@@ -31,7 +32,7 @@ function PoiObjects({ poi }) {
   const hovered = useStore(s => s.hover === poi.id);
   return (
     <PoiContext.Provider value={poi.id}>
-      {poi.objects.map((o, i) => <PlacedObject key={i} slot={i} object={o} active={active} hovered={hovered} />)}
+      {poi.objects.map((o, i) => <PlacedObject key={i} slot={i} object={o} active={active} hovered={hovered} editKey={`${poi.file}:${i}`} />)}
     </PoiContext.Provider>
   );
 }
@@ -40,6 +41,7 @@ export function Experience() {
   const scene = useStore(s => s.scene);
   const pois = useStore(s => s.pois);
   const particles = useStore(s => s.gfx.particles);
+  const editing = useStore(s => s.edit != null);
   const world = useMemo(() => ({
     name: scene.name,
     mats: createMaterials(scene),
@@ -58,9 +60,10 @@ export function Experience() {
       <Telemetry />
       <CameraRig />
       <Room />
-      {scene.decor.map((o, i) => <PlacedObject key={i} slot={i} object={o} />)}
+      {scene.decor.map((o, i) => <PlacedObject key={i} slot={i} object={o} editKey={`decor:${i}`} />)}
       {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
+      {editing && <EditMarks />}
       <Particles count={Math.round(scene.effects.particles * particles)} />
     </WorldContext.Provider>
   );

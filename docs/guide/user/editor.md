@@ -1,27 +1,81 @@
 # Editing in the browser
 
-This page shows how to build a scene without touching the repository: edit its files in the browser with the room updating live, then download the folder.
+This page shows how to build a scene without touching the repository: arrange its objects in a tree, or edit its files as text, with the room updating live, then export the folder.
 
 ## Open the editor
 
 Open `edit.html` next to the app, for example `http://localhost:5173/edit.html`. Add `?scene=gallery` to start from an existing scene instead of the one-stop template.
 
-![The editor: a left pane with the folder name, a Download .zip button, an object-type dropdown with Add to decor and New point of interest buttons, the list of files with scene.json selected and its text below; the Amber Gallery room on the right](images/editor.png)
+![The editor: a left pane with the folder name, Import… and Export… at the top, then + Add, undo and redo, Preview and Select; below them Objects and Files tabs and a filter box; the scene tree with the room, the scenery (bench, door) and three stops, the Landscape stop opened and its pictureFrame selected; under the tree the inspector with Belongs to, position, rotation, scale, width and height; the Amber Gallery room on the right with a box around the selected frame](images/editor.png)
 
-*The editor opened with `?scene=gallery`. Left: the files and the text of the selected one; right: the live room.*
+*The editor opened with `?scene=gallery`. Left: the scene tree with the selected object's settings under it; right: the live room, with a box around what is selected.*
 
-The left pane lists the scene's files. Click one to edit it; the room on the right follows a moment after you stop typing. The usual keys work in the room (`1`–`9`, `0`, `H`, `M`, `Esc`); the scroll wheel scrolls the editor when the mouse is over it.
+The pane has two views of the same scene: **Objects**, a tree of what is in the room, and **Files**, the scene's files as text. Whatever you change in one shows in the other, and the room on the right follows a moment later. The usual keys work in the room (`1`–`9`, `0`, `H`, `M`, `Esc`); the scroll wheel scrolls the editor when the mouse is over it. `⌘Z` / `Ctrl+Z` undoes the last change and `⇧⌘Z` / `Ctrl+Y` redoes it (also with the ↶ ↷ buttons).
 
-## Make changes
+## The scene tree
 
-- **Edit a file.** Everything on the [scene.json](../operator/reference/scene-json.md) and [point of interest](../operator/reference/poi-json.md) pages applies. A mistake shows up under the text in red, as `file › field: problem`, and the file turns red in the list. The room keeps showing the last version that worked.
+The tree has three parts:
 
-  ![The editor with poi/landscape.json open, the file name red in the list, and a red line under the text reading: gallery/poi/landscape.json › objects.0: Unrecognized key "positon"](images/editor-error.png)
+| Part | What it is |
+| --- | --- |
+| **Room** (the scene's title) | the room itself: its title, size, walls and lights |
+| **Scenery** | objects that are only there to be seen, such as seats, benches and lamps. Visitors do not stop at them |
+| **Stops** | the points visitors are taken to, in the order of the tour (the number keys and `←` `→` follow it). Each stop holds one or more objects, has its own camera position, a floating diamond and a text page |
 
-  *A misspelt `position` in a point-of-interest file. The file turns red in the list and the problem is named under the text; the room on the right is unchanged.*
-- **New point of interest.** Choose an object type in the dropdown, click **New point of interest**, give it a name. A file `poi/<name>.json`, a page `content/<name>.md` and the entry in `scene.json` are created, with the camera and marker placed automatically.
-- **Add to …** appends an object of the chosen type to the file you are editing (to `decor` when that is `scene.json`), with every setting written out at its default, so you can see what there is to change.
-- Pictures and videos: write their paths as usual (`"media/photo.jpg"`); they show once the files are in the folder's `media/` directory on the server.
+Click a row to select it: a box shows it in the room, and its settings appear under the tree. Clicking a stop also flies the camera there. To see an object up close, double-click it, or press `F` or `Enter`.
+
+**Preview** and **Select** at the top decide what a click in the room does. In **Preview** it does what it does for visitors (a screen zooms in, a door opens a link). In **Select** it selects the object under the pointer, opens its branch in the tree, and a double-click flies to it.
+
+On the right of a row, ● hides the object in the preview and ⊘ locks it, so that clicks in the room go through it to what is behind (useful for big things such as a projector's beam or the seats). Neither is saved: they only help while you work. A red ⚠ with a number counts the problems in that row, as described in [Edit the files](#edit-the-files).
+
+The filter box above the tree narrows it to matching names; `t:desk` shows only objects of that type. The stops of what matches stay visible, so you can see where each match belongs.
+
+| Key (with the tree focused) | Does |
+| --- | --- |
+| `↑` `↓`, `Home` `End` | move through the rows |
+| `→` `←` | open or close a branch; go to its first row or back to its parent |
+| a letter | jump to the next row starting with it |
+| `Enter`, `F` | fly to the row |
+| `F2` | rename (an empty name brings back the automatic one) |
+| `Delete` | delete (a stop asks first) |
+| `⌘D` / `Ctrl+D` | duplicate an object, a metre to the side |
+| `Alt+↑` `Alt+↓` | move a stop earlier or later in the tour, or an object within its list |
+| `H` | hide or show in the preview |
+
+Right-click a row for the same commands and a few more: **Show only this stop**, **Lock all scenery**, **Edit page**.
+
+## Add an object, then decide what it is
+
+1. Click **+ Add**, type part of a name (`desk`, `frame`, `screen`) and press `Enter`, or click a type. The object lands in the **Scenery**, on the floor where the camera is looking, turned towards you and a little aside from anything already standing there.
+2. If visitors should stop at it, make it a stop: click **Make it a stop** in the message that appears, choose **New stop with this object…** in its **Belongs to** list, or right-click it and pick **Make it a stop**. Type the stop's name and press `Enter`. The name also gives the stop its id (the `#name` in links) and its page `content/<name>.md`. The camera and the diamond are placed from the object; to show it from somewhere else, fly there and click **Use current view** in the stop's settings.
+
+You can change your mind at any time:
+
+- **Move an object** between the scenery and a stop, or from one stop to another: change its **Belongs to**, drag it onto **Scenery** or onto a stop, or right-click it and use **Move to**. It stays exactly where it is in the room; only its role changes.
+- **Turn a stop into scenery**: drag it onto **Scenery**, or click **Turn into scenery** in its settings. Its objects stay where they are; its name, camera, diamond and page go. The editor first lists what will go, including links and buttons elsewhere that lead to that stop.
+- **Reorder the tour**: drag a stop above or below another one.
+
+A drag that cannot be done says why (a stop cannot go inside another stop, for example). Everything here can be undone.
+
+## Change an object, a stop or the room
+
+The settings under the tree belong to the selected row:
+
+- **An object**: its name, **Belongs to**, position, rotation and scale, then every setting its type has, with the right kind of field for each (a number, a tick box, a list of choices). A setting changed from its default is marked with a bar on the left; ↺ puts it back. Numbers are applied when you press `Enter` or leave the field. **JSON** shows the object as text, for the settings a form cannot show well (actions, lists of screens).
+- **A stop**: its name and the small line above it (kicker), where the camera looks from (**Use current view**, or **Place from object** to go back to automatic), its diamond, and **Edit page** for its text. **Turn into scenery** and **Delete stop** are here too.
+- **The room**: its title, the logo text and its size. Everything else (lights, walls, theme) is in `scene.json` (**Open scene.json**); where the room opens and free flight are in [Export…](#export-a-scene-or-a-site).
+
+## Edit the files
+
+**Files** lists the scene's files. Click one to edit it as text; everything on the [scene.json](../operator/reference/scene-json.md) and [point of interest](../operator/reference/poi-json.md) pages applies. Changes made in the tree are written into these files without disturbing how the rest of each file is laid out.
+
+A mistake, in either view, shows at the bottom in red as `file › field: problem`. The file turns red in the list, and in the tree the object, its stop and the group get a ⚠ with the number of problems. Selected, the object shows the problem above its settings. The room keeps showing the last version that worked.
+
+![The editor with the Landscape stop's picture frame selected: the frame, its stop and the Stops group carry a red ⚠ 1 in the tree, the inspector shows objects.0: Unrecognized key "positon" above the frame's settings, and the same line is at the bottom of the pane](images/editor-error.png)
+
+*A misspelt `position` in a stop's file. The tree marks the object and its stop; the room on the right is unchanged.*
+
+Pictures and videos: write their paths as usual (`"media/photo.jpg"`); they show once the files are imported (see below) or are in the folder's `media/` directory on the server.
 
 ## Import
 

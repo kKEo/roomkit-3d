@@ -1,0 +1,234 @@
+import { useEffect, useState } from 'react';
+import { DECOR, parseKey, objectAt, objectRaw, setObjectField, setObjectRaw, setField, renameObject } from './tree.js';
+import { propFields, changed } from './form.js';
+import { glyphOf } from './types.js';
+
+/**
+ * The selected node's settings under the tree. An object gets a form generated from its prefab's schema
+ * (a changed prop is marked and can be reset to its default) or its own JSON; **Belongs to** moves it to the
+ * scenery or a stop, or makes it a stop of its own. A stop gets its label, camera, marker and page; the room
+ * its title and size. Every field writes the files through `edit`, so the Files view and undo follow.
+ */
+
+const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : '');
+const parseJson = t => { try { return { ok: true, v: JSON.parse(t) }; } catch (e) { return { ok: false, msg: e.message }; } };
+
+/** A number input that writes on Enter or when left, so half-typed values never reach the scene. */
+function NumberField({ value, onCommit, nullable = false, int = false, min, label, width }) {
+  const [text, setText] = useState(String(num(value)));
+  useEffect(() => setText(String(num(value))), [value]);
+  const commit = () => {
+    if (text.trim() === '') { if (nullable) onCommit(null); else setText(String(num(value))); return; }
+    const v = Number(text);
+    if (!Number.isFinite(v) || (int && !Number.isInteger(v)) || (min != null && v < min)) { setText(String(num(value))); return; }
+    if (v !== value) onCommit(v);
+  };
+  return (
+    <input className="num" inputMode="decimal" aria-label={label} value={text} placeholder={nullable ? 'none' : ''} style={width ? { width } : undefined}
+      onChange={e => setText(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); }} />
+  );
+}
+
+/** A text input that writes when left or on Enter. */
+function TextField({ value, onCommit, placeholder, label, nullable = false }) {
+  const [text, setText] = useState(value ?? '');
+  useEffect(() => setText(value ?? ''), [value]);
+  const commit = () => { const v = text === '' && nullable ? null : text; if (v !== (value ?? (nullable ? null : ''))) onCommit(v); };
+  return <input className="text" aria-label={label} value={text} placeholder={placeholder} onChange={e => setText(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); }} />;
+}
+
+/** JSON text for a nested setting; written when valid and left. */
+function JsonField({ value, onCommit, label, rows = 3 }) {
+  const shown = value === undefined ? '' : JSON.stringify(value, null, 1).replace(/\n\s*/g, ' ');
+  const [text, setText] = useState(shown);
+  const [bad, setBad] = useState(null);
+  useEffect(() => { setText(shown); setBad(null); }, [shown]);
+  const commit = () => {
+    if (text === shown) return;
+    const r = parseJson(text);
+    if (!r.ok) { setBad(r.msg); return; }
+    setBad(null);
+    onCommit(r.v);
+  };
+  return (
+    <>
+      <textarea className="json" rows={rows} aria-label={label} value={text} spellCheck={false} onChange={e => setText(e.target.value)} onBlur={commit} />
+      {bad && <div className="bad">{bad}</div>}
+    </>
+  );
+}
+
+function Vec({ label, value, onCommit }) {
+  const v = Array.isArray(value) && value.length === 3 ? value : [0, 0, 0];
+  return (
+    <div className="prop">
+      <span className="name">{label}</span>
+      <span className="vec">{['x', 'y', 'z'].map((a, i) => (
+        <NumberField key={a} label={`${label} ${a}`} value={v[i]} onCommit={n => onCommit(v.map((x, j) => (j === i ? n : x)))} />
+      ))}</span>
+    </div>
+  );
+}
+
+function PropField({ f, written, def, onSet }) {
+  const value = written === undefined ? def : written;
+  const isChanged = changed(written, def);
+  let input;
+  if (f.kind === 'boolean') input = <input type="checkbox" aria-label={f.key} checked={!!value} onChange={e => onSet(e.target.checked)} />;
+  else if (f.kind === 'number') input = <NumberField label={f.key} value={value} nullable={f.nullable} int={f.int} min={f.min} onCommit={onSet} />;
+  else if (f.kind === 'string') input = <TextField label={f.key} value={value} nullable={f.nullable} placeholder={f.nullable ? 'none' : ''} onCommit={onSet} />;
+  else if (f.kind === 'enum') {
+    input = (
+      <select aria-label={f.key} value={value ?? ''} onChange={e => onSet(e.target.value === '' ? null : e.target.value)}>
+        {f.nullable && <option value="">none</option>}
+        {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  } else input = <JsonField label={f.key} value={value} onCommit={onSet} />;
+  return (
+    <div className={`prop${isChanged ? ' changed' : ''}${f.kind === 'json' ? ' wide' : ''}`} title={isChanged ? 'Changed from the default' : undefined}>
+      <span className="name">{f.key}</span>
+      {input}
+      {written !== undefined && <button type="button" className="reset" title={`Back to the default (${JSON.stringify(def)})`} aria-label={`Reset ${f.key}`} onClick={() => onSet(undefined)}>↺</button>}
+    </div>
+  );
+}
+
+function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
+  const [tab, setTab] = useState('form');
+  const obj = objectAt(files, node.key);
+  const entry = registry.has(obj?.type) ? registry.get(obj.type) : null;
+  const set = (path, v) => edit(f => setObjectField(f, node.key, path, v));
+  const owner = parseKey(node.key).owner;
+  const ownerStop = tree.stops.find(s => s.file === owner);
+  if (!obj || typeof obj !== 'object') return <div className="insp-empty">This object is not an object in the JSON: fix it in Files.</div>;
+  return (
+    <>
+      <div className="insp-head">
+        <span className="ico" aria-hidden="true">{glyphOf(obj.type)}</span>
+        <TextField label="Name" value={obj.name ?? ''} placeholder={node.label} onCommit={v => edit(f => renameObject(f, node.key, v ?? ''))} />
+        <span className="sub">{obj.type}</span>
+      </div>
+      <label className="prop">
+        <span className="name">Belongs to</span>
+        <select value={owner} onChange={e => onBelongs(node.key, e.target.value)} aria-label="Belongs to">
+          <option value={DECOR}>Scenery</option>
+          {tree.stops.map(s => <option key={s.file} value={s.file} disabled={s.bad}>{String(s.n + 1).padStart(2, '0')} {s.label}</option>)}
+          <option value="new" disabled={ownerStop?.objects.length === 1}>New stop with this object…</option>
+        </select>
+      </label>
+      <div className="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'form'} onClick={() => setTab('form')}>Form</button>
+        <button type="button" role="tab" aria-selected={tab === 'json'} onClick={() => setTab('json')}>JSON</button>
+      </div>
+      {tab === 'json' ? <RawObject files={files} k={node.key} edit={edit} /> : (
+        <div className="form">
+          <Vec label="position" value={obj.position} onCommit={v => set(['position'], v)} />
+          <Vec label="rotation" value={obj.rotation ?? [0, 0, 0]} onCommit={v => set(['rotation'], v)} />
+          {Array.isArray(obj.scale)
+            ? <Vec label="scale" value={obj.scale} onCommit={v => set(['scale'], v)} />
+            : <div className="prop"><span className="name">scale</span><NumberField label="scale" value={obj.scale ?? 1} min={0.001} onCommit={v => set(['scale'], v === 1 ? undefined : v)} /></div>}
+          {entry
+            ? propFields(entry.schema).map(f => <PropField key={f.key} f={f} written={obj.props?.[f.key]} def={entry.props[f.key]} onSet={v => set(['props', f.key], v)} />)
+            : <div className="insp-empty">Unknown type <code>{obj.type}</code>: edit it in JSON.</div>}
+          <div className="note">{Object.keys(obj.actions ?? {}).length ? `Actions: ${Object.keys(obj.actions).join(', ')} (edit them in JSON).` : 'No actions: bind one to a hotspot in JSON.'}</div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** The object's own JSON, written as typed once it parses. */
+function RawObject({ files, k, edit }) {
+  const raw = objectRaw(files, k) ?? '';
+  const [text, setText] = useState(raw);
+  const [bad, setBad] = useState(null);
+  useEffect(() => { setText(raw); setBad(null); }, [raw]);
+  const onChange = t => {
+    setText(t);
+    const r = parseJson(t);
+    setBad(r.ok ? null : r.msg);
+    if (r.ok) edit(f => setObjectRaw(f, k, t), { typing: true });
+  };
+  return (
+    <>
+      <textarea className="json big" value={text} spellCheck={false} aria-label="The object as JSON" onChange={e => onChange(e.target.value)} />
+      {bad && <div className="bad">{bad}</div>}
+    </>
+  );
+}
+
+function StopInspector({ files, node, edit, onStop, openFile }) {
+  const poi = (() => { try { return JSON.parse(files.get(node.file)); } catch { return null; } })();
+  if (!poi) return <div className="insp-empty">{node.file} is missing or not valid JSON: fix it in Files.</div>;
+  const set = (path, v) => edit(f => setField(f, node.file, path, v));
+  return (
+    <>
+      <div className="insp-head">
+        <span className="ico" aria-hidden="true">{String(node.n + 1).padStart(2, '0')}</span>
+        <TextField label="Label" value={poi.label} onCommit={v => v && set(['label'], v)} />
+      </div>
+      <div className="form">
+        <div className="prop"><span className="name">kicker</span><TextField label="kicker" value={poi.kicker ?? ''} placeholder="a line above the title" onCommit={v => set(['kicker'], v || undefined)} /></div>
+        <div className="prop"><span className="name">id</span><code title="Used in #links and actions; change it in Files">{poi.id}</code></div>
+        <div className="prop wide">
+          <span className="name">camera</span>
+          <span className="value">{poi.camera ? 'fixed' : 'placed from its first object'}</span>
+          <button type="button" className="btn ghost" onClick={() => onStop('camera', node.file)} title="Fly where the stop should be seen from first">Use current view</button>
+          {poi.camera && <button type="button" className="btn ghost" onClick={() => set(['camera'], undefined)}>Place from object</button>}
+        </div>
+        <div className="prop wide">
+          <span className="name">marker</span>
+          <span className="value">{poi.marker ? 'fixed' : 'placed from its first object'}</span>
+          {poi.marker && <button type="button" className="btn ghost" onClick={() => set(['marker'], undefined)}>Place from object</button>}
+        </div>
+        <div className="prop wide">
+          <span className="name">page</span>
+          {typeof poi.content?.markdown === 'string'
+            ? <><code>{poi.content.markdown}</code><button type="button" className="btn ghost" onClick={() => openFile(poi.content.markdown)}>Edit page</button></>
+            : <span className="value">written as blocks in {node.file}</span>}
+        </div>
+        <div className="row">
+          <button type="button" className="btn ghost" onClick={() => onStop('dissolve', node.file)}>Turn into scenery</button>
+          <button type="button" className="btn ghost danger" onClick={() => onStop('delete', node.file)}>Delete stop</button>
+          <button type="button" className="btn ghost" onClick={() => openFile(node.file)}>Open file</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function RoomInspector({ files, edit, openFile }) {
+  let scene = null;
+  try { scene = JSON.parse(files.get('scene.json')); } catch { /* shown below */ }
+  if (!scene) return <div className="insp-empty">scene.json is not valid JSON: fix it in Files.</div>;
+  const set = (path, v) => edit(f => setField(f, 'scene.json', path, v));
+  return (
+    <div className="form">
+      <div className="prop"><span className="name">title</span><TextField label="title" value={scene.title ?? ''} onCommit={v => set(['title'], v || undefined)} /></div>
+      <div className="prop"><span className="name">brand</span><TextField label="brand" value={scene.brand ?? ''} placeholder="top-left logo, Word/Word" onCommit={v => set(['brand'], v || undefined)} /></div>
+      {['width', 'height', 'depth'].map(k => (
+        <div className="prop" key={k}><span className="name">{k}</span><NumberField label={`room ${k}`} value={scene.room?.[k]} min={1} onCommit={v => set(['room', k], v)} /></div>
+      ))}
+      <div className="note">Lights, walls, theme and the rest are in scene.json; where the room opens and free flight are in Export…</div>
+      <div className="row"><button type="button" className="btn ghost" onClick={() => openFile('scene.json')}>Open scene.json</button></div>
+    </div>
+  );
+}
+
+export function Inspector({ selKey, tree, files, registry, edit, onBelongs, onStop, openFile, onAdd }) {
+  if (!files || !selKey) return <div className="insp-empty">Select something in the tree or, in Select mode, in the room.</div>;
+  const k = parseKey(selKey);
+  if (k.group === 'room') return <RoomInspector files={files} edit={edit} openFile={openFile} />;
+  if (k.group === 'scenery') {
+    return <div className="insp-empty">Everything you add starts here, as scenery. Make an object a stop with <strong>Belongs to</strong>, or drag it onto a stop. <button type="button" className="btn ghost" onClick={onAdd}>+ Add</button></div>;
+  }
+  if (k.group === 'stops') return <div className="insp-empty">The tour, in order: the number keys and ← → follow it. Drag a stop to reorder it, or press Alt+↑ ↓.</div>;
+  if (k.stop) {
+    const node = tree.stops.find(s => s.file === k.stop);
+    return node ? <StopInspector files={files} node={node} edit={edit} onStop={onStop} openFile={openFile} /> : null;
+  }
+  const list = k.owner === DECOR ? tree.decor : tree.stops.find(s => s.file === k.owner)?.objects;
+  const node = list?.[k.index];
+  return node ? <ObjectInspector files={files} node={node} tree={tree} registry={registry} edit={edit} onBelongs={onBelongs} /> : null;
+}

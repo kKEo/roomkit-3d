@@ -123,6 +123,30 @@ Run `make dev` and open stop 07 of the default room. Its node table, FLEET numbe
 | A copy of a scene with a misspelt `type` and a missing POI file | both problems listed at once, each with file and field |
 | A media path that does not exist | the screen shows rain; a console warning names the file |
 
+## Editor: scene tree
+
+Open `/edit.html?scene=cinema` on the dev server.
+
+| Try | Expect |
+| --- | --- |
+| Look at the tree | Room (the title), Scenery 9 (projector, seats 1–6, bench 1–2), Stops 6 in tour order; ⌖ on the stop the camera is at |
+| Click `seats 3` | the row highlights, a box appears around that row of seats in the room, the inspector shows position, rotation, scale and the seats' settings, `riser` marked with a bar and ↺ |
+| Change `count` to 6, press `Enter` | the row of seats grows; **Files** › `scene.json` shows only that number changed, on the same line |
+| **Select**, click the server rack in the room | the rack is selected and its stop 04 opens in the tree; the doors do not open, screens do not zoom; double-click flies to it |
+| **Preview**, click the big screen | it zooms in as for visitors |
+| Lock the projector (⊘), click through its beam | the object behind is selected; in Select mode lines never pick, only surfaces |
+| **+ Add**, type `ped`, `Enter` | a pedestal appears in the scenery where the camera looks, aside from what stands there, facing the camera; a message offers **Make it a stop** |
+| **Make it a stop**, type `The exhibit`, `Enter` | a stop 07 appears in the top bar and the tree; its id is `the-exhibit`, its page `content/the-exhibit.md`; its diamond and camera are placed from the pedestal |
+| Drag `bench 2` onto `03 Booth`, then onto **Scenery** | it moves into the stop and back, staying where it is in the room |
+| Drag stop 06 above stop 01 | the top bar and the number keys follow the new order |
+| Drag a stop onto an object row | refused, with "Stops cannot go inside other stops…" |
+| Stop 06's **Turn into scenery** | a question lists the 4 objects, the page that goes and what links to the stop; after it, the doors are in the scenery; `⌘Z` (with focus anywhere outside a text field) brings the stop back, `⇧⌘Z` repeats it |
+| Misspell a prop in **Files**, back to **Objects** | the object, its stop and **Stops** carry ⚠ 1; selected, the object shows the line above its settings |
+| Filter `t:pic` | only the three picture frames, under stop 02 |
+| Keyboard in the tree: `↓` `→` `←` `Home` `End`, a letter, `F2`, `Delete`, `⌘D`, `Alt+↑` | moves, opens and closes, jumps, renames, deletes (an Undo in the message), duplicates, reorders; the room never moves with these keys |
+| Right-click a stop › **Show only this stop** | everything else disappears from the preview until **Show everything** |
+| `/edit.html`, **+ Add** a desk, make it a stop | it builds; the desk does not land inside the start pedestal |
+
 ## Editor: export a site
 
 Open `/edit.html?scene=cinema` on the dev server.

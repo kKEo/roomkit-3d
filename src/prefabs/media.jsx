@@ -181,7 +181,8 @@ export function ScreenSurface({ w, h, ...props }) {
   useEffect(() => registerScreen(key, () => recordRef.current()), [key]);
 
   // clickable: inside a POI by default (zoom straight in, whichever POI the visitor is at), or wherever an action is bound
-  const selectable = !zoomed && (action ? true : zoom && poi != null);
+  const picking = useStore(s => s.edit?.mode === 'select'); // the editor's select mode picks the object instead
+  const selectable = !zoomed && !picking && (action ? true : zoom && poi != null);
   // handlers go away while zoomed in, so no pointer-out will arrive to clear the hover
   useEffect(() => { if (!selectable) setHovered(false); }, [selectable]);
   const handlers = selectable ? {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeZip, crc32 } from '../src/editor/zip.js';
-import { newSceneFiles, addPoi, addObject, objectTemplate, slug } from '../src/editor/bundle.js';
+import { newSceneFiles, objectTemplate, slug } from '../src/editor/bundle.js';
+import { addToScenery, makeStop } from '../src/editor/tree.js';
 import { buildScene, readerFromMap } from '../src/config/buildScene.js';
 import { z } from 'zod';
 import { PREFAB_TYPES, createRegistry, normalisePrefab } from '../src/prefabs/registry.js';
@@ -36,27 +37,10 @@ describe('bundle templates', () => {
     expect(pois.map(p => p.id)).toEqual(['start']);
   });
 
-  it('addPoi adds a file, its markdown and the scene entry, with unique ids', async () => {
-    let r = addPoi(newSceneFiles(), 'North wall', 'pictureFrame');
-    expect(r.file).toBe('poi/north-wall.json');
-    r = addPoi(r.files, 'North wall', 'desk');
-    expect(r.file).toBe('poi/north-wall-2.json');
-    const { pois } = await build(r.files);
-    expect(pois.map(p => p.id)).toEqual(['start', 'north-wall', 'north-wall-2']);
-    expect(pois[2].objects[0].type).toBe('desk');
-  });
-
-  it('addObject appends to a POI or to decor and the result builds', async () => {
-    let files = addObject(newSceneFiles(), 'poi/start.json', 'bench');
-    files = addObject(files, 'scene.json', 'door');
-    const { scene, pois } = await build(files);
-    expect(pois[0].objects.map(o => o.type)).toEqual(['pedestal', 'bench']);
-    expect(scene.decor[0].type).toBe('door');
-  });
-
-  it.each(PREFAB_TYPES)('objectTemplate(%s) validates', async type => {
-    const files = addObject(newSceneFiles(), 'poi/start.json', type);
-    await expect(build(files)).resolves.toBeTruthy();
+  it.each(PREFAB_TYPES)('objectTemplate(%s) validates, as scenery and as a stop', async type => {
+    const r = addToScenery(newSceneFiles(), objectTemplate(type));
+    await expect(build(r.files)).resolves.toBeTruthy();
+    await expect(build(makeStop(r.files, r.key, type).files)).resolves.toBeTruthy();
     expect(objectTemplate(type).props).toBeDefined();
   });
 
@@ -67,7 +51,7 @@ describe('bundle templates', () => {
 });
 
 describe('templates with a scene registry', () => {
-  it('objectTemplate and addObject use the scene prefab\'s defaults', async () => {
+  it('objectTemplate uses the scene prefab\'s defaults', async () => {
     const lamp = normalisePrefab('lamp', {
       schema: z.strictObject({ height: z.number().positive().default(1.8) }),
       placement: p => ({ focus: [0, p.height, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
@@ -75,7 +59,7 @@ describe('templates with a scene registry', () => {
     const registry = createRegistry({ lamp });
     expect(objectTemplate('lamp', registry).props).toEqual({ height: 1.8 });
     expect(() => objectTemplate('lamp')).toThrow();
-    const files = addObject(newSceneFiles(), 'scene.json', 'lamp', registry);
+    const { files } = addToScenery(newSceneFiles(), objectTemplate('lamp', registry));
     files.set('scene.json', files.get('scene.json').replace('"decor"', '"prefabs": { "lamp": "prefabs/lamp.js" },\n  "decor"'));
     const { scene } = await buildScene({ name: 't', read: readerFromMap(files), resolveUrl: p => p, loadModule: async () => ({ meta: () => lamp }) });
     expect(scene.decor[0]).toMatchObject({ type: 'lamp', props: { height: 1.8 } });

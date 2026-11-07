@@ -79,7 +79,7 @@ export function Viewer() {
               gl={glAttrs}
               camera={{ fov: scene.camera.fov, near: 0.05, far, position: scene.camera.intro.position }}
               aria-label={fmt(scene.ui.canvasLabel, { total })}
-              onPointerMissed={() => useStore.getState().exitZoom()}
+              onPointerMissed={() => { const st = useStore.getState(); if (st.edit?.mode === 'select') st.setEdit({ selected: null }); else st.exitZoom(); }}
             >
               <Experience />
             </Canvas>

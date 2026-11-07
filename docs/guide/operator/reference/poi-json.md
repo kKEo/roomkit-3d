@@ -22,6 +22,7 @@ Used in `objects` and in `scene.json` `decor`.
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `type` | one of the [prefab types](prefabs.md) | — | an unknown type fails validation and lists the known ones |
+| `name` | string | — | what the editor's scene tree calls the object; the viewer does not show it. Without it the tree shows the screen id or the type, numbered when it repeats |
 | `position` | `[x, y, z]` | `[0, 0, 0]` | the prefab's origin (see its "origin" column) |
 | `rotation` | `[x, y, z]` degrees | `[0, 0, 0]` | Euler XYZ; prefabs face local +Z, so `y` picks the facing |
 | `scale` | number > 0 or `[x, y, z]` | `1` | also scales the auto-placed marker, but not the camera distance |

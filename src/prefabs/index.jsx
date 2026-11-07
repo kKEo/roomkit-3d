@@ -1,6 +1,6 @@
-import { Component, Suspense, lazy } from 'react';
+import { Component, Suspense, lazy, useCallback } from 'react';
 import { ActionsContext, SlotContext, Solid } from '../scene/core.jsx';
-import { useStore } from '../state/store.js';
+import { useStore, editGroups } from '../state/store.js';
 import { BUILTIN_REGISTRY } from './registry.js';
 import { LOADERS, loadComponent } from './loaders.js';
 import { externalComponent } from './external.js';
@@ -29,14 +29,27 @@ class PrefabBoundary extends Component {
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-/** A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world; `slot` is its index in the list. */
-export function PlacedObject({ object, slot = null, active = false, hovered = false }) {
+/**
+ * A config object ({ type, position, rotation (deg), scale, props, actions }) placed in the world; `slot` is its index in the list.
+ * `editKey` names it for the editor (src/editor/tree.js): hidden there, it is not drawn; in the editor's select mode a click
+ * picks it, and a double-click frames it.
+ */
+export function PlacedObject({ object, slot = null, active = false, hovered = false, editKey = null }) {
   const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
+  const hidden = useStore(s => editKey != null && !!s.edit?.hidden.has(editKey));
+  const picking = useStore(s => editKey != null && s.edit?.mode === 'select');
+  const track = useCallback(g => {
+    if (editKey == null || !g) return;
+    editGroups.set(editKey, g);
+    // while the list is reordered another object may already hold the key
+    return () => { if (editGroups.get(editKey) === g) editGroups.delete(editKey); };
+  }, [editKey]);
+  if (hidden) return null;
   const Component = COMPONENTS[object.type] ?? externalComponent(registry.get(object.type));
   return (
     <ActionsContext.Provider value={object.actions ?? NO_ACTIONS}>
       <SlotContext.Provider value={slot}>
-        <group position={object.position} rotation={toRad(object.rotation)} scale={object.scale}>
+        <group ref={track} position={object.position} rotation={toRad(object.rotation)} scale={object.scale} {...(picking ? pickHandlers(editKey) : {})}>
           <PrefabBoundary type={object.type}>
             <Suspense fallback={<Placeholder />}>
               <Component props={object.props} active={active} hovered={hovered} />
@@ -46,4 +59,19 @@ export function PlacedObject({ object, slot = null, active = false, hovered = fa
       </SlotContext.Provider>
     </ActionsContext.Provider>
   );
+}
+
+/**
+ * The editor's select mode: a locked object lets the pointer through to whatever is behind it, and so do lines (outlines,
+ * a projector's beam), which three.js picks within a generous distance; only surfaces pick.
+ */
+function pickHandlers(key) {
+  const st = useStore.getState;
+  const open = e => e.object.isMesh && !e.object.isLineSegments2 && !st().edit?.locked.has(key) && (e.stopPropagation(), true);
+  return {
+    onClick: e => { if (e.delta < 8 && open(e)) st().setEdit({ selected: key }); },
+    onDoubleClick: e => { if (open(e)) st().edit.frame?.(key); },
+    onPointerOver: e => { if (open(e)) { st().setEdit({ hovered: key }); document.body.style.cursor = 'pointer'; } },
+    onPointerOut: () => { if (st().edit?.hovered === key) st().setEdit({ hovered: null }); document.body.style.cursor = ''; },
+  };
 }

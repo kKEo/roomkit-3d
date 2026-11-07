@@ -41,6 +41,8 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
    */
   const objectSchema = z.strictObject({
     type: objectType,
+    /** what the editor's tree calls the object; the viewer does not show it */
+    name: z.string().optional(),
     position: vec3.default([0, 0, 0]),
     rotation: vec3.default([0, 0, 0]),
     scale: z.union([positive, scale3]).default(1),

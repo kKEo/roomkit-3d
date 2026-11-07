@@ -33,6 +33,7 @@ The dev server reloads the page when you change files in `public/scenes/`. Chang
 | `zustand` | 5.0.16 | store |
 | `react-markdown`, `remark-gfm` | 10.1.0, 4.0.1 | panel Markdown with tables |
 | `zod` | 4.6.7 | config validation |
+| `jsonc-parser` | 3.3.1 | the editor's JSON edits that keep a file's layout (its parser only; editor bundle only) |
 | `vite`, `@vitejs/plugin-react` | 8.3.5, 6.1.2 | dev server and build (dev only) |
 
 `@react-three/drei` is deliberately **not** used. Its `<Html>` labels logged React 19 root-unmount errors, and dropping it removed about 590 kB from the bundle. Labels are DOM elements projected in `src/ui/Labels.jsx`.

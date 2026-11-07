@@ -40,6 +40,12 @@ export const useStore = create((set, get) => ({
   afterZoom: null, // { free: true } while the camera flies back from a screen to resume free flight on arrival
   free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
   confirm: null,   // an `openUrl` action waiting for the visitor's yes (the same object the scene binds, so a prefab can tell it is its own)
+  /**
+   * The editor's hold on the preview; null in the viewer. `{ mode: 'preview' | 'select', selected, hovered, hidden, locked,
+   * frame(key) }`: in select mode a click picks the object under the pointer (its tree key, src/editor/tree.js) instead of
+   * zooming or running its actions; hidden objects are not drawn, locked ones let the click through to what is behind.
+   */
+  edit: null,
 
   /** Index of a POI id in `pois`, or -1. */
   indexOf: id => get().pois.findIndex(p => p.id === id),
@@ -165,7 +171,12 @@ export const useStore = create((set, get) => ({
   acceptConfirm: () => { const a = get().confirm; if (!a) return; set({ confirm: null }); openLink(a); },
   /** Run a config action ({ type: 'goTo' | 'zoom' | 'openUrl' | 'togglePanel' | 'emit', … }); see src/actions/registry.js. */
   dispatch: action => runAction(action, get()),
+  /** Change the editor's hold on the preview (see `edit`); nothing in the viewer. */
+  setEdit: patch => { if (get().edit) set(s => ({ edit: { ...s.edit, ...patch } })); },
 }));
+
+/** Object3D of each placed object by its tree key, while the editor is open: the selection box measures them. */
+export const editGroups = new Map();
 
 export const runtime = {
   mouse: { x: 0, y: 0 },        // target, -1..1

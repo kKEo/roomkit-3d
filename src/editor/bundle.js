@@ -1,4 +1,5 @@
 import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
+import { pretty } from './jsonEdit.js';
 
 /**
  * Scene bundles for the editor: a `Map<path, text>` of a scene folder's text files
@@ -6,7 +7,7 @@ import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
  * Media files stay where they are and are referenced by path.
  */
 
-const json = o => JSON.stringify(o, null, 2) + '\n';
+const json = o => pretty(o) + '\n';
 
 /** Text of a file by URL, or an Error saying why (the dev server answers missing files with HTML). */
 async function fetchText(url) {
@@ -71,26 +72,4 @@ export function newSceneFiles(title = 'My Room') {
     [`poi/${id}.json`, json(poi)],
     [`content/${id}.md`, markdown],
   ]);
-}
-
-/** A copy of `files` with a new POI added and listed in scene.json. Throws if scene.json is not valid JSON. */
-export function addPoi(files, label, type = 'pedestal', registry) {
-  const scene = JSON.parse(files.get('scene.json'));
-  let id = slug(label), n = 2;
-  while (files.has(`poi/${id}.json`)) id = `${slug(label)}-${n++}`;
-  const { poi, markdown } = poiTemplate(id, label, type, registry);
-  const out = new Map(files);
-  out.set(`poi/${id}.json`, json(poi));
-  out.set(`content/${id}.md`, markdown);
-  scene.poi = [...(scene.poi ?? []), `poi/${id}.json`];
-  out.set('scene.json', json(scene));
-  return { files: out, file: `poi/${id}.json` };
-}
-
-/** A copy of `files` with an object of `type` appended to the POI file (or to `decor` for scene.json). */
-export function addObject(files, file, type, registry) {
-  const doc = JSON.parse(files.get(file));
-  const list = file === 'scene.json' ? (doc.decor ??= []) : (doc.objects ??= []);
-  list.push(objectTemplate(type, registry));
-  return new Map(files).set(file, json(doc));
 }
