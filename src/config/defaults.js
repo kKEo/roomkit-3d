@@ -36,6 +36,7 @@ export const SCENE_DEFAULTS = {
     fov: 55,
     fovPortrait: 68,
     intro: { position: [0, 6.5, 27], target: [0, 3, 0], duration: 3200 },
+    freeFly: true,
   },
   effects: { ease: 'quint', parallax: 0.8, warp: 12, particles: 520, panelOffset: 0.16, markers: true },
   ui: {
@@ -48,6 +49,7 @@ export const SCENE_DEFAULTS = {
     unsupportedHint: 'The room is drawn with WebGL 2, which this browser does not support or has turned off. Open the page in a current Chrome, Edge, Firefox or Safari, with hardware acceleration enabled.',
     kicker: '{n} of {total}',
     hint: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room, [W][A][S][D] fly',
+    hintNoFly: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room',
     goTo: 'Go to {label}',
     home: 'view the whole room (0)',
     navLabel: 'Areas of the room',

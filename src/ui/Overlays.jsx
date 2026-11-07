@@ -9,7 +9,9 @@ export function Hint() {
   const total = useStore(s => s.pois.length);
   const zoomed = useStore(s => (s.zoom ? (s.zoom.screen?.source === 'video' ? 'video' : 'screen') : null));
   const free = useStore(s => s.free);
-  const parts = fmt(zoomed === 'video' ? ui.videoHint : zoomed ? ui.zoomHint : free ? ui.flyHint : ui.hint, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
+  const canFly = useStore(s => s.scene.camera.freeFly !== false);
+  const idle = canFly ? ui.hint : ui.hintNoFly;
+  const parts = fmt(zoomed === 'video' ? ui.videoHint : zoomed ? ui.zoomHint : free ? ui.flyHint : idle, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
   return (
     <div className="hint">
       {parts.map((p, i) => (/^\[.+\]$/.test(p) ? <kbd key={i}>{p.slice(1, -1)}</kbd> : p))}

@@ -15,6 +15,16 @@ async function fetchText(url) {
   return res.text();
 }
 
+/**
+ * Bytes of a file by URL (media, modules, the viewer's files), or an Error saying why. An HTML answer counts as
+ * missing (the dev server's fallback page), unless the file is HTML itself (`html: true`, the viewer's index.html).
+ */
+export async function fetchBytes(url, { html = false } = {}) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok || (!html && (res.headers.get('content-type') || '').includes('text/html'))) throw new Error(`${url}: file not found${res.ok ? '' : ` (HTTP ${res.status})`}`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 /** Fetch a published scene folder's text files. `base` is the folder URL (with a trailing slash). */
 export async function fetchBundle(base) {
   const files = new Map();

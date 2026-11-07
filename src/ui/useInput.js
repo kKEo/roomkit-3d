@@ -19,6 +19,7 @@ export function useInput(stageRef, enabled) {
   useEffect(() => {
     if (!enabled) return;
     const st = () => useStore.getState();
+    const canFly = () => st().scene?.camera.freeFly !== false;
     const inUi = t => t.closest && t.closest('#panel, .options, .screen-ui, .editor, .confirm');
 
     const onKey = e => {
@@ -52,7 +53,7 @@ export function useInput(stageRef, enabled) {
       if (e.key === ' ' && tag !== 'button') { e.preventDefault(); st().zoomIn(); return; }
       const { fly } = runtime;
       fly.slow = e.shiftKey;
-      if (FLY_KEYS.has(e.code)) { fly.keys.add(e.code); st().freeFly(); return; }
+      if (FLY_KEYS.has(e.code) && canFly()) { fly.keys.add(e.code); st().freeFly(); return; }
       const n = st().pois.length;
       if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) { e.preventDefault(); st().next(); }
       else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); st().prev(); }
@@ -86,7 +87,7 @@ export function useInput(stageRef, enabled) {
 
     let down = null, looking = false;
     const onDown = e => {
-      if (e.button === 1) {
+      if (e.button === 1 && canFly()) {
         // middle button looks around: no autoscroll or paste, and keep the drag when the pointer leaves the canvas
         e.preventDefault();
         stage.setPointerCapture(e.pointerId);

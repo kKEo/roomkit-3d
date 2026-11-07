@@ -90,6 +90,18 @@ describe('sceneSchema', () => {
     expect(poiSchema.safeParse({ ...good, lable: 'x' }).success).toBe(false);
   });
 
+  it('takes camera.start as a POI id, a fixed pose or null, and camera.freeFly as a boolean', () => {
+    const cam = camera => sceneSchema.safeParse(minimalScene({ poi: ['a'], camera }));
+    expect(cam({ start: 'lobby' }).success).toBe(true);
+    expect(cam({ start: null }).success).toBe(true);
+    expect(cam({ start: { position: [1, 2, 3], target: [0, 1, 0] } }).success).toBe(true);
+    expect(cam({ start: { position: [1, 2, 3] } }).success).toBe(false);
+    expect(cam({ start: '' }).success).toBe(false);
+    expect(cam({}).data.camera.freeFly).toBe(true);
+    expect(cam({ freeFly: false }).data.camera.freeFly).toBe(false);
+    expect(cam({ freeFly: 'no' }).success).toBe(false);
+  });
+
   it('rejects an unknown ease', () => {
     const r = sceneSchema.safeParse(minimalScene({ poi: ['a'], effects: { ease: 'bounce' } }));
     expect(r.success).toBe(false);

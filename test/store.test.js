@@ -243,6 +243,40 @@ describe('freeFly', () => {
     st().setLoaded(scene('other'), pois(['a']));
     expect(st().free).toBe(false);
   });
+
+  it('does nothing when the scene has switched it off (camera.freeFly: false)', () => {
+    st().setLoaded({ ...scene(), camera: { freeFly: false } }, pois(['a', 'b']));
+    st().goTo('a'); st().showPanel('a');
+    st().freeFly();
+    expect(st().free).toBe(false);
+    expect(st().current).toBe('a');
+    expect(st().shown).toBe('a');
+  });
+});
+
+describe('openAt', () => {
+  it('flies to a fixed pose with no POI, no panel and no hash, and the next navigation works as usual', () => {
+    const view = { position: [1, 2, 3], target: [0, 1, 0] };
+    st().openAt(view, 500);
+    expect(st().nav).toMatchObject({ id: null, view, duration: 500, nonce: 1 });
+    expect(st().current).toBe(null);
+    expect(st().shown).toBe(null);
+    expect(st().started).toBe(true);
+    st().next();
+    expect(st().current).toBe('a');
+    expect(st().nav.view).toBeUndefined();
+    expect(st().nav.nonce).toBe(2);
+  });
+
+  it('ends free flight and a zoom', () => {
+    st().freeFly();
+    st().openAt({ position: [0, 0, 0], target: [0, 0, 1] });
+    expect(st().free).toBe(false);
+    st().goTo('a'); st().zoomTo({ key: 'k', poi: 'a' });
+    st().openAt({ position: [0, 0, 0], target: [0, 0, 1] });
+    expect(st().zoom).toBe(null);
+    expect(st().zoomReturn).toBe(null);
+  });
 });
 
 describe('gfx', () => {

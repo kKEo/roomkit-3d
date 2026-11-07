@@ -1,12 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { viewerBundle } from './tools/viewer-bundle.js';
 
 /**
  * Dev-only test feeds for live screens and blocks (`make dev`; absent from the build):
  * - /__feeds/ticker       Server-Sent Events, one message a second
  * - /__feeds/ticker.json  the same value, fetched
  * Each value is screen fields usable without a transform: `values` for a graph, `stats` for a stats screen.
+ * The editor's "Export site" reads the viewer's files from /__viewer/ in dev and from viewer.json in a build
+ * (tools/viewer-bundle.js).
  */
 function devFeeds() {
   let n = 0;
@@ -46,7 +49,7 @@ function devFeeds() {
 export default defineConfig({
   // relative base so the build works from any sub-path; scenes are fetched at runtime from ./scenes/
   base: './',
-  plugins: [react(), devFeeds()],
+  plugins: [react(), devFeeds(), viewerBundle()],
   // three.js alone is ~700 kB minified
   build: {
     chunkSizeWarningLimit: 1600,

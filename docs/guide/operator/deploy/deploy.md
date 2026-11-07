@@ -16,6 +16,7 @@ make serve           # builds, then serves dist/ at http://localhost:4173 to che
 | `index.html` | the page | short or `no-cache` |
 | `assets/index-<hash>.js`, `.css` | the app, about 1.45 MB of JS (407 kB gzipped), mostly three.js | long, immutable (the names change with the content) |
 | `scenes/` | a copy of `public/scenes/`: every scene, POI, Markdown and media file | short; this is your content |
+| `viewer.json` | the list of the viewer's files (`index.html`, `assets/*` without the editor), written by `tools/viewer-bundle.js`; the editor's **Export…** reads it to zip a one-scene site | short; harmless to leave out when the editor is not deployed |
 
 ## Hosting rules
 

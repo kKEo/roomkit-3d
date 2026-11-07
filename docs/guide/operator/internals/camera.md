@@ -4,7 +4,7 @@ This page describes what happens between a visitor pressing `→` and the next p
 
 ## The flight
 
-When `nav` changes, `CameraRig` builds a transit from the camera's current base position `p0` to the POI's `camera.position` `p1`. `nav.id` is the POI's id; `null` is the whole-room view: it uses `scene.camera.overview` (computed from the footprint's bounds when the scene leaves it out, in `overviewCamera()` in `src/lib/autoCamera.js`), opens no panel, and clears the address hash:
+When `nav` changes, `CameraRig` builds a transit from the camera's current base position `p0` to the POI's `camera.position` `p1`. `nav.id` is the POI's id; `null` is the whole-room view: it uses `scene.camera.overview` (computed from the footprint's bounds when the scene leaves it out, in `overviewCamera()` in `src/lib/autoCamera.js`), opens no panel, and clears the address hash. A `nav.view` (from `openAt()`, used when `camera.start` is a pose) replaces that view for one flight; everything else is as for the overview:
 
 - **Path.** A centripetal Catmull-Rom curve through `p0`, a mid-point and `p1`. The mid-point is the halfway point raised by `1.2 + 0.07 × distance` (capped at `room.height − 0.6`) and pulled 30 % towards the vertical axis through the footprint's centroid, so flights arc through the middle of the room. A distance under 1 cm skips the curve.
 - **Duration.** `clamp(1300 + 55 × distance, 1500, 2800)` ms; 450 ms with reduced motion; or the explicit duration (the intro uses `camera.intro.duration`).
@@ -34,7 +34,9 @@ When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, paralla
 - **Wheel.** The pending wheel delta (`runtime.fly.dolly`) slides the camera along the gaze by 5 mm per unit, consumed at `10 × dt`.
 - **Floor.** The camera stays at least 20 cm above the floor; nothing else stops it.
 
-Parallax and the idle bob ease to zero exactly as when zoomed, so the camera only moves when the visitor moves it. `freeFly()` is ignored while zoomed.
+Parallax and the idle bob ease to zero exactly as when zoomed, so the camera only moves when the visitor moves it. `freeFly()` is ignored while zoomed, and always when the scene sets `camera.freeFly: false` (the store is the single gate; `useInput` then also leaves the fly keys and the middle button alone, and `Hint` shows `ui.hintNoFly`).
+
+Every frame the rig also copies the base pose into `runtime.pose` (`position` and `target` arrays, without parallax or bob). The editor's **Use current view** reads it.
 
 ## Every frame
 
@@ -53,8 +55,8 @@ Parallax and the idle bob ease to zero exactly as when zoomed, so the camera onl
 | `1`–`9` | `goTo(n − 1)` | only up to the number of POIs |
 | `0`, click on the logo | `home()` = `goTo(null)` | the whole-room view; from there `→` goes to POI 1 and `←` to the last |
 | `H` / `M` | toggle panel / toggle markers | |
-| `W` `A` `S` `D` `Q` `E` (by `code`), `Shift` | `freeFly()`, then fly | held keys are tracked until `keyup`; a window `blur` releases them all |
-| middle-button drag on the canvas | `freeFly()`, then look | the press is `preventDefault`ed (no autoscroll or paste) and the pointer is captured, so the drag continues off the canvas |
+| `W` `A` `S` `D` `Q` `E` (by `code`), `Shift` | `freeFly()`, then fly | held keys are tracked until `keyup`; a window `blur` releases them all; ignored with `camera.freeFly: false` |
+| middle-button drag on the canvas | `freeFly()`, then look | the press is `preventDefault`ed (no autoscroll or paste) and the pointer is captured, so the drag continues off the canvas; ignored with `camera.freeFly: false` |
 | wheel | next / previous; while flying, forward / back | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and Options |
 | horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical; primary button or touch only |
 | click on a diamond | `goTo(i)` | R3F click with drag under 8 px |

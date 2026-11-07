@@ -83,6 +83,8 @@ describe('buildScene', () => {
     expect(scene.camera.start).toBe('b');
     const e = await fails(build({ 'scene.json': withStart('nope') }));
     expect(e.lines).toEqual(['x/scene.json › camera.start: no POI has the id "nope"']);
+    const pose = { position: [1, 2, 3], target: [0, 1, 0] };
+    expect((await build({ 'scene.json': withStart(pose) })).scene.camera.start).toEqual(pose);
   });
 
   it('labels scene.json problems', async () => {

@@ -42,6 +42,7 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `canvasLabel` | `3D room with {total} areas` | accessible name of the canvas |
 | `zoomHint` | `[←][→][↑][↓] other screens (with [Ctrl/⌘] while typing), [Esc] back to the room` | bottom hint while zoomed into a screen |
 | `flyHint` | `[W][A][S][D] fly, [Q][E] down / up, [Shift] slower, middle-drag — look, wheel — forward / back, [0] whole room` | bottom hint while flying freely |
+| `hintNoFly` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room` | the bottom hint when the scene sets `camera.freeFly: false` |
 | `zoomBack` | `Back` | Back button on a zoomed-in screen |
 | `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [Ctrl/⌘]+[←][→][↑][↓] other screens, [Esc] back to the room` | bottom hint while zoomed into a video screen |
 | `videoPlay`, `videoPause` | `Play`, `Pause` | the play/pause button of a zoomed-in video (label and tooltip) |

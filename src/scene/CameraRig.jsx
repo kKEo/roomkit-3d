@@ -120,7 +120,7 @@ export function CameraRig() {
       const c = new V3(...zoom.center);
       startTransit(c.clone().addScaledVector(new V3(...zoom.normal), d), c, { dur: reducedMotion ? 300 : 900, arc: false, zoomed: true });
     } else if (nav && nav !== prev.nav) {
-      const view = viewOf(nav.id);
+      const view = nav.view ?? viewOf(nav.id);
       startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
     } else if (!zoom && prev.zoom) {
       // back to where the visitor was before the screen (the store has already restored which POI that was)
@@ -209,6 +209,7 @@ export function CameraRig() {
 
     runtime.camera = camera;
     runtime.time = time;
+    b.pos.toArray(runtime.pose.position); b.tgt.toArray(runtime.pose.target);
     // the canvas rectangle on the page, so DOM overlays project correctly wherever the canvas sits
     const vw = runtime.view;
     vw.left = size.left; vw.top = size.top; vw.width = w; vw.height = h;

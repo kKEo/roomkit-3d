@@ -12,8 +12,11 @@ This page explains the second page of the build, `edit.html`, and the publish fl
 | Live preview | `src/editor/EditorApp.jsx` | 250 ms after the last keystroke the files go through `buildScene`, the same function the viewer uses. Success installs the scene with `setLoaded`, which keeps the visitor at the same POI; failure shows the `file › path: message` lines and marks the files in red, while the last good scene stays on screen |
 | Templates | `src/editor/bundle.js` | **New point of interest** adds a POI file, its Markdown page and the `scene.json` entry; **Add to …** appends an object with every prop of the chosen prefab spelled out at its default (from the prefab's schema), to the selected POI or to `decor` |
 | Download | `src/editor/zip.js` | a zip (stored, no compression) of the files under `<folder>/`, written without a dependency |
+| Export… | `src/editor/export.js`, `tools/viewer-bundle.js` | a zip that is a whole site: the viewer's files, `scenes/index.json` naming this one scene, and `scenes/<folder>/` with the text files plus every file they refer to by a relative path (prefab and transform modules, media props, local feeds, fenced feed blocks), fetched from the published folder. The section also sets the scene's `camera.freeFly` and `camera.start` (a stop, or the pose of the preview's camera from `runtime.pose`), by rewriting `scene.json` |
 
-Media files are not part of the bundle. A scene opened with `?scene=` keeps resolving `media/…` against its published folder; a new scene's media paths only resolve once the folder is on a server.
+Media files are not part of the **Download** bundle. A scene opened with `?scene=` keeps resolving `media/…` against its published folder; a new scene's media paths only resolve once the folder is on a server. **Export…** does fetch them, from that same folder; for a new scene they are listed as missing and have to be added to the unzipped `scenes/<folder>/` by hand, as do files that cannot be found by reading the scene (assets a prefab module loads with `assetUrl()`, media a feed answers with).
+
+The viewer's file list comes from `viewer.json`, which `tools/viewer-bundle.js` writes next to `index.html` at build time. In `vite dev` the same plugin serves `/__viewer/viewer.json` and `/__viewer/<file>` from a production build it makes on the first request (into `node_modules/.cache/roomkit/viewer`, redone when `src/`, `index.html`, `vite.config.js` or `package.json` is newer), so the export works from the dev server too; the first export takes a few seconds longer. A viewer built with `VITE_SCENES_BASE` reads scenes from that host and cannot be bundled with one: the editor says so and disables the button.
 
 The viewer's fixed overlays move right by `--view-left` (set on `html.editing`), and they project through the canvas rectangle (`runtime.view`), which is why the room, labels and zoomed screens stay aligned beside the pane.
 
@@ -26,6 +29,10 @@ The viewer's fixed overlays move right by `--view-left` (set on `html.editing`),
 5. Share `…/?scene=<folder>`. Deep links to a POI are `…/?scene=<folder>#<poi-id>`.
 
 The published viewer is view-only by construction: it is the same `index.html` as before, and it reads the folder as data. No build is needed for new or changed scenes (see [Build and deploy](deploy.md)). To keep the editor off the public site, do not deploy `dist/edit.html` and `dist/assets/edit-*.js`.
+
+## Exporting a site
+
+The other route, for a scene that gets a host of its own: **Export…**, set *Allow free flight* and *opens at* (a stop, the whole room, or **Use current view** for the pose the preview's camera has now), then **Export site .zip**. Unzip `<folder>-site.zip` onto any static host that follows the [hosting rules](deploy.md#hosting-rules); its `index.html` opens that scene. Links to other scenes (`openUrl` actions with `?scene=…`) have no target in such a site, and the fonts still come from Google unless the scene sets `theme.fontsUrl` to `""`.
 
 ## Limits of this first editor
 

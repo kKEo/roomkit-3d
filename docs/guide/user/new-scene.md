@@ -90,4 +90,4 @@ Open the site with `?scene=my-office` at the end of the address. To make it the 
 { "default": "my-office", "scenes": ["neo-room", "gallery", "my-office"] }
 ```
 
-Every other setting, such as the camera fly-in, fog and particles, is listed in the [scene.json reference](../operator/reference/scene-json.md).
+Every other setting, such as the camera fly-in, where the room opens (`camera.start`: a stop or a fixed view), whether visitors may fly freely (`camera.freeFly`), fog and particles, is listed in the [scene.json reference](../operator/reference/scene-json.md).

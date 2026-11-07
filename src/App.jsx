@@ -55,7 +55,10 @@ export function Viewer() {
     const t = setTimeout(() => {
       setIntro(true);
       const st = useStore.getState();
-      st.goTo(poiIdFromHash() ?? st.scene.camera.start ?? null, reducedMotion ? 500 : st.scene.camera.intro.duration);
+      // the #poi in the address wins; then camera.start (a POI id or a fixed pose); then the whole-room view
+      const hash = poiIdFromHash(), start = st.scene.camera.start, dur = reducedMotion ? 500 : st.scene.camera.intro.duration;
+      if (hash == null && start && typeof start === 'object') st.openAt(start, dur);
+      else st.goTo(hash ?? start ?? null, dur);
     }, reducedMotion ? 100 : 650);
     return () => clearTimeout(t);
   }, [live]);

@@ -30,3 +30,20 @@ The left pane lists the scene's files. Click one to edit it; the room on the rig
 3. Visitors open `…/?scene=<folder>`. They see the room only; the editor is not part of what they get.
 
 > **Tip.** The downloaded folder is also what goes into `public/scenes/` in the repository when a scene should ship with the app.
+
+## Export a site
+
+When the room should live on its own address rather than next to other rooms, **Export…** makes a complete site in one zip: the viewer, this room and the pictures, videos, data files and modules it refers to. Unzip it onto any web host that serves plain files, and its `index.html` opens the room.
+
+The section that unfolds has two settings for the published room. Both are saved in the room's `scene.json`, so the preview on the right follows them at once and the plain **Download .zip** carries them too:
+
+| Setting | What it does |
+| --- | --- |
+| **Allow free flight** | Untick it and visitors cannot take the camera by hand: the fly keys and the middle mouse button do nothing, and the hint at the bottom no longer mentions them. Visitors still move between stops |
+| **opens at** | Where the room opens for someone who arrives without a `#stop` in the address: the whole room from above, one of the stops, or a **fixed view**. For a fixed view, move the camera where you want it (fly there, or go to a stop and step up to a screen) and click **Use current view**; the numbers under the dropdown are that position. A link with `#stop` still opens at that stop |
+
+Below the settings the editor lists the files it will fetch into the zip besides the text files. Two kinds of file cannot be found by reading the room and must be copied into the unzipped `scenes/<folder>/` by hand: files an object type's own module loads (models, textures) and media that live data answers with. A room that has not been published yet has no folder to fetch from, so its files are listed in red after the export and have to be added the same way.
+
+**Export site .zip** downloads `<folder>-site.zip`. From the development server the first export takes a few seconds longer, while the viewer is built.
+
+> **Note.** Doors or frames that link to another room (`?scene=…`) lead nowhere in a one-room site.

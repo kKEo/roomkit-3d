@@ -123,9 +123,25 @@ Run `make dev` and open stop 07 of the default room. Its node table, FLEET numbe
 | A copy of a scene with a misspelt `type` and a missing POI file | both problems listed at once, each with file and field |
 | A media path that does not exist | the screen shows rain; a console warning names the file |
 
+## Editor: export a site
+
+Open `/edit.html?scene=cinema` on the dev server.
+
+| Try | Expect |
+| --- | --- |
+| **Export…** | a section unfolds: *Allow free flight* ticked, *opens at* showing the `welcome` stop (the scene's `camera.start`), eight files listed (`data/…`, `media/…`, `prefabs/…`) |
+| Untick *Allow free flight*, then `W` and a middle-drag in the preview | nothing moves; the bottom hint has no `W A S D` part; `scene.json` now has `"freeFly": false` |
+| Tick it again, fly somewhere with `W` and a middle-drag, click **Use current view** | *opens at* switches to *fixed view*; the position and target appear under it, rounded to centimetres; `scene.json › camera.start` holds them |
+| **Export site .zip** | "Building the viewer…" (a few seconds the first time), then `cinema-site.zip` downloads; the note says how many files it holds, nothing in red |
+| Unzip into an empty folder and serve it (`python3 -m http.server`), open it | the loader, then the intro flight lands on the fixed view with no panel; `→` goes to stop 01; `0` goes to the whole-room view; `#booth` in the address opens at the booth; the intro video, the posters, the showtimes feed and the seats and projector all work; no 404 in the network tab apart from fonts when offline |
+| In that site, `W`, a middle-drag | nothing happens (free flight was off at export) |
+| `/edit.html` (no `?scene=`), **Export…** | the file list is empty; after export the note counts the viewer and the template's files only |
+| `/edit.html?scene=neo-room`, export, inspect the zip | `scenes/neo-room/media/floorplan.svg` and `data/nodes.json` are inside; `scenes/index.json` names `neo-room` as default |
+
 ## Production
 
 | Try | Expect |
 | --- | --- |
 | `make serve`, then a deep link | same behaviour as the dev server |
+| `dist/viewer.json` | lists `index.html` and every `assets/*` file except `edit-*.js`; `edit.html` and `scenes/` are not in it |
 | Serve `dist/` under a sub-path, with and without a trailing slash | works with the slash; without it, assets 404 (known, documented in the operator guide) |

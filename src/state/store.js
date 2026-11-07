@@ -83,9 +83,15 @@ export const useStore = create((set, get) => ({
     set({ current: id, shown: null, started: true, zoom: null, zoomReturn: null, afterZoom: null, free: false, confirm: null, nav: { id, duration, nonce: (nav?.nonce || 0) + 1 } });
     setHash(id);
   },
+  /** Fly to a fixed pose (`camera.start` given as a pose): like the overview, no POI, no panel, no hash. */
+  openAt: (view, duration) => {
+    const { nav } = get();
+    set({ current: null, shown: null, started: true, zoom: null, zoomReturn: null, afterZoom: null, free: false, confirm: null, nav: { id: null, view, duration, nonce: (nav?.nonce || 0) + 1 } });
+    setHash(null);
+  },
   /** Take the camera by hand: leaves the current POI (and any flight to it) where the camera is now. */
   freeFly: () => {
-    if (get().free || get().zoom) return;
+    if (get().free || get().zoom || get().scene?.camera?.freeFly === false) return;
     set({ free: true, current: null, shown: null, nav: null, started: true });
     setHash(null);
   },
@@ -168,6 +174,7 @@ export const runtime = {
   camPos: [0, 0, 0],
   camDir: [0, 0, -1],
   camera: null,                 // set by CameraRig, read by DOM overlays
+  pose: { position: [0, 0, 0], target: [0, 0, 0] }, // the camera's base pose (no parallax or bob), set by CameraRig every frame; the editor reads it
   view: { left: 0, top: 0, width: 0, height: 0 }, // the canvas rectangle on the page, set by CameraRig
   time: 0,
   progress: 0,
