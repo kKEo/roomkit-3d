@@ -6,9 +6,9 @@ This page shows how to build a scene without touching the repository: arrange it
 
 Open `edit.html` next to the app, for example `http://localhost:5173/edit.html`. Add `?scene=gallery` to start from an existing scene instead of the one-stop template.
 
-![The editor: a left pane with the folder name, Import… and Export… at the top, then + Add, undo and redo, Preview and Select; below them Objects and Files tabs and a filter box; the scene tree with the room, the scenery (bench, door) and three stops, the Landscape stop opened and its pictureFrame selected; under the tree the inspector with Belongs to, position, rotation, scale, width and height; the Amber Gallery room on the right with a box around the selected frame](images/editor.png)
+![The editor: a left pane with the folder name, Import… and Export… at the top, then + Add, undo and redo, Preview and Select, Move and Rotate; below them Objects and Files tabs and a filter box; the scene tree with the room, the scenery (bench, door) and three stops, the bench selected and the Landscape stop opened to show its pictureFrame; under the tree the inspector with Belongs to, position, rotation, scale, width and height; the Amber Gallery room on the right, the bench in a box with red, green and blue move arrows on it](images/editor.png)
 
-*The editor opened with `?scene=gallery`. Left: the scene tree with the selected object's settings under it; right: the live room, with a box around what is selected.*
+*The editor opened with `?scene=gallery`. Left: the scene tree with the selected object's settings under it; right: the live room, with a box and move handles on what is selected.*
 
 The pane has two views of the same scene: **Objects**, a tree of what is in the room, and **Files**, the scene's files as text. Whatever you change in one shows in the other, and the room on the right follows a moment later. The usual keys work in the room (`1`–`9`, `0`, `H`, `M`, `Esc`); the scroll wheel scrolls the editor when the mouse is over it. `⌘Z` / `Ctrl+Z` undoes the last change and `⇧⌘Z` / `Ctrl+Y` redoes it (also with the ↶ ↷ buttons).
 
@@ -42,7 +42,21 @@ The filter box above the tree narrows it to matching names; `t:desk` shows only 
 | `Alt+↑` `Alt+↓` | move a stop earlier or later in the tour, or an object within its list |
 | `H` | hide or show in the preview |
 
+With the room (or nothing) focused, `G` and `R` switch the handles between Move and Rotate.
+
 Right-click a row for the same commands and a few more: **Show only this stop**, **Lock all scenery**, **Edit page**.
+
+## Move and turn objects in the room
+
+The selected object carries handles in the room, in the colours of the room's directions: red left and right (x), green up and down (y), blue towards and away from the front (z).
+
+| Handle | Does |
+| --- | --- |
+| **Move** (or press `G`): an arrow | drag it to slide the object along that direction |
+| **Move**: a small square between two arrows | drag it to slide the object across that plane, for example over the floor |
+| **Rotate** (or press `R`): a ring | drag it to turn the object around that direction; the green ring turns it to face another way |
+
+Moves go in steps of 10 cm and turns in steps of 15°; hold `Shift` while dragging to go freely. `Esc` during a drag puts the object back. When you let go, the new position or rotation is written into the object's file (the numbers in its settings follow), and `⌘Z` / `Ctrl+Z` takes it back. Dragging a handle never selects anything else or moves the camera to another stop. The handles work in Preview and in Select; they are not shown for a whole stop, or while you are up close to a screen.
 
 ## Add an object, then decide what it is
 

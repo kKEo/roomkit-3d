@@ -41,9 +41,11 @@ export const useStore = create((set, get) => ({
   free: false,     // the visitor is flying the camera by hand (WASD, middle-drag); any navigation ends it
   confirm: null,   // an `openUrl` action waiting for the visitor's yes (the same object the scene binds, so a prefab can tell it is its own)
   /**
-   * The editor's hold on the preview; null in the viewer. `{ mode: 'preview' | 'select', selected, hovered, hidden, locked,
-   * frame(key) }`: in select mode a click picks the object under the pointer (its tree key, src/editor/tree.js) instead of
-   * zooming or running its actions; hidden objects are not drawn, locked ones let the click through to what is behind.
+   * The editor's hold on the preview; null in the viewer. `{ mode: 'preview' | 'select', tool: 'move' | 'rotate', selected,
+   * hovered, hidden, locked, frame(key), transform(key, { position?, rotation? }) }`: in select mode a click picks the object
+   * under the pointer (its tree key, src/editor/tree.js) instead of zooming or running its actions; hidden objects are not
+   * drawn, locked ones let the click through to what is behind; the selected object gets move or rotate handles
+   * (src/scene/Gizmo.jsx), whose result `transform` writes into the files (false when it could not).
    */
   edit: null,
 

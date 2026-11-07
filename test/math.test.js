@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { DEG, toRad, objectMatrix, circlePts, rgba } from '../src/lib/math.js';
+import { DEG, toRad, objectMatrix, circlePts, rgba, configRotation } from '../src/lib/math.js';
 
 describe('toRad', () => {
   it('converts a degree triple', () => {
@@ -40,5 +40,27 @@ describe('circlePts', () => {
 describe('rgba', () => {
   it('turns a hex colour and alpha into an rgba() string', () => {
     expect(rgba('#00ff66', 0.28)).toBe('rgba(0,255,102,0.28)');
+  });
+});
+
+describe('configRotation', () => {
+  const back = r => configRotation(new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(...toRad(r)))));
+
+  it('gives a yaw past 90° as a plain yaw, not with 180° tilts', () => {
+    expect(back([0, 150, 0])).toEqual([0, 150, 0]);
+    expect(back([0, -135, 0])).toEqual([0, -135, 0]);
+    expect(back([0, 180, 0])).toEqual([0, 180, 0]);
+    expect(configRotation({ x: Math.PI, y: 30 * DEG, z: Math.PI })).toEqual([0, 150, 0]);
+  });
+
+  it('keeps small rotations and tilts as they are, rounded, without -0', () => {
+    expect(back([0, -90, 0])).toEqual([0, -90, 0]);
+    expect(back([10, 20, 5])).toEqual([10, 20, 5]);
+    expect(configRotation({ x: -1e-9, y: 0, z: 0 })).toEqual([0, 0, 0]);
+  });
+
+  it('describes the same orientation', () => {
+    const q = r => new THREE.Quaternion().setFromEuler(new THREE.Euler(...toRad(r)));
+    for (const r of [[20, 170, -10], [0, 100, 30], [-45, -120, 0]]) expect(q(back(r)).angleTo(q(r))).toBeLessThan(0.01);
   });
 });

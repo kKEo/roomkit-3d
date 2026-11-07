@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useStore } from '../state/store.js';
 import { WorldContext, PoiContext } from './core.jsx';
@@ -11,6 +11,9 @@ import { Telemetry } from './Telemetry.jsx';
 import { Markers } from './Markers.jsx';
 import { PlacedObject } from '../prefabs/index.jsx';
 import { EditMarks } from './EditMarks.jsx';
+
+// the editor's move / rotate handles, in a chunk of their own that only the editor loads
+const Gizmo = lazy(() => import('./Gizmo.jsx').then(m => ({ default: m.Gizmo })));
 
 /** Shader time + Matrix-rain refresh (captioned with the current POI). */
 function Ticker({ world }) {
@@ -64,6 +67,7 @@ export function Experience() {
       {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
       {editing && <EditMarks />}
+      {editing && <Suspense fallback={null}><Gizmo /></Suspense>}
       <Particles count={Math.round(scene.effects.particles * particles)} />
     </WorldContext.Provider>
   );

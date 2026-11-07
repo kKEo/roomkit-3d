@@ -146,6 +146,11 @@ Open `/edit.html?scene=cinema` on the dev server.
 | Keyboard in the tree: `↓` `→` `←` `Home` `End`, a letter, `F2`, `Delete`, `⌘D`, `Alt+↑` | moves, opens and closes, jumps, renames, deletes (an Undo in the message), duplicates, reorders; the room never moves with these keys |
 | Right-click a stop › **Show only this stop** | everything else disappears from the preview until **Show everything** |
 | `/edit.html`, **+ Add** a desk, make it a stop | it builds; the desk does not land inside the start pedestal |
+| Select `seats 1`, drag the red arrow sideways | the seats slide along x in 10 cm steps; on release the position in its settings changes, `scene.json` changes only that line; the camera stays (no swipe to another stop) |
+| `R`, drag the green ring | the seats turn in 15° steps; past 90° the rotation reads `[0, -120, 0]`, not with 180° tilts; `⌘Z` twice undoes the turn, then the move |
+| Drag with `Shift` held; press `Esc` in the middle of a drag | free movement; the object jumps back and nothing is written |
+| In Select mode, click a handle without dragging, then click the floor | the first keeps the selection; the second clears it and the handles go |
+| Select a stop, or zoom into a screen | no handles |
 
 ## Editor: export a site
 

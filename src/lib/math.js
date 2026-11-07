@@ -13,6 +13,21 @@ export function objectMatrix({ position = [0, 0, 0], rotation = [0, 0, 0], scale
   );
 }
 
+const wrap = d => { const v = ((d + 180) % 360 + 360) % 360 - 180; return v === -180 ? 180 : v; };
+const tidy = d => { const v = Math.round(d * 10) / 10; return Object.is(v, -0) ? 0 : v; };
+
+/**
+ * A config rotation (degrees, XYZ) from an Euler in radians, in the form an author would write. Every rotation has two
+ * XYZ triples, (x, y, z) and (x + 180, 180 - y, z + 180); three.js gives the one with y within ±90, so an object turned
+ * to 150° comes back as [180, 30, 180]. This picks the triple with the smaller tilts, [0, 150, 0], rounded to 0.1°.
+ */
+export function configRotation({ x, y, z }) {
+  const a = [x / DEG, y / DEG, z / DEG].map(wrap);
+  const b = [wrap(a[0] + 180), wrap(180 - a[1]), wrap(a[2] + 180)];
+  const tilt = r => Math.abs(r[0]) + Math.abs(r[2]);
+  return (tilt(b) < tilt(a) - 1e-6 ? b : a).map(tidy);
+}
+
 /** Flat list of segment endpoints for a circle in the XZ plane. */
 export function circlePts(r, n, y = 0) {
   const a = [];

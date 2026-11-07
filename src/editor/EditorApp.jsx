@@ -14,7 +14,7 @@ import { readZip } from './unzip.js';
 import { makeZip } from './zip.js';
 import {
   DECOR, sceneTree, errorsByKey, parseKey, objectKey, stopKey, addToScenery, moveObject, makeStop, dissolveStop, deleteStop,
-  deleteObject, duplicateObject, moveStop, renameObject, renameNewStop, setField, stopRefs, viewSpot,
+  deleteObject, duplicateObject, moveStop, renameObject, renameNewStop, setField, setObjectField, stopRefs, viewSpot,
 } from './tree.js';
 import { Tree } from './Tree.jsx';
 import { Inspector } from './Inspector.jsx';
@@ -115,7 +115,12 @@ export function EditorApp() {
 
   // the editor's hold on the preview: selection, hover, hidden and locked objects, Preview / Select mode
   useEffect(() => {
-    useStore.setState({ edit: { mode: 'preview', selected: null, hovered: null, hidden: new Set(), locked: new Set(), frame } });
+    useStore.setState({
+      edit: {
+        mode: 'preview', tool: 'move', selected: null, hovered: null, hidden: new Set(), locked: new Set(), frame,
+        transform: (key, value) => keys.current.transform(key, value),
+      },
+    });
     return () => useStore.setState({ edit: null });
   }, []);
 
@@ -526,15 +531,29 @@ export function EditorApp() {
   const setMode = mode => { document.body.style.cursor = ''; useStore.getState().setEdit({ mode, hovered: null }); };
   const closeMenu = useCallback(() => setMenu(null), []);
 
-  // undo and redo anywhere on the page except while typing in a field, which has its own
-  const history = useRef(null);
-  history.current = { undo, redo };
+  const setTool = tool => useStore.getState().setEdit({ tool });
+  /** The handles in the room dropped an object: its new position and / or rotation, one undo step; false if the file refused. */
+  const transform = (key, { position, rotation }) => !!change(f => {
+    let next = f;
+    if (position) next = setObjectField(next, key, ['position'], position);
+    if (rotation) next = setObjectField(next, key, ['rotation'], rotation);
+    return { files: next, key };
+  });
+
+  // anywhere on the page except while typing in a field (which has its own undo) or in the tree (which takes letters):
+  // undo and redo, G to move and R to rotate with the handles
+  const keys = useRef(null);
+  keys.current = { undo, redo, transform };
   useEffect(() => {
     const onKey = e => {
       const tag = (e.target.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select' || !(e.metaKey || e.ctrlKey)) return;
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       const k = e.key.toLowerCase();
-      if (k === 'z' && !e.shiftKey) { e.preventDefault(); history.current.undo(); } else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); history.current.redo(); }
+      if (!(e.metaKey || e.ctrlKey)) {
+        if (!e.altKey && (k === 'g' || k === 'r')) useStore.getState().setEdit({ tool: k === 'g' ? 'move' : 'rotate' });
+        return;
+      }
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); keys.current.undo(); } else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); keys.current.redo(); }
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
@@ -588,8 +607,12 @@ export function EditorApp() {
             <button type="button" aria-pressed={edit?.mode !== 'select'} onClick={() => setMode('preview')} title="Clicks in the room work as for visitors: screens zoom, actions run">Preview</button>
             <button type="button" aria-pressed={edit?.mode === 'select'} onClick={() => setMode('select')} title="A click in the room selects the object under the pointer; a double-click flies to it">Select</button>
           </span>
+          <span className="seg" role="group" aria-label="What the handles on the selected object do">
+            <button type="button" aria-pressed={edit?.tool !== 'rotate'} onClick={() => setTool('move')} title="Arrows and squares on the selected object move it along the room's axes (G); Shift: no 10 cm steps">Move</button>
+            <button type="button" aria-pressed={edit?.tool === 'rotate'} onClick={() => setTool('rotate')} title="Rings on the selected object turn it (R); Shift: no 15° steps">Rotate</button>
+          </span>
           {(Object.keys(registry.extra).length > 0 || hasTransforms) && (
-            <button type="button" className="btn ghost" onClick={() => setBust(b => b + 1)} title="Import the scene's prefab and transform modules again">Reload modules</button>
+            <button type="button" className="btn ghost icon" onClick={() => setBust(b => b + 1)} title="Reload modules: import the scene's prefab and transform modules again" aria-label="Reload modules">⟳</button>
           )}
         </div>
         <div className="editor-tabs">
