@@ -23,27 +23,31 @@ The left pane lists the scene's files. Click one to edit it; the room on the rig
 - **Add to …** appends an object of the chosen type to the file you are editing (to `decor` when that is `scene.json`), with every setting written out at its default, so you can see what there is to change.
 - Pictures and videos: write their paths as usual (`"media/photo.jpg"`); they show once the files are in the folder's `media/` directory on the server.
 
-## Publish
+## Import
 
-1. Type a **folder** name at the top (letters, digits, `-` and `_`) and click **Download .zip**.
-2. Send the zip to whoever runs the site, or unzip it yourself into the site's `scenes/` folder, add your media files to its `media/` directory, and add the folder name to `scenes/index.json`.
-3. Visitors open `…/?scene=<folder>`. They see the room only; the editor is not part of what they get.
+**Import…** at the top takes files from your computer:
 
-> **Tip.** The downloaded folder is also what goes into `public/scenes/` in the repository when a scene should ship with the app.
+- **A scene zip**: one you exported earlier (a scene folder or a whole site), or any zip with a `scene.json` in it. The editor opens that scene, with its pictures, videos, data files and modules kept in memory, so the preview shows them and the next export includes them. The folder name is taken from the zip.
+- **Media files** (pictures, videos, audio, `.js` modules, `.json` data): they are added under `media/` in memory. Write `"media/<file name>"` in a file and the preview shows them at once; they go into the next export too.
 
-## Export a site
+An imported zip replaces what the editor currently shows, so export first if you want to keep your changes.
 
-When the room should live on its own address rather than next to other rooms, **Export…** makes a complete site in one zip: the viewer, this room and the pictures, videos, data files and modules it refers to. Unzip it onto any web host that serves plain files, and its `index.html` opens the room.
+## Export a scene or a site
 
-The section that unfolds has two settings for the published room. Both are saved in the room's `scene.json`, so the preview on the right follows them at once and the plain **Download .zip** carries them too:
+**Export…** unfolds a section with two settings and two kinds of zip. The settings are saved in the room's `scene.json`, so the preview on the right follows them at once and both zips carry them:
 
 | Setting | What it does |
 | --- | --- |
 | **Allow free flight** | Untick it and visitors cannot take the camera by hand: the fly keys and the middle mouse button do nothing, and the hint at the bottom no longer mentions them. Visitors still move between stops |
 | **opens at** | Where the room opens for someone who arrives without a `#stop` in the address: the whole room from above, one of the stops, or a **fixed view**. For a fixed view, move the camera where you want it (fly there, or go to a stop and step up to a screen) and click **Use current view**; the numbers under the dropdown are that position. A link with `#stop` still opens at that stop |
 
-Below the settings the editor lists the files it will fetch into the zip besides the text files. Two kinds of file cannot be found by reading the room and must be copied into the unzipped `scenes/<folder>/` by hand: files an object type's own module loads (models, textures) and media that live data answers with. A room that has not been published yet has no folder to fetch from, so its files are listed in red after the export and have to be added the same way.
+Below the settings the editor lists the files the zip gets besides the text files: those the room refers to (pictures, videos, data files, modules) and those you imported. A file is taken from memory if it was imported, otherwise fetched from the room's published folder. Two kinds of file cannot be found by reading the room: files an object type's own module loads (models, textures) and media that live data answers with. Import them, or copy them into the unzipped folder by hand. A room that was never published and has nothing imported shows its files in red after an export; add them the same way.
 
-**Export site .zip** downloads `<folder>-site.zip`. From the development server the first export takes a few seconds longer, while the viewer is built.
+Then pick the zip:
+
+| Button | Gives | Use it when |
+| --- | --- | --- |
+| **Scene folder .zip** | `<folder>.zip`, holding `<folder>/` with the text files and the files above | the room joins a site that hosts several rooms. Send the zip to whoever runs the site, or unzip it into the site's `scenes/` folder yourself and add the folder name to `scenes/index.json`. Visitors open `…/?scene=<folder>`. This folder is also what goes into `public/scenes/` in the repository when a room should ship with the app |
+| **Whole site .zip** | `<folder>-site.zip`: the viewer, this room and its files, ready to unzip onto any web host that serves plain files | the room gets an address of its own. Its `index.html` opens the room; the editor is not part of it. From the development server the first export takes a few seconds longer, while the viewer is built |
 
 > **Note.** Doors or frames that link to another room (`?scene=…`) lead nowhere in a one-room site.

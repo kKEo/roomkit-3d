@@ -16,7 +16,17 @@ import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
 const json = o => JSON.stringify(o, null, 2) + '\n';
 const parse = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' ? v : null; } catch { return null; } };
 const FENCE = /```([a-z]+)\n([\s\S]*?)```/g;
-const clean = p => p.replace(/^(\.\/)+/, '');
+/** `./media/x.svg` → `media/x.svg`: the key a file has in the folder. */
+export const cleanPath = p => p.replace(/^(\.\/)+/, '');
+const clean = cleanPath;
+
+const MIME = {
+  js: 'text/javascript', mjs: 'text/javascript', json: 'application/json', md: 'text/markdown', txt: 'text/plain', css: 'text/css', html: 'text/html',
+  svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif',
+  mp4: 'video/mp4', webm: 'video/webm', m3u8: 'application/vnd.apple.mpegurl', mp3: 'audio/mpeg', glb: 'model/gltf-binary', gltf: 'model/gltf+json', woff2: 'font/woff2',
+};
+/** The media type for a file held in memory (an object URL needs one for `import()` and `<video>` to work). */
+export const mimeOf = path => MIME[path.split('.').pop().toLowerCase()] ?? 'application/octet-stream';
 
 /** The publishing options held in scene.json: `{ freeFly, start }`, `start` a POI id, a pose or null. */
 export function exportOptions(files) {
@@ -101,6 +111,50 @@ export function sceneRefs(files, registry = BUILTIN_REGISTRY) {
 
 /** `scenes/index.json` for a one-scene site. */
 export const indexJson = name => json({ default: name, scenes: [name] });
+
+/** The scene folder alone, under `<name>/`: text `files` and fetched `assets`, to drop into a site's `scenes/`. */
+export function folderEntries({ name, files, assets = new Map() }) {
+  const out = new Map();
+  for (const [p, t] of files) out.set(`${name}/${p}`, t);
+  for (const [p, b] of assets) out.set(`${name}/${p}`, b);
+  return out;
+}
+
+const utf8 = new TextDecoder();
+const junk = p => p.endsWith('/') || /(^|\/)__MACOSX\//.test(p) || /(^|\/)\.DS_Store$/.test(p);
+
+/**
+ * A scene out of a zip's entries (path → bytes): a site zip (`scenes/index.json` names the scene), a folder zip
+ * (`<name>/scene.json`) or a bare folder (`scene.json` at the root). The text files `buildScene` reads become
+ * `files`; everything else under the folder becomes `assets`. `name` is the folder's name, or null at the root.
+ * Null when there is no scene.json at all.
+ */
+export function importZip(entries) {
+  const paths = [...entries.keys()].filter(p => !junk(p));
+  const sceneFiles = paths.filter(p => p === 'scene.json' || p.endsWith('/scene.json'));
+  if (!sceneFiles.length) return null;
+  let chosen = null;
+  if (paths.includes('scenes/index.json')) {
+    const d = parse(utf8.decode(entries.get('scenes/index.json')))?.default;
+    if (sceneFiles.includes(`scenes/${d}/scene.json`)) chosen = `scenes/${d}/scene.json`;
+  }
+  chosen ??= [...sceneFiles].sort((a, b) => a.split('/').length - b.split('/').length || a.localeCompare(b))[0];
+  const prefix = chosen.slice(0, -'scene.json'.length);
+  const name = prefix ? prefix.split('/').filter(Boolean).pop() : null;
+  const bytes = new Map(paths.filter(p => p.startsWith(prefix)).map(p => [p.slice(prefix.length), entries.get(p)]));
+  const files = new Map(), assets = new Map();
+  const text = p => { const b = bytes.get(p); if (b) { files.set(p, utf8.decode(b)); bytes.delete(p); } };
+  text('scene.json');
+  const scene = parse(files.get('scene.json'));
+  for (const f of Array.isArray(scene?.poi) ? scene.poi : []) {
+    if (typeof f !== 'string') continue;
+    text(f);
+    const md = parse(files.get(f) ?? '')?.content?.markdown;
+    if (typeof md === 'string') text(md);
+  }
+  for (const [p, b] of bytes) assets.set(p, b);
+  return { name, files, assets };
+}
 
 /**
  * The zip's entries: `viewer` (path → bytes) at the root, `scenes/index.json`, then the scene's text `files`

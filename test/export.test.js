@@ -3,7 +3,9 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildScene } from '../src/config/buildScene.js';
-import { exportOptions, withExportOptions, sceneRefs, bundleEntries, indexJson } from '../src/editor/export.js';
+import { exportOptions, withExportOptions, sceneRefs, bundleEntries, folderEntries, indexJson, importZip, mimeOf, cleanPath } from '../src/editor/export.js';
+import { makeZip } from '../src/editor/zip.js';
+import { readZip } from '../src/editor/unzip.js';
 
 const ROOT = join(import.meta.dirname, '..', 'public', 'scenes');
 const json = o => JSON.stringify(o, null, 2) + '\n';
@@ -89,5 +91,55 @@ describe('bundleEntries', () => {
     expect(JSON.parse(entries.get('scenes/index.json'))).toEqual({ default: 'my-room', scenes: ['my-room'] });
     expect(entries.get('scenes/my-room/media/a.png')).toBe(png);
     expect(indexJson('x')).toBe('{\n  "default": "x",\n  "scenes": [\n    "x"\n  ]\n}\n');
+  });
+
+  it('folderEntries puts the same files under <name>/ with no viewer and no index', () => {
+    const entries = folderEntries({ name: 'r', files: new Map([['scene.json', '{}']]), assets: new Map([['media/a.png', new Uint8Array(1)]]) });
+    expect([...entries.keys()]).toEqual(['r/scene.json', 'r/media/a.png']);
+  });
+
+  it('mimeOf and cleanPath', () => {
+    expect(mimeOf('prefabs/lamp.js')).toBe('text/javascript');
+    expect(mimeOf('media/clip.MP4')).toBe('video/mp4');
+    expect(mimeOf('odd.xyz')).toBe('application/octet-stream');
+    expect(cleanPath('./media/a.png')).toBe('media/a.png');
+  });
+});
+
+describe('importZip', () => {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const files = new Map([
+    ['scene.json', json({ title: 'T', poi: ['poi/a.json'] })],
+    ['poi/a.json', json({ id: 'a', content: { markdown: 'content/a.md' } })],
+    ['content/a.md', '# A\n'],
+  ]);
+  const png = new Uint8Array([9, 8, 7]);
+  const texts = m => Object.fromEntries([...m].map(([k, v]) => [k, typeof v === 'string' ? v : dec.decode(v)]));
+
+  it('takes the scene a site zip names in scenes/index.json, splitting text files from assets', async () => {
+    const site = bundleEntries({ name: 'room', files, assets: new Map([['media/a.png', png], ['prefabs/lamp.js', enc.encode('export const meta = 1;')]]), viewer: new Map([['index.html', '<html>'], ['assets/main.js', 'js']]) });
+    const r = importZip(await readZip(makeZip(site)));
+    expect(r.name).toBe('room');
+    expect(texts(r.files)).toEqual(texts(files));
+    expect([...r.assets.keys()]).toEqual(['media/a.png', 'prefabs/lamp.js']);
+    expect(r.assets.get('media/a.png')).toEqual(png);
+  });
+
+  it('takes a folder zip (Download .zip) and a bare folder, ignoring Finder junk', async () => {
+    const folder = importZip(await readZip(makeZip(new Map([...folderEntries({ name: 'my-room', files }), ['__MACOSX/my-room/._scene.json', 'x'], ['my-room/.DS_Store', 'x']]))));
+    expect(folder.name).toBe('my-room');
+    expect(texts(folder.files)).toEqual(texts(files));
+    expect(folder.assets.size).toBe(0);
+    const bare = importZip(await readZip(makeZip(files)));
+    expect(bare.name).toBe(null);
+    expect(texts(bare.files)).toEqual(texts(files));
+  });
+
+  it('prefers the scene.json nearest the root, and gives null without one', () => {
+    const entries = new Map([['deep/er/scene.json', enc.encode('{}')], ['top/scene.json', enc.encode('{ "poi": [] }')], ['top/media/x.svg', enc.encode('<svg/>')]]);
+    const r = importZip(entries);
+    expect(r.name).toBe('top');
+    expect([...r.assets.keys()]).toEqual(['media/x.svg']);
+    expect(importZip(new Map([['readme.txt', enc.encode('hi')]]))).toBe(null);
   });
 });

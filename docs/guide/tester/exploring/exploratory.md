@@ -132,10 +132,14 @@ Open `/edit.html?scene=cinema` on the dev server.
 | **Export…** | a section unfolds: *Allow free flight* ticked, *opens at* showing the `welcome` stop (the scene's `camera.start`), eight files listed (`data/…`, `media/…`, `prefabs/…`) |
 | Untick *Allow free flight*, then `W` and a middle-drag in the preview | nothing moves; the bottom hint has no `W A S D` part; `scene.json` now has `"freeFly": false` |
 | Tick it again, fly somewhere with `W` and a middle-drag, click **Use current view** | *opens at* switches to *fixed view*; the position and target appear under it, rounded to centimetres; `scene.json › camera.start` holds them |
-| **Export site .zip** | "Building the viewer…" (a few seconds the first time), then `cinema-site.zip` downloads; the note says how many files it holds, nothing in red |
+| **Whole site .zip** | "Building the viewer…" (a few seconds the first time), then `cinema-site.zip` downloads; the note says how many files it holds, nothing in red |
+| **Scene folder .zip** | `cinema.zip` downloads at once; inside, `cinema/` holds the 13 text files and the 8 listed files, no viewer |
+| **Import…**, pick that `cinema.zip` | the status line says "8 files in memory"; the list shows every file "· in memory"; the room still shows the posters, the intro video and the seats; no console error. Change the folder name, export again: the zip carries the memory files without fetching |
+| `/edit.html` (no `?scene=`), **Import…**, pick `cinema-site.zip` | the folder name turns `cinema`, the files appear, the room renders with its media; **Import…** a picture from disk, write `"image": "media/<its name>"` on a frame | the picture shows; the next export lists it "· in memory" |
+| **Import…** a zip without `scene.json` | "Import failed: … holds no scene.json"; the editor is unchanged |
 | Unzip into an empty folder and serve it (`python3 -m http.server`), open it | the loader, then the intro flight lands on the fixed view with no panel; `→` goes to stop 01; `0` goes to the whole-room view; `#booth` in the address opens at the booth; the intro video, the posters, the showtimes feed and the seats and projector all work; no 404 in the network tab apart from fonts when offline |
 | In that site, `W`, a middle-drag | nothing happens (free flight was off at export) |
-| `/edit.html` (no `?scene=`), **Export…** | the file list is empty; after export the note counts the viewer and the template's files only |
+| `/edit.html` (no `?scene=`), **Export…** | the file list is empty; after a whole-site export the note counts the viewer and the template's files only |
 | `/edit.html?scene=neo-room`, export, inspect the zip | `scenes/neo-room/media/floorplan.svg` and `data/nodes.json` are inside; `scenes/index.json` names `neo-room` as default |
 
 ## Production

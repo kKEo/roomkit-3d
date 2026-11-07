@@ -253,6 +253,7 @@ html.editing { --view-left: 440px }
 .editor-export .pose, .editor-export code { color: var(--text); font-family: var(--body) }
 .editor-export .files { list-style: none; margin: 0; padding: 0 0 0 12px; max-height: 12vh; overflow: auto }
 .editor-export .missing, .editor-export .bad { color: #ff6b6b }
+.editor-export .held { color: var(--text) }
 .editor-export .ok { color: var(--accent) }
 .editor-files { list-style: none; margin: 0; padding: 4px 0; border-bottom: 1px solid var(--line); max-height: 26vh; overflow: auto; flex: none }
 .editor-files button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 3px 12px; color: var(--text-dim); cursor: pointer; font: inherit }
