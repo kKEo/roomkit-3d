@@ -532,7 +532,8 @@ export function EditorApp() {
     }
   };
 
-  const setMode = mode => { document.body.style.cursor = ''; useStore.getState().setEdit({ mode, hovered: null }); };
+  // Preview shows the room as visitors see it, so it also lets go of the selection (and with it the handles and outline)
+  const setMode = mode => { document.body.style.cursor = ''; useStore.getState().setEdit({ mode, hovered: null, ...(mode === 'preview' ? { selected: null, part: null } : {}) }); };
   const closeMenu = useCallback(() => setMenu(null), []);
 
   const setTool = tool => useStore.getState().setEdit({ tool });
@@ -608,7 +609,7 @@ export function EditorApp() {
           <button type="button" className="btn ghost icon" onClick={undo} disabled={!hist.current.past.length} title="Undo (⌘Z / Ctrl+Z)" aria-label="Undo">↶</button>
           <button type="button" className="btn ghost icon" onClick={redo} disabled={!hist.current.future.length} title="Redo (⇧⌘Z / Ctrl+Y)" aria-label="Redo">↷</button>
           <span className="seg" role="group" aria-label="What a click in the room does">
-            <button type="button" aria-pressed={edit?.mode !== 'select'} onClick={() => setMode('preview')} title="Clicks in the room work as for visitors: screens zoom, actions run">Preview</button>
+            <button type="button" aria-pressed={edit?.mode !== 'select'} onClick={() => setMode('preview')} title="Clicks in the room work as for visitors: screens zoom, actions run; the selection is cleared">Preview</button>
             <button type="button" aria-pressed={edit?.mode === 'select'} onClick={() => setMode('select')} title="A click in the room selects the object under the pointer; a double-click flies to it">Select</button>
           </span>
           <span className="seg" role="group" aria-label="What the handles on the selected object do">

@@ -133,7 +133,7 @@ Open `/edit.html?scene=cinema` on the dev server.
 | Click `seats 3` | the row highlights, a box appears around that row of seats in the room, the inspector shows position, rotation, scale and the seats' settings, `riser` marked with a bar and ↺ |
 | Change `count` to 6, press `Enter` | the row of seats grows; **Files** › `scene.json` shows only that number changed, on the same line |
 | **Select**, click the server rack in the room | the rack is selected and its stop 04 opens in the tree; the doors do not open, screens do not zoom; double-click flies to it |
-| **Preview**, click the big screen | it zooms in as for visitors |
+| **Preview**, click the big screen | the rack's box, handles and inspector go (nothing is selected); the screen zooms in as for visitors |
 | Lock the projector (⊘), click through its beam | the object behind is selected; in Select mode lines never pick, only surfaces |
 | **+ Add**, type `ped`, `Enter` | a pedestal appears in the scenery where the camera looks, aside from what stands there, facing the camera; a message offers **Make it a stop** |
 | **Make it a stop**, type `The exhibit`, `Enter` | a stop 07 appears in the top bar and the tree; its id is `the-exhibit`, its page `content/the-exhibit.md`; its diamond and camera are placed from the pedestal |

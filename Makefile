@@ -35,6 +35,9 @@ build: node_modules ## Build the app into dist/
 serve: build ## Build the app and serve the production build (http://localhost:4173)
 	npm run preview $(VITE_PORT)
 
+serve-dev: build
+	npm run dev $(VITE_PORT)
+
 test: node_modules ## Run the unit tests (vitest)
 	npm test
 

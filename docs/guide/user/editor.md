@@ -24,7 +24,7 @@ The tree has three parts:
 
 Click a row to select it: a box shows it in the room, and its settings appear under the tree. Clicking a stop also flies the camera there. To see an object up close, double-click it, or press `F` or `Enter`.
 
-**Preview** and **Select** at the top decide what a click in the room does. In **Preview** it does what it does for visitors (a screen zooms in, a door opens a link). In **Select** it selects the object under the pointer, opens its branch in the tree, and a double-click flies to it.
+**Preview** and **Select** at the top decide what a click in the room does. In **Preview** it does what it does for visitors (a screen zooms in, a door opens a link); switching to Preview also clears the selection, so the room shows without a box or handles until you pick something in the tree again. In **Select** it selects the object under the pointer, opens its branch in the tree, and a double-click flies to it.
 
 On the right of a row, ● hides the object in the preview and ⊘ locks it, so that clicks in the room go through it to what is behind (useful for big things such as a projector's beam or the seats). Neither is saved: they only help while you work. A red ⚠ with a number counts the problems in that row, as described in [Edit the files](#edit-the-files).
 
