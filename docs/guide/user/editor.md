@@ -75,9 +75,21 @@ A drag that cannot be done says why (a stop cannot go inside another stop, for e
 
 The settings under the tree belong to the selected row:
 
-- **An object**: its name, **Belongs to**, position, rotation and scale, then every setting its type has, with the right kind of field for each (a number, a tick box, a list of choices). A setting changed from its default is marked with a bar on the left; ↺ puts it back. Numbers are applied when you press `Enter` or leave the field. **JSON** shows the object as text, for the settings a form cannot show well (actions, lists of screens).
+- **An object**: its name, **Belongs to**, position, rotation and scale, then every setting its type has, with the right kind of field for each (a number, a tick box, a list of choices). A setting changed from its default is marked with a bar on the left; ↺ puts it back. Numbers are applied when you press `Enter` or leave the field. Below them, **On click** sets what a click on each clickable part does (a desk's chair, a door, a picture frame): nothing, go to a stop, zoom into a screen, open a link (with an optional question first), show or hide the panel, or send an event to the page. **JSON** shows the object as text, for anything else.
 - **A stop**: its name and the small line above it (kicker), where the camera looks from (**Use current view**, or **Place from object** to go back to automatic), its diamond, and **Edit page** for its text. **Turn into scenery** and **Delete stop** are here too.
 - **The room**: its title, the logo text and its size. Everything else (lights, walls, theme) is in `scene.json` (**Open scene.json**); where the room opens and free flight are in [Export…](#export-a-scene-or-a-site).
+
+## Set up screens
+
+A control desk, a desk, a cinema screen, and a scene's own objects built on screens get a screen editor in their settings:
+
+![The editor with neo-room's control desk selected: under its settings a sketch of the wall of twelve screens in four columns (NETWORK, STATUS, PERIMETER, uplink, floorplan, FLEET, …), FLEET highlighted; below it + Screen, Duplicate, ◀ ▶ and Remove, then the FLEET screen's settings: what it shows (Stats chosen among Rain, Image, Video, Text, Graph, Stats, Terminal, Dashboard and Form), its title, numbers and colour, with Live data starting below. On the right the same wall of screens in the room](images/editor-screens.png)
+
+- **The wall**: a control desk's screens are drawn as they hang, left to right and top row first, each with its symbol and title. ⟳ marks live data, ↗ a click that does something else than zoom, ⊘ a screen that cannot be clicked, a red border a mistake. Click a tile, or in **Select** mode click the screen in the room: its settings open below and a pale box marks it in the room. **+ Screen**, **Duplicate**, ◀ ▶ (earlier or later on the wall) and **Remove** change the wall; a click set up for a screen moves with it.
+- **Shows**: pick what the screen shows. Only the settings that kind of screen uses are listed: a caption and colour for rain; a file for an image or video; lines for text; the kind, numbers, range and blips for a graph; up to eight numbers for stats; a prompt, a banner and commands with their answers for a terminal; rows, columns, filter chips and a bar for a dashboard; fields, a button and an address for a form. Switching to another kind removes the settings it does not use, and says so (`⌘Z` brings them back).
+- **Live data**: *fetch* reads an address (again every so many seconds, if you set it), *stream* listens to one, *both* does both; **transform** picks one of the functions `scene.json` declares. What you set under **Shows** is on screen until the first answer arrives.
+- **On click**: *Zoom in* (the default), *Nothing*, or any of the actions above, for example *Zoom into another screen*. In the scenery a screen zooms only when you choose *Zoom in* there yourself. The editor warns when a terminal, a dashboard or a form gets another click, because visitors could no longer reach it.
+- **Name**: the screen's id, which actions and zoom links use and which keeps what visitors typed into it. Renaming it moves its click setting along.
 
 ## Edit the files
 

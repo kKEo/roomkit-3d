@@ -2,61 +2,16 @@ import { useEffect, useState } from 'react';
 import { DECOR, parseKey, objectAt, objectRaw, setObjectField, setObjectRaw, setField, renameObject } from './tree.js';
 import { propFields, changed } from './form.js';
 import { glyphOf } from './types.js';
+import { NumberField, TextField, JsonField, parseJson } from './fields.jsx';
+import { ScreenEditor, PartActions, screenProps } from './ScreenEditor.jsx';
 
 /**
  * The selected node's settings under the tree. An object gets a form generated from its prefab's schema
- * (a changed prop is marked and can be reset to its default) or its own JSON; **Belongs to** moves it to the
+ * (a changed prop is marked and can be reset to its default; screens get their own editor, src/editor/ScreenEditor.jsx,
+ * and every clickable part a choice of what a click does) or its own JSON; **Belongs to** moves it to the
  * scenery or a stop, or makes it a stop of its own. A stop gets its label, camera, marker and page; the room
  * its title and size. Every field writes the files through `edit`, so the Files view and undo follow.
  */
-
-const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : '');
-const parseJson = t => { try { return { ok: true, v: JSON.parse(t) }; } catch (e) { return { ok: false, msg: e.message }; } };
-
-/** A number input that writes on Enter or when left, so half-typed values never reach the scene. */
-function NumberField({ value, onCommit, nullable = false, int = false, min, label, width }) {
-  const [text, setText] = useState(String(num(value)));
-  useEffect(() => setText(String(num(value))), [value]);
-  const commit = () => {
-    if (text.trim() === '') { if (nullable) onCommit(null); else setText(String(num(value))); return; }
-    const v = Number(text);
-    if (!Number.isFinite(v) || (int && !Number.isInteger(v)) || (min != null && v < min)) { setText(String(num(value))); return; }
-    if (v !== value) onCommit(v);
-  };
-  return (
-    <input className="num" inputMode="decimal" aria-label={label} value={text} placeholder={nullable ? 'none' : ''} style={width ? { width } : undefined}
-      onChange={e => setText(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); }} />
-  );
-}
-
-/** A text input that writes when left or on Enter. */
-function TextField({ value, onCommit, placeholder, label, nullable = false }) {
-  const [text, setText] = useState(value ?? '');
-  useEffect(() => setText(value ?? ''), [value]);
-  const commit = () => { const v = text === '' && nullable ? null : text; if (v !== (value ?? (nullable ? null : ''))) onCommit(v); };
-  return <input className="text" aria-label={label} value={text} placeholder={placeholder} onChange={e => setText(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); }} />;
-}
-
-/** JSON text for a nested setting; written when valid and left. */
-function JsonField({ value, onCommit, label, rows = 3 }) {
-  const shown = value === undefined ? '' : JSON.stringify(value, null, 1).replace(/\n\s*/g, ' ');
-  const [text, setText] = useState(shown);
-  const [bad, setBad] = useState(null);
-  useEffect(() => { setText(shown); setBad(null); }, [shown]);
-  const commit = () => {
-    if (text === shown) return;
-    const r = parseJson(text);
-    if (!r.ok) { setBad(r.msg); return; }
-    setBad(null);
-    onCommit(r.v);
-  };
-  return (
-    <>
-      <textarea className="json" rows={rows} aria-label={label} value={text} spellCheck={false} onChange={e => setText(e.target.value)} onBlur={commit} />
-      {bad && <div className="bad">{bad}</div>}
-    </>
-  );
-}
 
 function Vec({ label, value, onCommit }) {
   const v = Array.isArray(value) && value.length === 3 ? value : [0, 0, 0];
@@ -128,10 +83,13 @@ function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
           {Array.isArray(obj.scale)
             ? <Vec label="scale" value={obj.scale} onCommit={v => set(['scale'], v)} />
             : <div className="prop"><span className="name">scale</span><NumberField label="scale" value={obj.scale ?? 1} min={0.001} onCommit={v => set(['scale'], v === 1 ? undefined : v)} /></div>}
-          {entry
-            ? propFields(entry.schema).map(f => <PropField key={f.key} f={f} written={obj.props?.[f.key]} def={entry.props[f.key]} onSet={v => set(['props', f.key], v)} />)
-            : <div className="insp-empty">Unknown type <code>{obj.type}</code>: edit it in JSON.</div>}
-          <div className="note">{Object.keys(obj.actions ?? {}).length ? `Actions: ${Object.keys(obj.actions).join(', ')} (edit them in JSON).` : 'No actions: bind one to a hotspot in JSON.'}</div>
+          {entry ? (
+            <>
+              {propFields(entry.schema).filter(f => !screenProps(entry, obj).has(f.key)).map(f => <PropField key={f.key} f={f} written={obj.props?.[f.key]} def={entry.props[f.key]} onSet={v => set(['props', f.key], v)} />)}
+              <ScreenEditor objKey={node.key} obj={obj} entry={entry} edit={edit} files={files} tree={tree} registry={registry} />
+              <PartActions objKey={node.key} obj={obj} entry={entry} edit={edit} files={files} tree={tree} registry={registry} />
+            </>
+          ) : <div className="insp-empty">Unknown type <code>{obj.type}</code>: edit it in JSON.</div>}
         </div>
       )}
     </>

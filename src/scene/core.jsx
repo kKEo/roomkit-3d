@@ -19,6 +19,8 @@ export const ActionsContext = createContext({});
 
 /** Position of the placed object in its list (`objects[i]` of a POI, or `decor[i]`); keeps the screens of two alike objects apart. */
 export const SlotContext = createContext(null);
+/** The editor's tree key of the placed object around (src/editor/tree.js), or null: its screens tell the editor which one was clicked. */
+export const EditKeyContext = createContext(null);
 
 /**
  * Pointer handlers for a named hotspot: a hand cursor, `hot` while hovered, and the bound

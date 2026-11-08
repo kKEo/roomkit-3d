@@ -1,5 +1,5 @@
 import { Component, Suspense, lazy, useCallback } from 'react';
-import { ActionsContext, SlotContext, Solid } from '../scene/core.jsx';
+import { ActionsContext, SlotContext, EditKeyContext, Solid } from '../scene/core.jsx';
 import { useStore, editGroups } from '../state/store.js';
 import { BUILTIN_REGISTRY } from './registry.js';
 import { LOADERS, loadComponent } from './loaders.js';
@@ -49,13 +49,15 @@ export function PlacedObject({ object, slot = null, active = false, hovered = fa
   return (
     <ActionsContext.Provider value={object.actions ?? NO_ACTIONS}>
       <SlotContext.Provider value={slot}>
-        <group ref={track} position={object.position} rotation={toRad(object.rotation)} scale={object.scale} {...(picking ? pickHandlers(editKey) : {})}>
-          <PrefabBoundary type={object.type}>
-            <Suspense fallback={<Placeholder />}>
-              <Component props={object.props} active={active} hovered={hovered} />
-            </Suspense>
-          </PrefabBoundary>
-        </group>
+        <EditKeyContext.Provider value={editKey}>
+          <group ref={track} position={object.position} rotation={toRad(object.rotation)} scale={object.scale} {...(picking ? pickHandlers(editKey) : {})}>
+            <PrefabBoundary type={object.type}>
+              <Suspense fallback={<Placeholder />}>
+                <Component props={object.props} active={active} hovered={hovered} />
+              </Suspense>
+            </PrefabBoundary>
+          </group>
+        </EditKeyContext.Provider>
       </SlotContext.Provider>
     </ActionsContext.Provider>
   );

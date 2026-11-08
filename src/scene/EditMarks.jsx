@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useStore, editGroups } from '../state/store.js';
+import { useStore, editGroups, editScreens } from '../state/store.js';
 import { useWorld } from './core.jsx';
 
 /** The placed objects a tree key covers: one object, or every object of a stop (`stop:<file>`). */
@@ -35,24 +35,37 @@ function fit(helper, key) {
   helper.visible = !helper.box.isEmpty();
 }
 
+/** Fits a helper's box closely around the screen the inspector shows, or hides it. */
+function fitScreen(helper, mesh) {
+  helper.box.makeEmpty();
+  // just outside the screen's bezel, in the selection's colour, so it does not merge with the frame lines
+  if (mesh) helper.box.setFromObject(mesh).expandByScalar(0.07);
+  helper.visible = !helper.box.isEmpty();
+}
+
 /**
- * The editor's marks in the room: a box around the selected object (or all of a selected stop's objects) and a
- * fainter one around the hovered one, drawn over everything so a box behind a wall still shows.
+ * The editor's marks in the room: a box around the selected object (or all of a selected stop's objects), a
+ * fainter one around the hovered one and a tight one around the screen the inspector shows, drawn over everything
+ * so a box behind a wall still shows.
  */
 export function EditMarks() {
   const { theme } = useWorld();
   const selected = useStore(s => s.edit?.selected);
   const hovered = useStore(s => s.edit?.hovered);
+  const part = useStore(s => s.edit?.part);
   const sel = useBoxHelper(theme.highlight, 1);
   const hov = useBoxHelper(theme.accent, 0.5);
+  const scr = useBoxHelper(theme.highlight, 1);
   useFrame(() => {
     fit(sel, selected);
     fit(hov, hovered !== selected ? hovered : null);
+    fitScreen(scr, selected && part != null ? editScreens.get(`${selected}#${part}`) : null);
   });
   return (
     <>
       <primitive object={sel} />
       <primitive object={hov} />
+      <primitive object={scr} />
     </>
   );
 }

@@ -152,6 +152,27 @@ Open `/edit.html?scene=cinema` on the dev server.
 | In Select mode, click a handle without dragging, then click the floor | the first keeps the selection; the second clears it and the handles go |
 | Select a stop, or zoom into a screen | no handles |
 
+## Editor: screens
+
+Open `/edit.html?scene=neo-room#control` on the dev server and select the control desk of stop 07.
+
+| Try | Expect |
+| --- | --- |
+| Look under its settings | no `screens` JSON box; a wall of 12 tiles in 4 columns, as on the desk in the room; ⟳ on FLEET, NODES and NODE LOAD |
+| **Select**, click the FLEET screen in the room | the desk is selected, the FLEET tile is highlighted, its settings show *Stats* with its feed (`data/nodes.json`, every 15 s, transform `nodeStats`); a pale box marks that screen in the room |
+| Pick *Graph* for the uplink rain (tile 4) | the screen turns into a wave; a message says `label` was removed; `color` stays; `⌘Z` brings the rain and its caption back |
+| On the STATUS tile, edit **lines**, leave the field | the screen types the new lines; the file changes only that screen's `lines` |
+| CONSOLE: add a command `ping` → `pong`, zoom in on it in **Preview**, type `ping` | the console answers `pong` |
+| NODES: tick and untick **filters** chips; pick **bar** | the chips on the zoomed-in table follow |
+| **On click** › *Go to a stop* › 01 on any tile | `actions` gains `scr<n>` (or the screen's id) with `goTo`; ↗ on the tile; in Preview a click on that screen flies to stop 01 |
+| Give that screen an id | the action moves to the new id |
+| **+ Screen**, then **Remove** | a rain tile is added at the end and selected; Remove takes that one away again, nothing else |
+| ◀ on a screen with a click set up | it moves one place earlier; its action follows it (`scr5` → `scr4`) |
+| **On click** › *Nothing* | `zoom: false`, ⊘ on the tile; the screen no longer zooms |
+| Select stop 06's desk | one screen (no wall); below it **Other clickable parts** › `chair` with an action picker |
+| Select stop 04's cinema screen | its settings hide `source` and `src` (the full screen config replaces them) |
+| In `?scene=cinema`, **+ Add** a control desk | six rain tiles; changing one writes the whole list of six into the file, the others as `{}` |
+
 ## Editor: export a site
 
 Open `/edit.html?scene=cinema` on the dev server.

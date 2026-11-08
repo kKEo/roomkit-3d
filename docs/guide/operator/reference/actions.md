@@ -32,7 +32,7 @@ The built-in interactions use the same actions: a marker click and the terminal'
 | `bench` | `bench` | the block |
 | `cinemaScreen` | `screen` | the screen surface |
 | `controlDesk` | one per screen: its `id`, else `scr0`, `scr1`, … in list order | each screen surface |
-| `desk` | `screen`, `chair` | the monitor, the chair |
+| `desk` | the screen's `id`, else `screen`; `chair` | the monitor, the chair |
 | `door` | `door` | the door wing (the frame is plain). A `label` on its action becomes a nameplate on the wing |
 | `pedestal` | `solid` | the floating shape |
 | `pictureFrame` | `frame`, `image` | the frame board, the picture (when `image` is set) |

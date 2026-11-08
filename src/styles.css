@@ -338,6 +338,44 @@ html.editing { --view-left: 440px }
 .editor .inspector .form { display: flex; flex-direction: column; gap: 2px }
 .editor .inspector .note { color: var(--text-dim); margin-top: 6px }
 .editor .inspector .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px }
+.editor .btn.small { padding: 3px 8px; font-size: 11px }
+.editor .inspector .aside { color: var(--text-dim); font-size: 11px }
+.editor .inspector .note.warn { color: #ffcf6b }
+.editor .inspector .sect { margin: 12px 0 4px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--accent); font-size: 11px; letter-spacing: .08em; text-transform: uppercase }
+.editor .inspector .sect .aside { text-transform: none; letter-spacing: 0; margin-left: 6px }
+.editor .inspector .sect code { text-transform: none; color: var(--text-dim) }
+.editor .inspector .sub-props { margin-left: 14px; border-left: 1px dotted var(--line) }
+.editor .inspector .prop .seg button { padding: 2px 8px; font-size: 11px }
+.editor .inspector .wall { display: grid; gap: 4px; margin: 4px 0 }
+.editor .inspector .tile { --tile: var(--accent); display: grid; grid-template-columns: 16px 1fr; grid-template-rows: auto auto; align-items: center; gap: 0 4px; min-width: 0; min-height: 38px; padding: 3px 5px; background: #000; border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 11px; text-align: left; cursor: pointer; box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--tile) 60%, transparent) }
+.editor .inspector .tile:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)) }
+.editor .inspector .tile.on { border-color: var(--accent); background: rgba(0,255,102,.1) }
+.editor .inspector .tile.bad { border-color: #ff6b6b }
+.editor .inspector .tile .ico { color: var(--tile); font-family: var(--display); font-size: 14px; text-align: center }
+.editor .inspector .tile .cap { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.editor .inspector .tile .badges { grid-column: 1 / -1; align-self: end; display: flex; gap: 4px; color: var(--text-dim); font-size: 10px; min-height: 12px }
+.editor .inspector .wall-tools { margin-top: 2px }
+.editor .inspector .sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 3px; margin-bottom: 2px }
+.editor .inspector .sources button { display: flex; gap: 5px; align-items: center; background: none; border: 1px solid var(--line); color: var(--text-dim); padding: 3px 6px; font: inherit; font-size: 11px; cursor: pointer; text-align: left }
+.editor .inspector .sources button .ico { width: 12px; text-align: center; color: var(--accent); font-family: var(--display) }
+.editor .inspector .sources button:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 60%, var(--line)) }
+.editor .inspector .sources button.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent) }
+.editor .inspector .sources button.on .ico { color: var(--accent-ink) }
+.editor .inspector .note.blurb { margin: 0 0 4px }
+.editor .inspector .rows { flex: 1 1 100%; display: flex; flex-direction: column; gap: 3px }
+.editor .inspector .rows .rec { display: flex; gap: 3px; align-items: flex-start }
+.editor .inspector .rows .cell { flex: 1 1 0; min-width: 0; display: flex }
+.editor .inspector .rows .cell input.text, .editor .inspector .rows .cell input.num, .editor .inspector .rows .cell select, .editor .inspector .rows .cell textarea { width: 100%; min-width: 0 }
+.editor .inspector .rows .cell.check { justify-content: center; padding-top: 4px }
+.editor .inspector .rows .btn { align-self: flex-start }
+.editor .inspector textarea.lines { flex: 1 1 100%; resize: vertical; white-space: pre; font: inherit }
+.editor .inspector .rows textarea.lines { flex: 1; white-space: pre-wrap; overflow-x: hidden; field-sizing: content; min-height: 24px; max-height: 160px }
+.editor .inspector .reset:disabled { opacity: .3; cursor: default }
+.editor .inspector .chips { display: flex; flex-wrap: wrap; gap: 4px 10px; flex: 1 }
+.editor .inspector .chips label { display: inline-flex; gap: 3px; align-items: center }
+.editor .inspector .color { display: flex; gap: 4px; flex: 1; align-items: center }
+.editor .inspector .color input[type="color"] { width: 26px; height: 22px; padding: 0; border: 1px solid var(--line); background: none; flex: none; cursor: pointer }
+.editor .inspector .color input.text { flex: 1 }
 .editor-toast { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px; border-top: 1px solid var(--accent); background: rgba(0,255,102,.07); font-size: 12px; flex: none }
 .editor-toast.bad { border-top-color: #ff6b6b; background: rgba(255,107,107,.08); color: #ffb3b3 }
 .editor-toast span { flex: 1 1 200px }

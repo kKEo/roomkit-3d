@@ -1,8 +1,8 @@
 import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld, PoiContext, ActionsContext, SlotContext } from '../scene/core.jsx';
-import { useStore } from '../state/store.js';
+import { useWorld, PoiContext, ActionsContext, SlotContext, EditKeyContext } from '../scene/core.jsx';
+import { useStore, editScreens } from '../state/store.js';
 import { getSession, sessionKey, registerScreen, registerVideo } from '../scene/screenState.js';
 import {
   createTextScreen, createGraphScreen, createStatsScreen, createOwnRain,
@@ -169,6 +169,7 @@ export function ScreenSurface({ w, h, ...props }) {
   const [hovered, setHovered] = useState(false);
   const zoomed = useStore(s => s.zoom?.key === key);
   const action = useContext(ActionsContext)[id];
+  const editKey = useContext(EditKeyContext);
   useEffect(() => {
     if (!SCREEN_SOURCES.includes(source)) console.warn(`Unknown screen source "${source}" (known: ${SCREEN_SOURCES.join(', ')}); showing rain`);
   }, [source]);
@@ -185,6 +186,14 @@ export function ScreenSurface({ w, h, ...props }) {
   const selectable = !zoomed && !picking && (action ? true : zoom && poi != null);
   // handlers go away while zoomed in, so no pointer-out will arrive to clear the hover
   useEffect(() => { if (!selectable) setHovered(false); }, [selectable]);
+  // the editor knows the screen by its id: a click in select mode also opens it in the inspector (the object takes the click)
+  useEffect(() => {
+    if (editKey == null || id == null) return;
+    const k = `${editKey}#${id}`, m = mesh.current;
+    editScreens.set(k, m);
+    return () => { if (editScreens.get(k) === m) editScreens.delete(k); };
+  }, [editKey, id]);
+  const pick = picking && editKey != null ? { onClick: e => { if (e.delta < 8) useStore.getState().setEdit({ part: id ?? null }); } } : {};
   const handlers = selectable ? {
     onPointerOver: e => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; },
     onPointerOut: () => { setHovered(false); document.body.style.cursor = ''; },
@@ -201,7 +210,7 @@ export function ScreenSurface({ w, h, ...props }) {
   } : {};
 
   return (
-    <mesh ref={mesh} {...rest} {...handlers}>
+    <mesh ref={mesh} {...rest} {...pick} {...handlers}>
       <planeGeometry args={[w, h]} />
       <meshBasicMaterial map={media || drawn || rain.texture} color={hovered && selectable ? BRIGHT : WHITE} toneMapped={false} />
     </mesh>

@@ -172,7 +172,7 @@ A screen in a frame, with an optional stage and speakers. Origin: **wall surface
 | `source` | `"rain"` | `"rain"`, `"image"` or `"video"` |
 | `src` | `null` | media file for `source` (an `.m3u8` URL plays as an HLS live stream) |
 | `screen` | `null` | a full screen config, as for a [control desk screen](#controldesk) (`"stats"`, `"graph"`, a `feed`, …); when given it replaces `source` and `src` |
-| `zoom` | `true` | `false` makes the screen not clickable |
+| `zoom` | `true` | `false` makes the screen not clickable; so does `zoom: false` in `screen` |
 | `stage` | `true` | 2.6 m deep floor stage |
 | `speakers` | `true` | at `±(w/2 + 1.4)` |
 

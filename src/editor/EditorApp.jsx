@@ -117,7 +117,7 @@ export function EditorApp() {
   useEffect(() => {
     useStore.setState({
       edit: {
-        mode: 'preview', tool: 'move', selected: null, hovered: null, hidden: new Set(), locked: new Set(), frame,
+        mode: 'preview', tool: 'move', selected: null, part: null, hovered: null, hidden: new Set(), locked: new Set(), frame,
         transform: (key, value) => keys.current.transform(key, value),
       },
     });
@@ -220,8 +220,12 @@ export function EditorApp() {
     try {
       const r = fn(latest.current);
       const next = r instanceof Map ? r : r.files;
-      if (next !== latest.current) commit(next, how);
+      if (next !== latest.current) {
+        commit(next, how);
+        if (how?.note) say(how.note);
+      }
       if (!(r instanceof Map) && r.key) select(r.key);
+      how?.then?.();
       return r;
     } catch (e) {
       say(`Could not do that: ${e.message}`, 'bad');

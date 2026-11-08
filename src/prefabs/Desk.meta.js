@@ -11,6 +11,6 @@ export const desk = {
     zoom: z.boolean().default(true),
   }),
   media: ['src', 'screen.src'],
-  hotspots: ['screen', 'chair'],
+  hotspots: p => [p.screen?.id ?? 'screen', 'chair'],
   placement: () => ({ focus: [0, 1.6, 0], cameraDistance: 6, cameraHeight: 2.9, markerOffset: [0, 2.8, 0] }),
 };
