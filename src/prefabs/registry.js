@@ -9,6 +9,8 @@
  *              when a POI leaves them out. Prefabs face local +Z.
  * - hotspots:  names of the clickable parts a scene can bind `actions` to; a list, or a
  *              function of the props when the parts depend on them (screens of a controlDesk)
+ * - title, blurb, glyph: optional, how an editor shows the type (a name, one line, one or two characters)
+ * - requires:  optional, the SDK versions a scene-shipped prefab was written for (`^1.0.0`); see metaSdk.js
  *
  * The built-in set is `BUILTIN`. A scene can add its own types (`scene.json › prefabs`, see
  * src/config/buildScene.js): `createRegistry(extra)` lays them over the built-ins, and every lookup
@@ -54,6 +56,8 @@ export function normalisePrefab(type, meta) {
   const hotspots = asFn(meta.hotspots);
   const names = hotspots(props);
   if (!Array.isArray(names) || !names.every(n => typeof n === 'string')) throw new Error('"hotspots" must give a list of names');
+  for (const k of ['title', 'blurb', 'requires']) if (meta[k] != null && (typeof meta[k] !== 'string' || !meta[k].trim())) throw new Error(`"${k}" must be a non-empty string`);
+  if (meta.glyph != null && (typeof meta.glyph !== 'string' || ![1, 2].includes([...meta.glyph.trim()].length))) throw new Error('"glyph" must be one or two characters');
   return { ...meta, media: meta.media ?? [], hotspots, props };
 }
 

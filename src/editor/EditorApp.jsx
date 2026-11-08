@@ -2,23 +2,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Viewer } from '../App.jsx';
 import { useStore, runtime } from '../state/store.js';
 import { buildScene, readerFromMap } from '../config/buildScene.js';
-import { scenesBase, sceneNameFromUrl, importModule, SCENE_NAME } from '../config/loadScene.js';
+import { scenesBase, sceneNameFromUrl, importModule, loadIndex, SCENE_NAME } from '../config/loadScene.js';
 import { ConfigError } from '../config/schema.js';
 import { applyTheme } from '../ui/theme.js';
 import { BUILTIN_REGISTRY } from '../prefabs/registry.js';
 import { preloadPrefabs } from '../prefabs/preload.js';
 import { autoPlacement } from '../lib/autoCamera.js';
 import { fetchBundle, fetchBytes, newSceneFiles, objectTemplate, slug } from './bundle.js';
-import { exportOptions, withExportOptions, sceneRefs, bundleEntries, folderEntries, importZip, mimeOf, cleanPath } from './export.js';
+import { exportOptions, withExportOptions, sceneRefs, hostedModules, bundleEntries, folderEntries, importZip, mimeOf, cleanPath } from './export.js';
 import { readZip } from './unzip.js';
 import { makeZip } from './zip.js';
 import {
   DECOR, sceneTree, errorsByKey, parseKey, objectKey, stopKey, addToScenery, moveObject, makeStop, dissolveStop, deleteStop,
   deleteObject, duplicateObject, moveStop, renameObject, renameNewStop, setField, setObjectField, stopRefs, viewSpot,
+  prefabDecls, addPrefabDecls, removePrefabDecl,
 } from './tree.js';
 import { Tree } from './Tree.jsx';
 import { Inspector } from './Inspector.jsx';
 import { AddMenu } from './AddMenu.jsx';
+import { AddTypeDialog } from './AddTypeDialog.jsx';
 import { ContextMenu, ConfirmBox } from './Menus.jsx';
 
 const sortPaths = paths => [...paths].sort((a, b) => (a === 'scene.json' ? -1 : b === 'scene.json' ? 1 : a.localeCompare(b)));
@@ -94,6 +96,9 @@ export function EditorApp() {
   const [ask, setAsk] = useState(null); // { title, lines, actions }
   const [toast, setToast] = useState(null); // { text, kind, actions }
   const [adding, setAdding] = useState(false);
+  const [addingType, setAddingType] = useState(false);
+  // open the Add palette once the build after "Add type" has made the new types known
+  const openPalette = useRef(false);
   // the prefab types the last good build knew: built-ins plus the scene's own
   const registry = useStore(s => s.scene?.registry) ?? BUILTIN_REGISTRY;
   const hasTransforms = useStore(s => Object.keys(s.scene?.transforms ?? {}).length > 0);
@@ -126,27 +131,30 @@ export function EditorApp() {
 
   useEffect(() => {
     const n = sceneNameFromUrl();
-    if (!n) { setFiles(newSceneFiles()); return; }
+    // the index first: it names the code origins the operator allows, which the first build already needs
+    const ready = loadIndex().catch(() => null);
+    if (!n) { ready.then(() => setFiles(newSceneFiles())); return; }
     const b = new URL(`${n}/`, scenesBase());
     base.current = b;
-    fetchBundle(b).then(setFiles).catch(e => { setErrors([String(e.message)]); setFiles(newSceneFiles()); });
+    ready.then(() => fetchBundle(b)).then(setFiles).catch(e => { setErrors([String(e.message)]); setFiles(newSceneFiles()); });
   }, []);
+
+  // how the preview (and the "Add type" check) finds files and imports modules:
+  // a file held in memory wins over the published folder; modules are re-imported under a new `?v=` on Reload
+  const resolveUrl = useCallback(p => assets.get(cleanPath(p))?.url ?? (base.current ? new URL(p, base.current).href : p), [assets]);
+  const loadModule = useCallback(url => importModule(url.startsWith('blob:') ? url : `${url}${url.includes('?') ? '&' : '?'}v=${bust}`), [bust]);
 
   // rebuild the scene a moment after the last change
   useEffect(() => {
     if (!files) return;
     const t = setTimeout(async () => {
       try {
-        const { scene, pois } = await preloadPrefabs(await buildScene({
-          name, read: readerFromMap(files),
-          // a file held in memory wins over the published folder
-          resolveUrl: p => assets.get(cleanPath(p))?.url ?? (base.current ? new URL(p, base.current).href : p),
-          loadModule: url => importModule(url.startsWith('blob:') ? url : `${url}${url.includes('?') ? '&' : '?'}v=${bust}`),
-        }));
+        const { scene, pois } = await preloadPrefabs(await buildScene({ name, read: readerFromMap(files), resolveUrl, loadModule }));
         applyTheme(scene);
         useStore.getState().setLoaded(scene, pois);
         built.current = true;
         setErrors([]);
+        if (openPalette.current) { openPalette.current = false; setAdding(true); }
         setStatus(`${plural(pois.length, 'stop')} · ${plural(scene.decor.length, 'scenery object')} · ${plural(files.size, 'file')}${assets.size ? ` · ${plural(assets.size, 'file')} in memory` : ''}`);
       } catch (e) {
         const lines = e instanceof ConfigError ? e.lines : [String(e.message ?? e)];
@@ -155,7 +163,7 @@ export function EditorApp() {
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [files, assets, name, bust]);
+  }, [files, name, assets, resolveUrl, loadModule]);
 
   useEffect(() => {
     if (!toast) return;
@@ -166,6 +174,9 @@ export function EditorApp() {
 
   const tree = useMemo(() => (files ? sceneTree(files) : { ok: true, title: null, decor: [], stops: [] }), [files]);
   const errorMap = useMemo(() => errorsByKey(errors, name, tree), [errors, name, tree]);
+  // what went wrong with each of the scene's own types (`scene.json › prefabs.<type>: …`), for the Room's type list
+  const typeErrors = useMemo(() => new Map(errors.map(l => /› prefabs\.([A-Za-z0-9_]+): ([\s\S]*)$/.exec(l)).filter(Boolean).map(m => [m[1], m[2]])), [errors]);
+  const hosted = useMemo(() => (files ? hostedModules(files) : []), [files]);
   const badFiles = useMemo(() => new Set(errors.map(l => l.split(/ › |: /)[0].replace(`${name}/`, ''))), [errors, name]);
   const paths = useMemo(() => (files ? sortPaths(files.keys()) : []), [files]);
   const safe = SCENE_NAME.test(name) ? name : slug(name);
@@ -411,6 +422,21 @@ export function EditorApp() {
     ]);
   };
 
+  /** The dialog's result: `{ type: url }`, written as one change; the palette opens on the new types once they are built. */
+  const onAddTypes = decls => {
+    const had = prefabDecls(latest.current);
+    const types = Object.keys(decls).filter(t => had[t] !== decls[t]);
+    const r = change(f => addPrefabDecls(f, decls));
+    if (!r) return;
+    openPalette.current = true;
+    if (!types.length) { say('Those types were already in the scene.'); setAdding(true); return; }
+    say(`Added ${types.length === 1 ? `the type ${types[0]}` : `${types.length} types: ${types.join(', ')}`}. Find ${types.length === 1 ? 'it' : 'them'} under “From the web” in + Add.`, 'ok', [{ label: 'Undo', onClick: undo }]);
+  };
+  const onRemoveType = type => {
+    // refused while objects use the type: `change` says why
+    if (change(f => removePrefabDecl(f, type))) say(`Removed the type ${type} from the scene.`, 'ok', [{ label: 'Undo', onClick: undo }]);
+  };
+
   const menuFor = row => {
     const ed = useStore.getState().edit;
     if (row.kind === 'object') {
@@ -592,7 +618,12 @@ export function EditorApp() {
               Besides the {plural(files.size, 'text file')}, the zip gets {extra.length === 0 ? 'no other files' : `${plural(extra.length, 'file')}: those the scene refers to${assets.size ? ', and those imported' : ''}`}{!base.current && extra.some(p => !assets.has(p)) ? ' (this scene has no published folder, so files not imported cannot be fetched)' : ''}.
               Files a prefab module loads itself and media a feed answers with are not found by reading the scene: import them, or add them to the unzipped folder by hand.
             </div>
-            {extra.length > 0 && <ul className="files">{extra.map(r => <li key={r} className={missing.has(r) ? 'missing' : assets.has(r) ? 'held' : ''}>{r}{assets.has(r) ? ' · in memory' : ''}</li>)}</ul>}
+            {(extra.length > 0 || hosted.length > 0) && (
+              <ul className="files">
+                {extra.map(r => <li key={r} className={missing.has(r) ? 'missing' : assets.has(r) ? 'held' : ''}>{r}{assets.has(r) ? ' · in memory' : ''}</li>)}
+                {hosted.map(u => <li key={u} className="hosted" title="A module from the web is not copied into the zip; the scene keeps its address">{u} · stays on its host</li>)}
+              </ul>
+            )}
             <div className="row">
               <button type="button" className="btn ghost" onClick={() => onExport('folder')} disabled={note?.kind === 'busy'} title={`${safe}/ to drop into a site's scenes/ next to other scenes`}>Scene folder .zip</button>
               <button type="button" className="btn" onClick={() => onExport('site')} disabled={note?.kind === 'busy' || REMOTE_SCENES} title="The viewer and this scene: a complete site for its own address">Whole site .zip</button>
@@ -604,7 +635,7 @@ export function EditorApp() {
         <div className="editor-bar">
           <span className="add-wrap">
             <button type="button" className="btn" onClick={() => setAdding(a => !a)} disabled={!files} aria-expanded={adding} title="Add an object to the scenery, where the camera looks">+ Add</button>
-            {adding && <AddMenu registry={registry} onPick={onPick} onClose={() => setAdding(false)} />}
+            {adding && <AddMenu registry={registry} onPick={onPick} onClose={() => setAdding(false)} onAddType={() => { setAdding(false); setAddingType(true); }} />}
           </span>
           <button type="button" className="btn ghost icon" onClick={undo} disabled={!hist.current.past.length} title="Undo (⌘Z / Ctrl+Z)" aria-label="Undo">↶</button>
           <button type="button" className="btn ghost icon" onClick={redo} disabled={!hist.current.future.length} title="Redo (⇧⌘Z / Ctrl+Y)" aria-label="Redo">↷</button>
@@ -635,7 +666,7 @@ export function EditorApp() {
             <Tree
               tree={tree} errors={errorMap} selected={selected} hovered={edit?.hovered ?? null} current={current}
               hidden={edit?.hidden ?? new Set()} locked={edit?.locked ?? new Set()} expanded={expanded} setExpanded={setExpanded}
-              filter={filter} renaming={renaming} setRenaming={setRenaming}
+              filter={filter} renaming={renaming} setRenaming={setRenaming} registry={registry}
               onSelect={(key, { fly } = {}) => { select(key); if (fly) frame(key); }}
               onActivate={frame}
               onHover={key => useStore.getState().setEdit({ hovered: key })}
@@ -648,7 +679,8 @@ export function EditorApp() {
             />
             <section className="inspector" aria-label="Inspector">
               {(errorMap.get(selected) ?? []).map((l, i) => <div key={i} className="bad">{l}</div>)}
-              <Inspector selKey={selected} tree={tree} files={files} registry={registry} edit={change} onBelongs={onBelongs} onStop={onStop} openFile={openFile} onAdd={() => setAdding(true)} />
+              <Inspector selKey={selected} tree={tree} files={files} registry={registry} edit={change} onBelongs={onBelongs} onStop={onStop} openFile={openFile} onAdd={() => setAdding(true)}
+                typeErrors={typeErrors} onAddType={() => setAddingType(true)} onRemoveType={onRemoveType} onReload={() => setBust(b => b + 1)} />
             </section>
           </div>
         ) : (
@@ -683,6 +715,7 @@ export function EditorApp() {
         )}
         {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
         {ask && <ConfirmBox {...ask} onClose={() => setAsk(null)} />}
+        {addingType && files && <AddTypeDialog files={files} resolveUrl={resolveUrl} loadModule={loadModule} onAdd={onAddTypes} onClose={() => setAddingType(false)} />}
       </aside>
       <Viewer />
     </>

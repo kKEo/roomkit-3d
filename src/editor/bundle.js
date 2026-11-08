@@ -10,7 +10,7 @@ import { pretty } from './jsonEdit.js';
 const json = o => pretty(o) + '\n';
 
 /** Text of a file by URL, or an Error saying why (the dev server answers missing files with HTML). */
-async function fetchText(url) {
+export async function fetchText(url) {
   const res = await fetch(url);
   if (!res.ok || (res.headers.get('content-type') || '').includes('text/html')) throw new Error(`${url}: file not found${res.ok ? '' : ` (HTTP ${res.status})`}`);
   return res.text();

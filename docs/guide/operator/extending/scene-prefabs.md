@@ -31,6 +31,10 @@ export function meta({ z }) {
     media: [],                      // optional: props that hold a file path relative to the SCENE folder
     hotspots: ['shade'],            // optional: names a scene can bind actions to; a list or (props) => string[]
     placement: p => ({ focus: [0, p.height * 0.7, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
+    title: 'Floor lamp',            // optional: how the editor names the type (else the type name)
+    blurb: 'a lamp on a pole',      // optional: one line under the name in the editor's Add palette
+    glyph: '⚲',                     // optional: one or two characters for the editor's tree
+    requires: '^1.0.0',             // optional: the SDK versions this module was written for (see below)
   };
 }
 
@@ -48,9 +52,18 @@ export function component({ h, useRef, useFrame, Solid, reducedMotion }) {
 }
 ```
 
-`meta` has the same shape as a built-in `<Name>.meta.js` (see [Adding a prefab](prefab.md#2-describe-its-props)): a strict zod schema where **every key has a default**, optional `media` and `hotspots`, and `placement`. The component receives `{ props, active, hovered }` like a built-in and returns a group in local space, facing +Z, in metres. Write elements with `h` (React's `createElement`): `h(Solid, { ...props }, ...children)`.
+`meta` has the same shape as a built-in `<Name>.meta.js` (see [Adding a prefab](prefab.md#2-describe-its-props)): a strict zod schema where **every key has a default**, optional `media` and `hotspots`, and `placement`. The four presentation keys are for the editor and may be left out. The component receives `{ props, active, hovered }` like a built-in and returns a group in local space, facing +Z, in metres. Write elements with `h` (React's `createElement`): `h(Solid, { ...props }, ...children)`.
 
-Keep `meta` free of anything browser-only: the test suite imports every scene's prefab modules in Node and runs `meta()` to check the scene builds. `component` is never called there.
+Keep `meta` free of anything browser-only: the test suite imports every scene's prefab modules in Node and runs `meta()` to check the scene builds. `component` is never called there, but it must be exported: a module without it is refused on the loading screen (`… has no "component" export`), before anything renders.
+
+### Versions
+
+A module that lives outside the app (on your own host, shared between scenes) outlives the app's builds. The SDK therefore has a version, `sdk.version` in `meta()` (`SDK_VERSION` in `src/prefabs/metaSdk.js`, semver), and a module may say what it was written for in `requires`: `^1.0.0` (that major, at least that version), `>=1.2.0` (any later), `1.2.3` or `*`. An app whose SDK does not satisfy it refuses the module with one loading-screen line (`needs SDK ^2.0.0, this app has 1.4.0`) instead of failing at render time. The version moves by these rules:
+
+- **minor**: a key added to either SDK object, or a new optional meta key;
+- **major**: a key removed, renamed or changed in meaning.
+
+What the SDK hands out is listed in the two tables below. Of those, treat `useStore` and `runtime` as the app's internals: they are passed through so a prefab can do what a built-in can, but their shape follows the app, not this version number. Everything else in the tables is covered by it.
 
 ## The SDK
 
@@ -58,6 +71,7 @@ Keep `meta` free of anything browser-only: the test suite imports every scene's 
 
 | Key | What it is |
 | --- | --- |
+| `version` | the SDK's version (semver), what `requires` is checked against |
 | `z` | zod, for the props schema |
 | `screenSchema`, `screenOrSource`, `SCREEN_SOURCES` | the screen config schemas, to give a prop a screen like `desk` does |
 | `SHAPES` | the names `Solid` accepts as `shape` |
@@ -104,16 +118,44 @@ export function component({ h, useEffect, useModel, assetUrl, useWorld, hatch })
 ## Loading, caching and the editor
 
 - The modules are imported while the loading screen is up, before the scene is validated: their schemas validate the objects. Their components are built before the first frame, along with the built-in prefab chunks the scene uses, so the intro flight shows no placeholders.
-- The browser caches a module by URL for the page's lifetime. The editor (`edit.html`) adds `?v=<n>` and offers **Reload prefabs** to import the scene's modules again after you change them; the viewer never does.
-- The editor edits JSON and Markdown; prefab modules are written in your own editor and stay in the scene folder, referenced by URL like media. A new scene started in the editor has no folder yet, so a relative prefab path cannot be fetched until the scene is published.
-- A prefab that throws while rendering, or whose `component` export is missing, logs one error and renders nothing; the rest of the room is unaffected.
+- The browser caches a module by URL for the page's lifetime. The editor (`edit.html`) adds `?v=<n>` and offers **Reload modules** to import the scene's modules again after you change them; the viewer never does. A module published at a fixed URL is also cached by the browser's HTTP cache and by any CDN in between, so a change may take a while to reach visitors. For a hosted module, put the version in the file name (`kiosk@1.2.0.js`) and serve it with a long `Cache-Control: immutable`; a scene then moves to the new version by changing its URL, and old scenes keep working. Dynamic `import()` has no integrity check, so a URL you do not control is a URL you trust.
+- The editor edits JSON and Markdown; prefab modules are written in your own editor and stay in the scene folder or on your host, referenced by path or URL like media. The editor's **+ Add a type from the web…** writes the URL into `scene.json › prefabs` after importing the module once through `loadPrefab` (`src/config/buildScene.js`), so a module that would fail on the loading screen is refused in the dialog instead; a catalog (below) offers several at once. A new scene started in the editor has no folder yet, so a relative prefab path cannot be fetched until the scene is published; a module by URL works at once.
+- A prefab that throws while rendering logs one error and renders nothing; the rest of the room is unaffected.
+
+## Publishing a catalog
+
+The editor adds a hosted prefab from its URL (**+ Add a type from the web…**), one at a time. To offer several at once, publish a **catalog** next to them: a JSON file whose URL ends in `.json`, which the editor shows as a pick list.
+
+```json
+{
+  "roomkit": 1,
+  "title": "Acme furniture",
+  "prefabs": [
+    { "type": "kiosk", "url": "kiosk@1.2.0.js", "title": "Kiosk", "blurb": "a touch kiosk on a pole", "glyph": "▮" },
+    { "type": "plant", "url": "plant.js" }
+  ]
+}
+```
+
+- `roomkit` is the format version, `1`. `title` is optional.
+- Each entry needs a `type` (the name the scene will use; the author can change it) and a `url`, resolved against the catalog's own URL, so the folder can be copied or mirrored whole. `title`, `blurb` and `glyph` are optional hints shown before the module is fetched; the module's own `meta` wins once it is checked.
+- The catalog is data, fetched with CORS and without credentials (it follows `VITE_DATA_ORIGINS`); the modules it names follow the code origin rules below. Nothing is written into a scene until the author ticks entries, checks them and clicks **Add**.
+
+The repository ships one for the samples: `public/scenes/loft/prefabs/catalog.json` lists the loft's lamp and the cinema's projector.
 
 ## Where modules may come from
 
-A scene prefab is JavaScript running with the page's privileges, so trust is scoped to where scenes already come from: by default only modules on the **page's origin or the scenes' origin** (`VITE_SCENES_BASE`) load; any other URL is a config error `prefabs.<type>: could not load …: blocked: <origin> is not an allowed prefab origin`. To allow more, set at build time:
+A scene prefab is JavaScript running with the page's privileges, so trust is scoped to where scenes already come from: by default only modules on the **page's origin or the scenes' origin** (`VITE_SCENES_BASE`) load; any other URL is a config error `prefabs.<type>: could not load …: blocked: <origin> is not an allowed prefab origin`. To allow more, the operator lists origins in one of two places; the lists add up:
+
+```json
+// scenes/index.json, read at runtime, no rebuild
+{ "default": "cinema", "scenes": ["cinema"], "prefabOrigins": ["https://content.example.com", "https://cdn.example.com"] }
+```
 
 ```bash
-VITE_PREFAB_ORIGINS=https://content.example.com,https://cdn.example.com npm run build   # or `*`
+VITE_PREFAB_ORIGINS=https://content.example.com,https://cdn.example.com npm run build   # at build time; or `*`
 ```
+
+Either may be `"*"` to allow any origin. The runtime list lives in `scenes/index.json` on purpose: that file is the operator's, like the app, and a scene's own files cannot widen it. An entry is an origin (scheme and host, a port if any); anything else in the list is ignored.
 
 A cross-origin host must send `Access-Control-Allow-Origin` on the module and on every model or texture it fetches, serve `.js` as `text/javascript` (a SPA fallback that answers `index.html` breaks the import), and your Content-Security-Policy's `script-src` must include it. That CSP is the check the browser enforces; the app's own origin check is a convenience on top of it, so do send one (see [Deploying › Content-Security-Policy](../deploy/deploy.md#content-security-policy)). Anyone who can write to an allowed module origin can run code in your page.

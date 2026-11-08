@@ -52,7 +52,7 @@ Everything in `dist/scenes/` is read at runtime, so content authors can change, 
 
 Live data needs no rebuild either: screens and panel blocks with a `feed` fetch it while the room is open, and transform modules (`scene.json › transforms`) live in the scene folder like prefab modules. See [Live data](../extending/live-data.md).
 
-Scene prefab and transform modules must be served as `text/javascript` (a SPA fallback that answers `index.html` for unknown paths breaks the import). By default they may come only from the page's origin or the scenes' origin; `VITE_PREFAB_ORIGINS` (a comma-separated list of origins, or `*`) allows others at build time, and such a host needs `Access-Control-Allow-Origin` on the module and on the models and textures it loads.
+Scene prefab and transform modules must be served as `text/javascript` (a SPA fallback that answers `index.html` for unknown paths breaks the import). By default they may come only from the page's origin or the scenes' origin. To allow other hosts, list their origins in `scenes/index.json › prefabOrigins` (`["https://cdn.example.com"]`, or `"*"`; read at runtime, so no rebuild) or in `VITE_PREFAB_ORIGINS` (comma-separated, or `*`) at build time; the two lists add up. Such a host needs `Access-Control-Allow-Origin` on the module and on the models and textures it loads. `scenes/index.json` is yours, not a scene author's: whoever can edit it can allow code to run in your page, so keep it with the app, not in a content bucket.
 
 ## External requests
 
@@ -62,7 +62,7 @@ A scene's live feeds and HLS video URLs are requested by the visitor's browser f
 
 ## Content-Security-Policy
 
-The origin rules above (`VITE_PREFAB_ORIGINS`, `VITE_DATA_ORIGINS`) are checked by the app's own JavaScript (`src/config/origins.js`). The boundary the **browser** enforces is a Content-Security-Policy, so send one as a response header from the web server (a `<meta http-equiv="Content-Security-Policy">` in `dist/index.html` and `dist/edit.html` works too, but cannot carry `frame-ancestors`). Build it from the same settings. With the app and its scenes on one host, and feeds from `https://api.example.com`:
+The origin rules above (`prefabOrigins`, `VITE_PREFAB_ORIGINS`, `VITE_DATA_ORIGINS`) are checked by the app's own JavaScript (`src/config/origins.js`). The boundary the **browser** enforces is a Content-Security-Policy, so send one as a response header from the web server (a `<meta http-equiv="Content-Security-Policy">` in `dist/index.html` and `dist/edit.html` works too, but cannot carry `frame-ancestors`). Build it from the same settings. With the app and its scenes on one host, and feeds from `https://api.example.com`:
 
 ```
 Content-Security-Policy:
@@ -81,7 +81,7 @@ Content-Security-Policy:
 
 | Directive | What to list | Why |
 | --- | --- | --- |
-| `script-src` | the page, the origin of `VITE_SCENES_BASE`, every `VITE_PREFAB_ORIGINS` entry. Never `'unsafe-eval'` or `*` | scene prefab and transform modules are `import()`ed; this directive decides which hosts may run code in your page, whatever the app's own check says |
+| `script-src` | the page, the origin of `VITE_SCENES_BASE`, every entry of `scenes/index.json › prefabOrigins` and of `VITE_PREFAB_ORIGINS`. Never `'unsafe-eval'` or `*` | scene prefab and transform modules are `import()`ed; this directive decides which hosts may run code in your page, whatever the app's own check says |
 | `connect-src` | the page, the scenes' origin, every `VITE_DATA_ORIGINS` entry | scene files, feeds, streams, HLS playlists and segments, and form `action`s. Without `VITE_DATA_ORIGINS`, every host a scene's feeds name must be here, or the browser refuses it |
 | `img-src`, `media-src` | the same data origins, plus `data:` and `blob:` | image and video screens, a `src` a feed hands back, textures and hls.js buffers |
 | `worker-src` | `'self' blob:` | hls.js demuxes in a Web Worker |

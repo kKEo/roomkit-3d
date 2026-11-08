@@ -5,6 +5,7 @@ import { inline, pretty, setAt, removeAt, insertAt, rawAt, replaceRaw, getAt } f
 import {
   sceneTree, errorsByKey, parseKey, addToScenery, moveObject, makeStop, dissolveStop, deleteStop, deleteObject,
   duplicateObject, moveStop, renameObject, renameNewStop, setObjectField, setObjectRaw, setField, stopRefs, objectAt, objectRaw, viewSpot,
+  prefabDecls, addPrefabDecls, removePrefabDecl, typeUses, typeNameProblem, typeNameFromUrl,
 } from '../src/editor/tree.js';
 import { newSceneFiles, objectTemplate } from '../src/editor/bundle.js';
 import { buildScene, readerFromMap } from '../src/config/buildScene.js';
@@ -222,5 +223,66 @@ describe('tree operations', () => {
     expect(viewSpot({ position: [5, 3, 0], target: [0, 0, 0] }, room).rotation).toEqual([0, 90, 0]);
     expect(viewSpot({ position: [0, 5, 10], target: [0, 0, 0] }, room, [[0, 0, 0.5]]).position).toEqual([2, 0, 0]);
     expect(viewSpot({ position: [0, 5, 10], target: [9, 0, 0] }, room, [[9, 0, 0]]).position).toEqual([7, 0, 0]);
+  });
+});
+
+describe("the scene's own types (scene.json › prefabs)", () => {
+  const cinema = () => sceneFiles('cinema');
+  const kiosk = 'https://cdn.example/kiosk.js';
+
+  it('reads the declarations, {} when absent', () => {
+    expect(prefabDecls(cinema())).toEqual({ seats: 'prefabs/seats.js', projector: 'prefabs/projector.js' });
+    expect(prefabDecls(newSceneFiles())).toEqual({});
+    expect(prefabDecls(new Map([['scene.json', '{ "prefabs": [1] }']]))).toEqual({});
+  });
+
+  it('adds declarations in one change, creating the map when missing and keeping the layout', () => {
+    const { files, key } = addPrefabDecls(newSceneFiles(), { kiosk, plant: 'https://cdn.example/plant.js' });
+    expect(key).toBe('room');
+    expect(prefabDecls(files)).toEqual({ kiosk, plant: 'https://cdn.example/plant.js' });
+    expect(files.get('scene.json')).toContain('"prefabs": { "kiosk": "https://cdn.example/kiosk.js", "plant": "https://cdn.example/plant.js" }');
+    const before = cinema().get('scene.json');
+    const after = addPrefabDecls(cinema(), { kiosk }).files.get('scene.json');
+    // the cinema writes its map on one line, so the new entry joins that line
+    expect(after.split('\n').length).toBe(before.split('\n').length);
+    expect(after).toContain('"projector": "prefabs/projector.js", "kiosk": "https://cdn.example/kiosk.js" }');
+    // the same module under the same name is not a change
+    const same = cinema();
+    expect(addPrefabDecls(same, { seats: 'prefabs/seats.js' }).files).toBe(same);
+  });
+
+  it('refuses a bad name, a built-in and a name declared with another module', () => {
+    expect(() => addPrefabDecls(newSceneFiles(), { Kiosk: kiosk })).toThrow(/a type name is letters/);
+    expect(() => addPrefabDecls(newSceneFiles(), { door: kiosk })).toThrow('"door" is a built-in type');
+    expect(() => addPrefabDecls(cinema(), { seats: kiosk })).toThrow('"seats" is already declared (prefabs/seats.js)');
+    expect(typeNameProblem('seats', cinema(), 'prefabs/seats.js')).toBeNull();
+    expect(() => addPrefabDecls(new Map([['scene.json', '{']]), { kiosk })).toThrow(/not valid JSON/);
+  });
+
+  it('removes a declaration, and the map when it was the last; refuses while objects use the type', () => {
+    expect(() => removePrefabDecl(cinema(), 'seats')).toThrow(/6 objects use "seats": seats 1, seats 2, seats 3, seats 4, seats 5, seats 6\. Delete them/);
+    expect(() => removePrefabDecl(cinema(), 'projector')).toThrow(/an object uses "projector": projector\./);
+    expect(typeUses(cinema(), 'projector').map(n => n.key)).toEqual(['decor:0']);
+    const withKiosk = addPrefabDecls(cinema(), { kiosk }).files;
+    const gone = removePrefabDecl(withKiosk, 'kiosk').files;
+    expect(gone.get('scene.json')).toBe(cinema().get('scene.json'));
+    const one = addPrefabDecls(newSceneFiles(), { kiosk }).files;
+    const none = removePrefabDecl(one, 'kiosk').files;
+    expect(none.get('scene.json')).toBe(newSceneFiles().get('scene.json'));
+    const fresh = newSceneFiles();
+    expect(removePrefabDecl(fresh, 'nope').files).toBe(fresh);
+  });
+
+  it('suggests a type name from a module URL', () => {
+    expect(typeNameFromUrl('https://cdn.example/prefabs/kiosk.js')).toBe('kiosk');
+    expect(typeNameFromUrl('https://cdn.example/desk-lamp@1.2.0.min.js?v=3')).toBe('deskLamp');
+    expect(typeNameFromUrl('https://cdn.example/3d-plant.js')).toBe('type3dPlant');
+    expect(typeNameFromUrl('https://cdn.example/Big%20Sign.JS')).toBe('bigSign');
+    expect(typeNameFromUrl('https://cdn.example/door.js')).toBe('door2');
+    expect(typeNameFromUrl('https://cdn.example/')).toBe('type');
+    expect(typeNameFromUrl('https://cdn.example/seats.js', cinema())).toBe('seats2');
+    expect(typeNameFromUrl('https://cdn.example/seats.js', cinema(), ['seats2'])).toBe('seats3');
+    // the same module already declared keeps its name
+    expect(typeNameFromUrl('prefabs/seats.js', cinema())).toBe('seats');
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { DECOR, parseKey, objectAt, objectRaw, setObjectField, setObjectRaw, setField, renameObject } from './tree.js';
+import { DECOR, parseKey, objectAt, objectRaw, setObjectField, setObjectRaw, setField, renameObject, prefabDecls, typeUses } from './tree.js';
 import { propFields, changed } from './form.js';
-import { glyphOf } from './types.js';
+import { glyphOf, isHosted } from './types.js';
 import { NumberField, TextField, JsonField, parseJson } from './fields.jsx';
 import { ScreenEditor, PartActions, screenProps } from './ScreenEditor.jsx';
 
@@ -60,9 +60,9 @@ function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
   return (
     <>
       <div className="insp-head">
-        <span className="ico" aria-hidden="true">{glyphOf(obj.type)}</span>
+        <span className="ico" aria-hidden="true">{glyphOf(obj.type, registry)}</span>
         <TextField label="Name" value={obj.name ?? ''} placeholder={node.label} onCommit={v => edit(f => renameObject(f, node.key, v ?? ''))} />
-        <span className="sub">{obj.type}</span>
+        <span className="sub" title={entry?.title && entry.title !== obj.type ? obj.type : undefined}>{entry?.title ?? obj.type}</span>
       </div>
       <label className="prop">
         <span className="name">Belongs to</span>
@@ -156,7 +156,43 @@ function StopInspector({ files, node, edit, onStop, openFile }) {
   );
 }
 
-function RoomInspector({ files, edit, openFile }) {
+/**
+ * The scene's own object types (`scene.json › prefabs`): each with where it comes from, how often it is placed and
+ * what went wrong with it, a way to remove it, and the door to adding more from the web.
+ */
+function TypeList({ files, registry, typeErrors, onAddType, onRemoveType, onReload }) {
+  const decls = prefabDecls(files);
+  const types = Object.keys(decls);
+  const host = url => { try { return new URL(url).host; } catch { return url; } };
+  return (
+    <div role="group" aria-label="Object types">
+      <div className="prop wide">
+        <span className="name">own types</span>
+        <span className="value">{types.length ? `${types.length} besides the built-in ones` : 'none; the built-in types only'}</span>
+        {types.length > 0 && <button type="button" className="btn ghost" onClick={onReload} title="Import the scene's prefab and transform modules again, after a change to their files">Reload</button>}
+      </div>
+      {types.length > 0 && (
+        <ul className="insp-types">
+          {types.map(t => {
+            const entry = registry.extra[t], err = typeErrors.get(t), url = decls[t], n = typeUses(files, t).length;
+            return (
+              <li key={t} className={err ? 'bad' : ''}>
+                <span className="ico" aria-hidden="true">{glyphOf(t, registry)}</span>
+                <span className="lbl">{entry?.title ?? t}{entry?.title && entry.title !== t && <code>{t}</code>}</span>
+                <button type="button" className="reset" title={`Remove the type ${t} from the scene`} aria-label={`Remove type ${t}`} onClick={() => onRemoveType(t)}>×</button>
+                <span className="sub" title={url}>{isHosted(entry ?? { url }) ? `from ${host(url)}` : 'in the scene folder'} · {n === 0 ? 'not placed' : n === 1 ? 'placed once' : `placed ${n} times`}</span>
+                {err && <div className="err">{err}</div>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="row"><button type="button" className="btn ghost" onClick={onAddType} title="A prefab module by URL, or a catalog that lists several">+ Add a type from the web…</button></div>
+    </div>
+  );
+}
+
+function RoomInspector({ files, registry, edit, openFile, typeErrors, onAddType, onRemoveType, onReload }) {
   let scene = null;
   try { scene = JSON.parse(files.get('scene.json')); } catch { /* shown below */ }
   if (!scene) return <div className="insp-empty">scene.json is not valid JSON: fix it in Files.</div>;
@@ -168,16 +204,17 @@ function RoomInspector({ files, edit, openFile }) {
       {['width', 'height', 'depth'].map(k => (
         <div className="prop" key={k}><span className="name">{k}</span><NumberField label={`room ${k}`} value={scene.room?.[k]} min={1} onCommit={v => set(['room', k], v)} /></div>
       ))}
+      <TypeList files={files} registry={registry} typeErrors={typeErrors} onAddType={onAddType} onRemoveType={onRemoveType} onReload={onReload} />
       <div className="note">Lights, walls, theme and the rest are in scene.json; where the room opens and free flight are in Export…</div>
       <div className="row"><button type="button" className="btn ghost" onClick={() => openFile('scene.json')}>Open scene.json</button></div>
     </div>
   );
 }
 
-export function Inspector({ selKey, tree, files, registry, edit, onBelongs, onStop, openFile, onAdd }) {
+export function Inspector({ selKey, tree, files, registry, edit, onBelongs, onStop, openFile, onAdd, typeErrors = new Map(), onAddType, onRemoveType, onReload }) {
   if (!files || !selKey) return <div className="insp-empty">Select something in the tree or, in Select mode, in the room.</div>;
   const k = parseKey(selKey);
-  if (k.group === 'room') return <RoomInspector files={files} edit={edit} openFile={openFile} />;
+  if (k.group === 'room') return <RoomInspector files={files} registry={registry} edit={edit} openFile={openFile} typeErrors={typeErrors} onAddType={onAddType} onRemoveType={onRemoveType} onReload={onReload} />;
   if (k.group === 'scenery') {
     return <div className="insp-empty">Everything you add starts here, as scenery. Make an object a stop with <strong>Belongs to</strong>, or drag it onto a stop. <button type="button" className="btn ghost" onClick={onAdd}>+ Add</button></div>;
   }

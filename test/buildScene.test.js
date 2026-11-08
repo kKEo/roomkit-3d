@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildScene, readerFromMap, resolveObjectMedia, isRelative } from '../src/config/buildScene.js';
+import { buildScene, loadPrefab, readerFromMap, resolveObjectMedia, isRelative } from '../src/config/buildScene.js';
 import { ConfigError } from '../src/config/schema.js';
 
 const resolveUrl = p => `scene://x/${p}`;
@@ -166,6 +166,15 @@ describe('buildScene with scene prefabs', () => {
     expect(scene.prefabs.lamp).toBe('https://cdn.example/lamp.js');
   });
 
+  it('loadPrefab alone gives the entry the editor checks before writing a declaration', async () => {
+    modules['https://cdn.example/kiosk.js'] = { meta: sdk => ({ ...lampModule.meta(sdk), title: 'Kiosk', glyph: '▮', requires: `^${sdk.version}` }), component: lampModule.component };
+    const e = await loadPrefab('kiosk', 'https://cdn.example/kiosk.js', { resolveUrl, loadModule });
+    expect([e.title, e.glyph, e.url, e.props.height, typeof e.module.component]).toEqual(['Kiosk', '▮', 'https://cdn.example/kiosk.js', 1.8, 'function']);
+    await expect(loadPrefab('door', 'https://cdn.example/kiosk.js', { resolveUrl, loadModule })).rejects.toThrow('"door" is a built-in type');
+    await expect(loadPrefab('Kiosk', 'https://cdn.example/kiosk.js', { resolveUrl, loadModule })).rejects.toThrow('a type name is letters');
+    await expect(loadPrefab('kiosk', 'https://cdn.example/none.js', { resolveUrl, loadModule })).rejects.toThrow('could not load https://cdn.example/none.js: Failed to fetch');
+  });
+
   it('a scene without prefabs has an empty map and the built-in registry types', async () => {
     const { scene } = await build();
     expect(scene.prefabs).toEqual({});
@@ -177,6 +186,9 @@ describe('buildScene with scene prefabs', () => {
     ['a module without meta', { lamp: 'prefabs/nometa.js' }, /prefabs\.lamp: .*module has no "meta" export/],
     ['a meta() that throws', { lamp: 'prefabs/throws.js' }, /prefabs\.lamp: meta\(\) failed: boom/],
     ['a schema without defaults', { lamp: 'prefabs/nodefaults.js' }, /prefabs\.lamp: defaults do not validate/],
+    ['a module without component', { lamp: 'prefabs/nocomponent.js' }, /prefabs\.lamp: .*module has no "component" export/],
+    ['a module written for a later SDK', { lamp: 'prefabs/future.js' }, /prefabs\.lamp: .*needs SDK \^9\.0\.0, this app has \d+\.\d+\.\d+/],
+    ['a module whose requires is not a range', { lamp: 'prefabs/badrange.js' }, /prefabs\.lamp: "requires" must be a version range such as "\^\d+\.\d+\.\d+"/],
     ['a built-in type name', { door: 'prefabs/lamp.js' }, /prefabs\.door: "door" is a built-in type/],
     ['a bad type name', { 'Lamp-1': 'prefabs/lamp.js' }, /prefabs\.Lamp-1: a type name is letters/],
     ['an empty path', { lamp: '' }, /prefabs\.lamp: give the path/],
@@ -184,6 +196,9 @@ describe('buildScene with scene prefabs', () => {
     modules['scene://x/prefabs/nometa.js'] = { component: () => null };
     modules['scene://x/prefabs/throws.js'] = { meta: () => { throw new Error('boom'); } };
     modules['scene://x/prefabs/nodefaults.js'] = { meta: ({ z }) => ({ ...lampModule.meta({ z }), schema: z.strictObject({ height: z.number() }) }) };
+    modules['scene://x/prefabs/nocomponent.js'] = { meta: lampModule.meta };
+    modules['scene://x/prefabs/future.js'] = { meta: sdk => ({ ...lampModule.meta(sdk), requires: '^9.0.0' }), component: lampModule.component };
+    modules['scene://x/prefabs/badrange.js'] = { meta: sdk => ({ ...lampModule.meta(sdk), requires: 'latest' }), component: lampModule.component };
     const e = await fails(buildWith({ 'scene.json': sceneWith(prefabs) }));
     expect(e).toBeInstanceOf(ConfigError);
     expect(e.lines.filter(l => /prefabs/.test(l))).toHaveLength(1);

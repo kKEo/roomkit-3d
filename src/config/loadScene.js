@@ -1,9 +1,9 @@
 import { buildScene } from './buildScene.js';
 import { ConfigError } from './schema.js';
 import { preloadPrefabs } from '../prefabs/preload.js';
-import { scenesBase, guardOrigin } from './origins.js';
+import { scenesBase, guardOrigin, prefabOriginsOf, setRuntimeOrigins } from './origins.js';
 
-export { scenesBase, guardOrigin, guardData } from './origins.js';
+export { scenesBase, guardOrigin, guardData, prefabOrigins } from './origins.js';
 
 export const SCENE_NAME = /^[a-z0-9][a-z0-9-_]*$/i;
 
@@ -24,15 +24,30 @@ async function fetchText(url) {
 /** Imports a scene's own module (a prefab or a transform) by URL; Vite leaves the URL alone (`@vite-ignore`), the browser fetches it. */
 export const importModule = url => import(/* @vite-ignore */ guardOrigin(url));
 
+let index;
+
+/**
+ * `scenes/index.json`, parsed, fetched once per page: the default scene and the operator's `prefabOrigins`,
+ * which it applies (`setRuntimeOrigins`). Rejects with a ConfigError naming the file.
+ */
+export function loadIndex() {
+  return (index ??= (async () => {
+    let text;
+    try { text = await fetchText(new URL('index.json', scenesBase())); } catch (e) { throw new ConfigError([`scenes/index.json: ${e.message}`]); }
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (e) { throw new ConfigError([`scenes/index.json: invalid JSON — ${e.message}`]); }
+    setRuntimeOrigins(prefabOriginsOf(parsed));
+    return parsed;
+  })().catch(e => { index = undefined; throw e; }));
+}
+
 /** Loads the scene named by `?scene=` (or the default from scenes/index.json) over HTTP. */
 export async function loadScene() {
   const root = scenesBase();
   let name = sceneNameFromUrl();
-  if (!name) {
-    let text;
-    try { text = await fetchText(new URL('index.json', root)); } catch (e) { throw new ConfigError([`scenes/index.json: ${e.message}`]); }
-    try { name = JSON.parse(text).default; } catch (e) { throw new ConfigError([`scenes/index.json: invalid JSON — ${e.message}`]); }
-  }
+  // the index names the default scene and the code origins the operator allows; a `?scene=` works without it
+  if (name) await loadIndex().catch(() => null);
+  else name = (await loadIndex()).default;
   if (!SCENE_NAME.test(name || '')) throw new ConfigError([`invalid scene name "${name}"`]);
 
   const base = new URL(`${name}/`, root);

@@ -20,14 +20,39 @@ export function originAllowed(url, extra) {
   return origin === location.origin || origin === scenesBase().origin || extra.includes('*') || extra.includes(origin);
 }
 
+/** An origin as the browser spells it (`https://cdn.example`), from an origin or any URL on it; null for junk. */
+const asOrigin = v => { try { return typeof v === 'string' && /^[a-z]+:/i.test(v) ? new URL(v).origin : null; } catch { return null; } };
+
+/**
+ * The code origins the operator allows at runtime: `scenes/index.json › prefabOrigins` (a list of origins, or
+ * `"*"`), set by the loader once the index is read. That file is the operator's, like the app itself; a scene
+ * cannot widen it. `prefabOriginsOf` reads the key out of the parsed index, dropping what is not an origin.
+ */
+let runtime = [];
+
+export function prefabOriginsOf(index) {
+  const v = index?.prefabOrigins;
+  if (v === '*') return ['*'];
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.map(o => (o === '*' ? '*' : asOrigin(o))).filter(Boolean))];
+}
+
+export function setRuntimeOrigins(origins) {
+  runtime = Array.isArray(origins) ? origins.filter(o => typeof o === 'string' && (o === '*' || asOrigin(o) === o)) : [];
+}
+
+/** Every origin prefab and transform modules may come from: the build-time list plus the runtime one. */
+export const prefabOrigins = () => [...new Set([...list(import.meta.env.VITE_PREFAB_ORIGINS), ...runtime])];
+
 /**
  * Where a scene's own code (prefab and transform modules) may come from. Such a module runs with the
  * page's privileges, so by default only the scenes' own origin (and the page's) is trusted;
- * `VITE_PREFAB_ORIGINS` (build-time, comma-separated origins, or `*`) widens that.
+ * `VITE_PREFAB_ORIGINS` (build-time, comma-separated origins, or `*`) and `scenes/index.json › prefabOrigins`
+ * (runtime, the operator's file) widen that.
  */
 export function guardOrigin(url) {
-  if (originAllowed(url, list(import.meta.env.VITE_PREFAB_ORIGINS))) return url;
-  throw new Error(`blocked: ${new URL(url, location.href).origin} is not an allowed prefab origin (see VITE_PREFAB_ORIGINS)`);
+  if (originAllowed(url, prefabOrigins())) return url;
+  throw new Error(`blocked: ${new URL(url, location.href).origin} is not an allowed prefab origin (see prefabOrigins in scenes/index.json, or VITE_PREFAB_ORIGINS)`);
 }
 
 /**

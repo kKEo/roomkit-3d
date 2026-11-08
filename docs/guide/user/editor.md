@@ -71,13 +71,25 @@ You can change your mind at any time:
 
 A drag that cannot be done says why (a stop cannot go inside another stop, for example). Everything here can be undone.
 
+## Add object types from the web
+
+**+ Add** lists the built-in types, the types this scene brings in its own folder, and, under **From the web**, types taken from someone's server. To add one of those, click **+ Add a type from the web…** at the bottom of the palette, or select the room and use the **own types** row in its settings:
+
+1. Paste the address of a prefab module (`https://…/prefabs/kiosk.js`) or of a **catalog** that lists several (`https://…/catalog.json`, the address ends in `.json`) and click **Look up**. A module shows as one row with a suggested type name; a catalog shows a row per type, all ticked, with the name, line and glyph the catalog gives. Untick what you do not want and change a type name if you like (letters, digits and `_`, starting with a lowercase letter; the built-in names are taken).
+2. Click **Check**. The editor loads each module the way the viewer will and shows its settings, its clickable parts and the files it expects, or what is wrong: the address does not answer, the module is not a prefab, it was written for a newer version of the app, or the viewer does not allow its host (then whoever runs the viewer has to allow it; the dialog says where).
+3. Click **Add**. The types are written into the scene in one step (`⌘Z` takes them back), the palette opens, and you place them like any other object. Their settings appear in the inspector as for built-in types.
+
+The module stays where it is: the scene keeps only its address, both zips in **Export…** list it as "stays on its host", and visitors' browsers fetch it from there. So add only hosts you trust: a module runs in the page with the same rights as the app, for you and for every visitor. If the author changes the module at the same address, the room changes with it; **Reload** in the room's settings (or ⟳ in the top bar) fetches the modules again while you edit.
+
+The room's settings list every type the scene declares, where it comes from, how often it is placed and any problem loading it. **×** removes a type from the scene; it refuses while objects of that type are still placed, and names them.
+
 ## Change an object, a stop or the room
 
 The settings under the tree belong to the selected row:
 
 - **An object**: its name, **Belongs to**, position, rotation and scale, then every setting its type has, with the right kind of field for each (a number, a tick box, a list of choices). A setting changed from its default is marked with a bar on the left; ↺ puts it back. Numbers are applied when you press `Enter` or leave the field. Below them, **On click** sets what a click on each clickable part does (a desk's chair, a door, a picture frame): nothing, go to a stop, zoom into a screen, open a link (with an optional question first), show or hide the panel, or send an event to the page. **JSON** shows the object as text, for anything else.
 - **A stop**: its name and the small line above it (kicker), where the camera looks from (**Use current view**, or **Place from object** to go back to automatic), its diamond, and **Edit page** for its text. **Turn into scenery** and **Delete stop** are here too.
-- **The room**: its title, the logo text and its size. Everything else (lights, walls, theme) is in `scene.json` (**Open scene.json**); where the room opens and free flight are in [Export…](#export-a-scene-or-a-site).
+- **The room**: its title, the logo text, its size and its [own object types](#add-object-types-from-the-web). Everything else (lights, walls, theme) is in `scene.json` (**Open scene.json**); where the room opens and free flight are in [Export…](#export-a-scene-or-a-site).
 
 ## Set up screens
 
@@ -121,7 +133,7 @@ An imported zip replaces what the editor currently shows, so export first if you
 | **Allow free flight** | Untick it and visitors cannot take the camera by hand: the fly keys and the middle mouse button do nothing, and the hint at the bottom no longer mentions them. Visitors still move between stops |
 | **opens at** | Where the room opens for someone who arrives without a `#stop` in the address: the whole room from above, one of the stops, or a **fixed view**. For a fixed view, move the camera where you want it (fly there, or go to a stop and step up to a screen) and click **Use current view**; the numbers under the dropdown are that position. A link with `#stop` still opens at that stop |
 
-Below the settings the editor lists the files the zip gets besides the text files: those the room refers to (pictures, videos, data files, modules) and those you imported. A file is taken from memory if it was imported, otherwise fetched from the room's published folder. Two kinds of file cannot be found by reading the room: files an object type's own module loads (models, textures) and media that live data answers with. Import them, or copy them into the unzipped folder by hand. A room that was never published and has nothing imported shows its files in red after an export; add them the same way.
+Below the settings the editor lists the files the zip gets besides the text files: those the room refers to (pictures, videos, data files, modules) and those you imported. A file is taken from memory if it was imported, otherwise fetched from the room's published folder. Modules taken from the web are listed too, as "stays on its host": the zip does not copy them, the room keeps their addresses. Two kinds of file cannot be found by reading the room: files an object type's own module loads (models, textures) and media that live data answers with. Import them, or copy them into the unzipped folder by hand. A room that was never published and has nothing imported shows its files in red after an export; add them the same way.
 
 Then pick the zip:
 

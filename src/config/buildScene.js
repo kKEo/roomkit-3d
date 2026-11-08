@@ -3,6 +3,7 @@ import { makeSchemas, parseOrThrow, ConfigError } from './schema.js';
 import { BUILTIN, BUILTIN_REGISTRY, TYPE_NAME, createRegistry, normalisePrefab } from '../prefabs/registry.js';
 import { META_SDK } from '../prefabs/metaSdk.js';
 import { isFeed } from '../data/feedSchema.js';
+import { satisfies, validRange } from '../lib/semver.js';
 import { autoPlacement, overviewCamera } from '../lib/autoCamera.js';
 import { withFootprint } from '../lib/footprint.js';
 
@@ -101,19 +102,30 @@ async function importDeclared(path, { resolveUrl, loadModule, kind }) {
   try { return { url, mod: await loadModule(url) }; } catch (e) { throw new Error(`could not load ${url}: ${e?.message ?? e}`); }
 }
 
-/** `scene.json › prefabs`: each module becomes a registry entry (its normalised meta plus `url` and `module`). */
+/**
+ * One scene prefab: imports the module at `path` (relative to the scene, or a URL) and turns it into a registry
+ * entry (its normalised meta plus `url` and `module`). Rejects with an Error whose message is the reason, the
+ * same line the loading screen shows; the editor uses it to check a module before writing it into a scene.
+ */
+export async function loadPrefab(type, path, { resolveUrl, loadModule }) {
+  if (!TYPE_NAME.test(type)) throw new Error('a type name is letters, digits and "_", starting with a lowercase letter');
+  if (Object.hasOwn(BUILTIN, type)) throw new Error(`"${type}" is a built-in type`);
+  const { url, mod } = await importDeclared(path, { resolveUrl, loadModule, kind: 'prefabs' });
+  if (typeof mod?.meta !== 'function') throw new Error(`${url}: module has no "meta" export`);
+  let meta;
+  try { meta = mod.meta(META_SDK); } catch (e) { throw new Error(`meta() failed: ${e?.message ?? e}`); }
+  const entry = normalisePrefab(type, meta);
+  if (entry.requires != null) {
+    if (!validRange(entry.requires)) throw new Error(`"requires" must be a version range such as "^${META_SDK.version}"`);
+    if (!satisfies(META_SDK.version, entry.requires)) throw new Error(`${url}: needs SDK ${entry.requires}, this app has ${META_SDK.version}`);
+  }
+  if (typeof mod.component !== 'function') throw new Error(`${url}: module has no "component" export`);
+  return { ...entry, url, module: mod };
+}
+
+/** `scene.json › prefabs`: each module becomes a registry entry (see loadPrefab). */
 function loadPrefabs(decl, { resolveUrl, loadModule, label }) {
-  return loadDeclared(decl, {
-    key: 'prefabs', what: 'type', label,
-    load: async (type, path) => {
-      if (Object.hasOwn(BUILTIN, type)) throw new Error(`"${type}" is a built-in type`);
-      const { url, mod } = await importDeclared(path, { resolveUrl, loadModule, kind: 'prefabs' });
-      if (typeof mod?.meta !== 'function') throw new Error(`${url}: module has no "meta" export`);
-      let meta;
-      try { meta = mod.meta(META_SDK); } catch (e) { throw new Error(`meta() failed: ${e?.message ?? e}`); }
-      return { ...normalisePrefab(type, meta), url, module: mod };
-    },
-  });
+  return loadDeclared(decl, { key: 'prefabs', what: 'type', label, load: (type, path) => loadPrefab(type, path, { resolveUrl, loadModule }) });
 }
 
 /**

@@ -109,6 +109,17 @@ export function sceneRefs(files, registry = BUILTIN_REGISTRY) {
   return [...new Set(out.filter(isRelative).map(clean))].filter(p => p && !files.has(p)).sort();
 }
 
+/** The modules a scene takes from the web (absolute URLs in `prefabs` and `transforms`): they stay on their hosts, no zip carries them. */
+export function hostedModules(files) {
+  const scene = parse(files.get('scene.json') ?? '');
+  const out = [];
+  if (scene) {
+    for (const p of Object.values(scene.prefabs ?? {})) if (typeof p === 'string' && !isRelative(p)) out.push(p);
+    for (const p of Object.values(scene.transforms ?? {})) if (typeof p === 'string' && !isRelative(p)) out.push(p.split('#')[0]);
+  }
+  return [...new Set(out)].sort();
+}
+
 /** `scenes/index.json` for a one-scene site. */
 export const indexJson = name => json({ default: name, scenes: [name] });
 

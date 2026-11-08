@@ -1,0 +1,8 @@
+{
+  "roomkit": 1,
+  "title": "Roomkit samples",
+  "prefabs": [
+    { "type": "lamp", "url": "lamp.js", "title": "Floor lamp", "blurb": "a lamp on a pole whose shade turns", "glyph": "⚲" },
+    { "type": "projector", "url": "../../cinema/prefabs/projector.js", "title": "Projector", "blurb": "a ceiling projector with a light cone", "glyph": "◬" }
+  ]
+}

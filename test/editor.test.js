@@ -61,7 +61,7 @@ describe('templates with a scene registry', () => {
     expect(() => objectTemplate('lamp')).toThrow();
     const { files } = addToScenery(newSceneFiles(), objectTemplate('lamp', registry));
     files.set('scene.json', files.get('scene.json').replace('"decor"', '"prefabs": { "lamp": "prefabs/lamp.js" },\n  "decor"'));
-    const { scene } = await buildScene({ name: 't', read: readerFromMap(files), resolveUrl: p => p, loadModule: async () => ({ meta: () => lamp }) });
+    const { scene } = await buildScene({ name: 't', read: readerFromMap(files), resolveUrl: p => p, loadModule: async () => ({ meta: () => lamp, component: () => () => null }) });
     expect(scene.decor[0]).toMatchObject({ type: 'lamp', props: { height: 1.8 } });
   });
 });

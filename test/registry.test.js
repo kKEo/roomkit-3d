@@ -37,8 +37,19 @@ describe('normalisePrefab and registries', () => {
     expect(m.url).toBe('u');
   });
 
+  it('keeps the presentation fields and `requires` when they are well formed', () => {
+    const m = normalisePrefab('lamp', { ...lamp, title: 'Floor lamp', blurb: 'a lamp on a pole', glyph: '⚲', requires: '^1.0.0' });
+    expect([m.title, m.blurb, m.glyph, m.requires]).toEqual(['Floor lamp', 'a lamp on a pole', '⚲', '^1.0.0']);
+    expect(normalisePrefab('lamp', lamp).title).toBeUndefined();
+  });
+
   it.each([
     ['Lamp', lamp, /not a valid type name/],
+    ['lamp', { ...lamp, title: '' }, /"title" must be a non-empty string/],
+    ['lamp', { ...lamp, blurb: 3 }, /"blurb" must be a non-empty string/],
+    ['lamp', { ...lamp, requires: ['^1'] }, /"requires" must be a non-empty string/],
+    ['lamp', { ...lamp, glyph: 'lamp' }, /"glyph" must be one or two characters/],
+    ['lamp', { ...lamp, glyph: '' }, /"glyph" must be one or two characters/],
     ['lamp', { ...lamp, schema: z.strictObject({ height: z.number() }) }, /defaults do not validate/],
     ['lamp', { ...lamp, schema: {} }, /"schema" must be a zod schema/],
     ['lamp', { ...lamp, placement: { focus: [0, 0, 0] } }, /"placement" must be a function/],

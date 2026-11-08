@@ -64,7 +64,7 @@ function Toggle({ on, label, glyph, onClick, mixed }) {
 }
 
 export function Tree({
-  tree, errors, selected, hovered, current, hidden, locked, expanded, setExpanded, filter, renaming, setRenaming,
+  tree, errors, selected, hovered, current, hidden, locked, expanded, setExpanded, filter, renaming, setRenaming, registry,
   onSelect, onActivate, onHover, onRename, onMenu, onDrop, onReject, onDelete, onDuplicate, onStep, onHide, onLock,
 }) {
   const rows = useMemo(() => rowsOf(tree, expanded, filter), [tree, expanded, filter]);
@@ -195,7 +195,7 @@ export function Tree({
               {expandable ? (row.open ? '▾' : '▸') : ''}
             </span>
             <span className="ico" aria-hidden="true">
-              {row.kind === 'room' ? '⌂' : row.key === 'scenery' ? '▦' : row.key === 'stops' ? '◆' : row.kind === 'stop' ? pad(row.n) : glyphOf(row.type)}
+              {row.kind === 'room' ? '⌂' : row.key === 'scenery' ? '▦' : row.key === 'stops' ? '◆' : row.kind === 'stop' ? pad(row.n) : glyphOf(row.type, registry)}
             </span>
             {renaming === row.key ? (
               <RenameBox initial={row.kind === 'stop' ? row.label : row.name ?? ''} placeholder={row.label}

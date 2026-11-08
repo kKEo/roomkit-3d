@@ -1,18 +1,19 @@
 import { useMemo, useState } from 'react';
-import { glyphOf, blurbOf } from './types.js';
+import { glyphOf, blurbOf, titleOf, isHosted } from './types.js';
 
 /**
- * The Add palette: every prefab type the scene can use, built-ins and the scene's own, filtered as you type.
- * ↑ ↓ choose, Enter adds, Esc closes. What is added always starts as scenery, where the camera looks.
+ * The Add palette: every prefab type the scene can use, the built-ins, the scene's own (modules in its folder) and
+ * those it takes from the web, filtered as you type. ↑ ↓ choose, Enter adds, Esc closes. What is added always
+ * starts as scenery, where the camera looks. The last line opens the dialog that adds types from the web.
  */
-export function AddMenu({ registry, onPick, onClose }) {
+export function AddMenu({ registry, onPick, onClose, onAddType }) {
   const [q, setQ] = useState('');
   const [at, setAt] = useState(0);
   const groups = useMemo(() => {
-    const own = new Set(Object.keys(registry.extra));
-    const hit = t => !q || t.toLowerCase().includes(q.toLowerCase()) || blurbOf(t).includes(q.toLowerCase());
+    const hit = t => !q || `${t} ${titleOf(t, registry)} ${blurbOf(t, registry)}`.toLowerCase().includes(q.toLowerCase());
     const types = registry.types().filter(hit);
-    return [['Built-in', types.filter(t => !own.has(t))], ["This scene's own", types.filter(t => own.has(t))]].filter(([, ts]) => ts.length);
+    const kind = t => (!registry.extra[t] ? 'Built-in' : isHosted(registry.extra[t]) ? 'From the web' : "This scene's own");
+    return ['Built-in', "This scene's own", 'From the web'].map(g => [g, types.filter(t => kind(t) === g)]).filter(([, ts]) => ts.length);
   }, [registry, q]);
   const flat = groups.flatMap(([, ts]) => ts);
   const pick = t => { if (t) onPick(t); };
@@ -22,7 +23,7 @@ export function AddMenu({ registry, onPick, onClose }) {
     if (e.key === 'Escape') { e.preventDefault(); onClose(); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); setAt(i => Math.min(flat.length - 1, i + 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setAt(i => Math.max(0, i - 1)); }
-    else if (e.key === 'Enter') { e.preventDefault(); pick(flat[at]); }
+    else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') { e.preventDefault(); pick(flat[at]); }
   };
 
   return (
@@ -39,9 +40,9 @@ export function AddMenu({ registry, onPick, onClose }) {
               {ts.map(t => (
                 <li key={t} id={`add-${t}`} role="option" aria-selected={flat[at] === t} className={flat[at] === t ? 'on' : ''}
                   onMouseEnter={() => setAt(flat.indexOf(t))} onMouseDown={e => e.preventDefault()} onClick={() => pick(t)}>
-                  <span className="ico" aria-hidden="true">{glyphOf(t)}</span>
-                  <span className="lbl">{t}</span>
-                  <span className="sub">{blurbOf(t)}</span>
+                  <span className="ico" aria-hidden="true">{glyphOf(t, registry)}</span>
+                  <span className="lbl" title={titleOf(t, registry) !== t ? t : undefined}>{titleOf(t, registry)}</span>
+                  <span className="sub">{blurbOf(t, registry)}</span>
                 </li>
               ))}
             </ul>
@@ -49,7 +50,10 @@ export function AddMenu({ registry, onPick, onClose }) {
         ))}
         {!flat.length && <li className="sub">No type matches.</li>}
       </ul>
-      <div className="note">Lands in the scenery where the camera looks. Make it a stop afterwards if visitors should stop at it.</div>
+      <div className="note">
+        Lands in the scenery where the camera looks. Make it a stop afterwards if visitors should stop at it.
+        {onAddType && <button type="button" className="link" onClick={onAddType}>+ Add a type from the web…</button>}
+      </div>
     </div>
   );
 }

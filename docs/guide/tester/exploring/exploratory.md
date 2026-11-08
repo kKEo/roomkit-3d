@@ -173,6 +173,28 @@ Open `/edit.html?scene=neo-room#control` on the dev server and select the contro
 | Select stop 04's cinema screen | its settings hide `source` and `src` (the full screen config replaces them) |
 | In `?scene=cinema`, **+ Add** a control desk | six rain tiles; changing one writes the whole list of six into the file, the others as `{}` |
 
+## Editor: object types from the web
+
+Open `/edit.html` (no `?scene=`) on the dev server. The sample modules are served by the dev server itself, so they count as the page's own origin.
+
+| Try | Expect |
+| --- | --- |
+| **+ Add**, read the groups | **Built-in** only; the last line reads **+ Add a type from the web…** |
+| Click it, paste `http://localhost:5180/scenes/cinema/prefabs/projector.js`, **Look up** | one row: ◇ `projector`, the URL under it; a note that code from `http://localhost:5180` runs in the page |
+| **Check** | the row turns green: settings `throw, width, height, drop, elevation, beam, spin` · clickable `lens`; **Add type** is enabled |
+| **Add type** | a message "Added the type projector…"; the palette opens with **From the web › projector**; **Files** › `scene.json` has `"prefabs": { "projector": "http://localhost:5180/…/projector.js" }` |
+| Pick it | a projector appears in the scenery; the inspector shows its settings with ↺ on none |
+| Select **Room** | **own types** reads "1 besides the built-in ones"; the list shows `projector` · from localhost:5180 · placed once; **Reload** and **×** |
+| **×** on `projector` | refused: "an object uses "projector": projector. Delete them, or give them another type, first" |
+| Delete the projector object, **×** again | the type goes; `scene.json` has no `prefabs` key any more; `⌘Z` brings it back |
+| **+ Add a type from the web…**, paste `http://localhost:5180/scenes/loft/prefabs/catalog.json`, **Look up** | "Catalog “Roomkit samples”: 2 types", rows **Floor lamp** (`lamp`, ⚲) and **Projector** (`projector`, ◬), both ticked |
+| Change `lamp` to `door`, **Check** | that row turns red: `"door" is a built-in type`; **Add** stays disabled |
+| Change it to `lamp2`, **Check**, **Add 2 types** | both are written in one step (one `⌘Z` removes both); the palette lists them under **From the web** with the catalog's glyphs |
+| **Look up** a URL that is not a module (`http://localhost:5180/scenes/index.json` is a catalog without `roomkit`; `…/scenes/loft/scene.json`) | "roomkit must be 1…"; a `.js` that does not exist: **Check** reports `could not load … file not found` or `Failed to fetch` |
+| Serve the repository from a second port (`npx serve public -l 5181 --cors`), **Look up** `http://localhost:5181/scenes/loft/prefabs/lamp.js`, **Check** | red: `blocked: http://localhost:5181 is not an allowed prefab origin…`; the note says where to allow it |
+| Add `"prefabOrigins": ["http://localhost:5181"]` to `public/scenes/index.json`, reload the editor page, repeat | green; after **Add**, the lamp renders from the other port; the viewer (`/?scene=…` after an export) loads it too |
+| **Export…** with a type from the web | the file list has a line `http://… · stays on its host`; neither zip holds the module |
+
 ## Editor: export a site
 
 Open `/edit.html?scene=cinema` on the dev server.

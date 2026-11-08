@@ -1,5 +1,6 @@
 import { getAt, rawAt, setAt, removeAt, insertAt, replaceRaw, pretty } from './jsonEdit.js';
 import { slug } from './bundle.js';
+import { BUILTIN, TYPE_NAME } from '../prefabs/registry.js';
 
 /**
  * The scene as a tree of what an author places: the room, the scenery (`scene.json › decor`) and the stops
@@ -310,6 +311,71 @@ export function stopRefs(files, file) {
     const md = poi?.content?.markdown;
     if (f !== file && typeof md === 'string' && (files.get(md) ?? '').includes(`(#${id})`)) out.push(`${md} › a link to #${id}`);
   }
+  return out;
+}
+
+// ── the scene's own types (`scene.json › prefabs`) ───────────────────────────
+
+/** `scene.json › prefabs` as written: type → module path or URL; `{}` when absent or not a map. */
+export function prefabDecls(files) {
+  const v = tryParse(files.get(SCENE))?.prefabs;
+  return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+}
+
+/** Checks a type name for a new declaration: valid, not built-in, not declared with another module. */
+export function typeNameProblem(type, files, url) {
+  if (!TYPE_NAME.test(type)) return 'a type name is letters, digits and "_", starting with a lowercase letter';
+  if (Object.hasOwn(BUILTIN, type)) return `"${type}" is a built-in type`;
+  const have = prefabDecls(files)[type];
+  if (have != null && have !== url) return `"${type}" is already declared (${have})`;
+  return null;
+}
+
+/** Declares types, `{ type: url }`, in scene.json, in one change; one already declared with the same module is left as is. */
+export function addPrefabDecls(files, decls) {
+  parsed(files, SCENE);
+  let text = files.get(SCENE);
+  for (const [type, url] of Object.entries(decls)) {
+    const bad = typeNameProblem(type, files, url);
+    if (bad) throw new Error(bad);
+    if (prefabDecls(files)[type] !== url) text = setAt(text, ['prefabs', type], url);
+  }
+  return { files: text === files.get(SCENE) ? files : with1(files, SCENE, text), key: 'room' };
+}
+
+/** The objects of a type, as tree nodes (the scenery's first, then each stop's). */
+export function typeUses(files, type) {
+  const t = sceneTree(files);
+  return [...t.decor, ...t.stops.flatMap(s => s.objects)].filter(n => n.type === type);
+}
+
+/** Takes a type out of `scene.json › prefabs`; refused while objects of that type stand in the scene (they are named). */
+export function removePrefabDecl(files, type) {
+  const used = typeUses(files, type);
+  if (used.length) throw new Error(`${used.length === 1 ? 'an object uses' : `${used.length} objects use`} "${type}": ${used.map(n => n.label).join(', ')}. Delete them, or give them another type, first`);
+  if (!(type in prefabDecls(files))) return { files, key: 'room' };
+  let text = removeAt(files.get(SCENE), ['prefabs', type]);
+  if (!Object.keys(getAt(text, ['prefabs']) ?? {}).length) text = removeAt(text, ['prefabs']);
+  return { files: with1(files, SCENE, text), key: 'room' };
+}
+
+/**
+ * A type name for a module URL, free in `files` and not built-in: `kiosk.js` → `kiosk`, `desk-lamp@1.2.0.min.js` →
+ * `deskLamp`, `3d-plant.js` → `type3dPlant`, `door.js` → `door2` (a built-in), numbered too when the name is
+ * taken by another module (`taken` adds names claimed in the same go).
+ */
+export function typeNameFromUrl(url, files = new Map(), taken = []) {
+  let file;
+  try { file = new URL(url, 'https://x/').pathname.split('/').pop() ?? ''; } catch { file = String(url).split('/').pop() ?? ''; }
+  const stem = decodeURIComponent(file).replace(/\.[a-z0-9]+$/i, '').replace(/\.min$/i, '').replace(/@.*$/, '');
+  const words = stem.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  let name = words.map((w, i) => (i ? w[0].toUpperCase() + w.slice(1) : w[0].toLowerCase() + w.slice(1))).join('');
+  if (/^\d/.test(name)) name = `type${name}`;
+  if (!name) name = 'type';
+  const used = new Set([...Object.keys(prefabDecls(files)), ...taken]);
+  const ok = n => TYPE_NAME.test(n) && !Object.hasOwn(BUILTIN, n) && !(used.has(n) && prefabDecls(files)[n] !== url);
+  let out = name, i = 2;
+  while (!ok(out)) out = `${name}${i++}`;
   return out;
 }
 

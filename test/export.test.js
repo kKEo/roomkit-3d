@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildScene } from '../src/config/buildScene.js';
-import { exportOptions, withExportOptions, sceneRefs, bundleEntries, folderEntries, indexJson, importZip, mimeOf, cleanPath } from '../src/editor/export.js';
+import { exportOptions, withExportOptions, sceneRefs, hostedModules, bundleEntries, folderEntries, indexJson, importZip, mimeOf, cleanPath } from '../src/editor/export.js';
 import { makeZip } from '../src/editor/zip.js';
 import { readZip } from '../src/editor/unzip.js';
 
@@ -69,12 +69,14 @@ describe('sceneRefs', () => {
 
   it('skips absolute URLs, files already in the bundle and unknown object types; reads fenced feeds', () => {
     const files = new Map([
-      ['scene.json', json({ prefabs: { lamp: 'prefabs/lamp.js' }, transforms: { t: 'https://cdn.example/t.js#t' }, decor: [{ type: 'pictureFrame', props: { image: 'https://img.example/a.png' } }, { type: 'nope', props: { src: 'media/x.svg' } }], poi: ['poi/a.json'] })],
+      ['scene.json', json({ prefabs: { lamp: 'prefabs/lamp.js', kiosk: 'https://cdn.example/kiosk.js' }, transforms: { t: 'https://cdn.example/t.js#t' }, decor: [{ type: 'pictureFrame', props: { image: 'https://img.example/a.png' } }, { type: 'nope', props: { src: 'media/x.svg' } }], poi: ['poi/a.json'] })],
       ['poi/a.json', json({ id: 'a', objects: [{ type: 'desk', props: { screen: { source: 'stats', feed: { url: './data/kpi.json', stream: '/abs/sse' } } } }], content: { markdown: 'content/a.md', blocks: [{ type: 'list', feed: 'data/list.json' }] } })],
       ['content/a.md', '# A\n\n```stats\n{ "feed": "data/kpi.json" }\n```\n\n```js\nnot a feed\n```\n'],
       ['data/list.json', '[]'],
     ]);
     expect(sceneRefs(files)).toEqual(['data/kpi.json', 'prefabs/lamp.js']);
+    expect(hostedModules(files)).toEqual(['https://cdn.example/kiosk.js', 'https://cdn.example/t.js']);
+    expect(hostedModules(new Map([['scene.json', '{']]))).toEqual([]);
   });
 
   it('survives broken files', () => {

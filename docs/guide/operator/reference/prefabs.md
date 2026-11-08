@@ -209,4 +209,4 @@ Placement: focus `[0, 0, 0]`, distance `6`, cam y `—`, marker `[0, 1.4, 0]`.
 
 ## Scene-shipped types
 
-A scene may declare further types in `scene.json › prefabs`, each a module in the scene folder (or at a URL) with its own schema, hotspots and placement. They are placed exactly like the types above; their props are whatever the module's `meta()` declares. The `loft` example ships a `lamp` (`public/scenes/loft/prefabs/lamp.js`). See [Scene-shipped prefabs](../extending/scene-prefabs.md).
+A scene may declare further types in `scene.json › prefabs`, each a module in the scene folder (or at a URL on a host the operator allows) with its own schema, hotspots, placement and, for the editor, a title, a one-line blurb and a glyph. They are placed exactly like the types above; their props are whatever the module's `meta()` declares. The `loft` example ships a `lamp` (`public/scenes/loft/prefabs/lamp.js`). See [Scene-shipped prefabs](../extending/scene-prefabs.md).
