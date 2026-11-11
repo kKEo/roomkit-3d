@@ -47,7 +47,7 @@ Yjs or Automerge would add 100–300 kB and solve offline merging the event does
 
 ## Protocol summary
 
-A connection opens at `/ws/<event>` and sends a `join` (`{ t, v, scene, name, color, resume? }`) as its first frame; the server answers `welcome` (`{ id, token, now, seq, tickMs, peers, state }`) or `error` and closes. After that:
+A connection opens at `/ws/<event>` and sends a `join` (`{ t, v, scene, name, color, resume? }`) as its first frame; the server answers `welcome` (`{ id, token, now, seq, tickMs, peers, state }`) or `error` and closes. Right after the `welcome` it sends one `POSES` frame with the latest pose of every peer that flies by hand, because poses are otherwise sent only when they change and a peer that has stopped would show at the start of its flight. After that:
 
 | From the client | From the server |
 | --- | --- |

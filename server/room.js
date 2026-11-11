@@ -110,6 +110,11 @@ export function createRoom({
     client.lastSeen = client.opRefill = client.msgRefill = now();
     clients.set(client.id, client);
     welcome(client);
+    // poses go out only when they change, so a peer that flew by hand and stopped would stay at the start of its
+    // flight for a newcomer: give the newcomer where everyone who flies by hand is now, once
+    const here = [];
+    for (const c of clients.values()) if (c !== client && c.pose) here.push({ id: c.id, pose: c.pose, flags: c.flags });
+    if (here.length) send(client, packPoses(here));
     broadcast({ t: 'join', peer: peerOf(client) }, client);
     if (!tickTimer) start();
     return client;

@@ -129,6 +129,27 @@ describe('shared state', () => {
     expect(a.last()).toMatchObject({ t: 'state', value: 2, seq: 2 });
   });
 
+  it('tells a newcomer where the peers who fly by hand are now, even when they stopped moving', () => {
+    const a = conn(), b = conn(), c = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.message(ca, msg({ t: 'intent', intent: { kind: 'free', from: view() } }));
+    room.message(ca, packPose({ position: [3, 1.7, -2], yaw: 0.5, pitch: 0.1 }));
+    ck.advance(500); // delivered, and from now on nothing changes
+    const cb = room.join(b, JOIN('Bob'));
+    const batch = b.frames().find(f => f.type === 'poses');
+    expect(batch.entries).toHaveLength(1);
+    expect(batch.entries[0]).toMatchObject({ id: ca.id, flags: 1 });
+    expect(batch.entries[0].pose.position).toEqual([3, 1.7, -2]);
+    // after the welcome (the client needs its peers first), and only to the newcomer
+    expect(b.sent.findIndex(d => typeof d !== 'string')).toBeGreaterThan(b.sent.findIndex(d => typeof d === 'string' && JSON.parse(d).t === 'welcome'));
+    expect(a.frames().filter(f => f.type === 'poses')).toHaveLength(1); // only the tick's own
+    // a peer that parked at a point of interest has no pose to give
+    room.message(ca, msg({ t: 'intent', intent: { kind: 'still', from: view() } }));
+    room.join(c, JOIN('Cy'));
+    expect(c.frames().filter(f => f.type === 'poses')).toHaveLength(0);
+    expect(cb).toBeTruthy();
+  });
+
   it('limits ops per second and the size of a value', () => {
     const a = conn();
     const ca = room.join(a, JOIN('Ada'));
