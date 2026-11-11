@@ -144,6 +144,64 @@ describe('shared state', () => {
     expect(a.last()).toMatchObject({ t: 'state', value: 'ok' });
   });
 
+  it('limits the other messages too, so one client cannot make the room echo it without end', () => {
+    const a = conn(), b = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    b.clear();
+    for (let i = 0; i < 500; i++) room.message(ca, msg({ t: 'intent', intent: { kind: 'still', from: view(i) } }));
+    expect(b.json().filter(m => m.t === 'intent').length).toBe(10);
+    for (let i = 0; i < 100; i++) room.message(ca, msg({ t: 'profile', name: `n${i}` }));
+    expect(b.json().filter(m => m.t === 'profile').length).toBe(0);
+    ck.advance(1000);
+    b.clear();
+    room.message(ca, msg({ t: 'intent', intent: { kind: 'still', from: view() } }));
+    expect(b.json().filter(m => m.t === 'intent').length).toBe(1);
+  });
+
+  it('answers a grab over the limit with a reject for that key, and lets pings through', () => {
+    const a = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    for (let i = 0; i < 10; i++) room.message(ca, msg({ t: 'drop', key: 'k' }));
+    a.clear();
+    room.message(ca, msg({ t: 'grab', key: 'k' }));
+    expect(a.last()).toMatchObject({ t: 'reject', key: 'k', reason: 'limit' });
+    room.message(ca, msg({ t: 'ping', c: 7 }));
+    expect(a.last()).toMatchObject({ t: 'pong', c: 7 });
+  });
+
+  it('caps the number of keys, for ops and for grabs alike', () => {
+    const small = createRoom({ scene: 'loft', now: ck.now, setTimer: ck.setTimer, clearTimer: ck.clearTimer, random: () => 0.5, maxKeys: 3, opsPerSec: 1000, msgsPerSec: 1000 });
+    const a = conn();
+    const ca = small.join(a, JOIN('Ada'));
+    for (const k of ['a', 'b', 'c']) small.message(ca, msg({ t: 'op', key: k, value: 1 }));
+    a.clear();
+    small.message(ca, msg({ t: 'op', key: 'd', value: 1 }));
+    expect(a.last()).toMatchObject({ t: 'reject', key: 'd', reason: 'limit' });
+    small.message(ca, msg({ t: 'grab', key: 'e' }));
+    expect(a.last()).toMatchObject({ t: 'reject', key: 'e', reason: 'limit' });
+    expect(small.stats.keys).toBe(3);
+    // an existing key can still be written and grabbed
+    small.message(ca, msg({ t: 'op', key: 'a', value: 2 }));
+    expect(a.last()).toMatchObject({ t: 'state', key: 'a', value: 2 });
+    small.message(ca, msg({ t: 'grab', key: 'b' }));
+    expect(a.last()).toMatchObject({ t: 'lease', key: 'b', owner: ca.id });
+  });
+
+  it('forgets a key that was only grabbed and never written', () => {
+    const a = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    for (let i = 0; i < 5; i++) { room.message(ca, msg({ t: 'grab', key: `g${i}` })); room.message(ca, msg({ t: 'drop', key: `g${i}` })); ck.advance(200); }
+    expect(room.stats.keys).toBe(0);
+    room.message(ca, msg({ t: 'grab', key: 'lease-only' }));
+    ck.advance(6000); // the lease runs out with no op and no drop
+    expect(room.stats.keys).toBe(0);
+    room.message(ca, msg({ t: 'op', key: 'kept', value: 1 }));
+    room.message(ca, msg({ t: 'grab', key: 'kept' }));
+    room.message(ca, msg({ t: 'drop', key: 'kept' }));
+    expect(room.entry('kept')).toMatchObject({ value: 1 });
+  });
+
   it('snapshot and restore carry the state and the sequence', () => {
     const a = conn();
     const ca = room.join(a, JOIN('Ada'));

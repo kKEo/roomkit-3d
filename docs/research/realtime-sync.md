@@ -88,7 +88,7 @@ rooms per process with persistence).
   the snapshot on resume (simplest correct behaviour).
 - **Ownership lease** (future "moving things"): `grab(key)` → server grants `owner` + TTL 5 s refreshed by
   updates; only the owner's `set` on that key is accepted; release on `drop`, disconnect or TTL.
-- **Rate limits**: server clamps per-client poses to 20 Hz and ops to 10/s; max message 4 kB; origin check.
+- **Rate limits**: server clamps per-client poses to 20 Hz, ops to 10/s and every other forwarded message (intent, profile, grab, drop) to 10/s; at most 2000 keys per event; max message 4 kB; origin check.
 - **Encoding**: poses as hand-packed `ArrayBuffer` (DataView); ops/control as JSON validated with zod on both
   ends (volume is tiny, debuggability matters). Frame byte 0 = message type.
 

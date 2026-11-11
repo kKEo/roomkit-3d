@@ -32,6 +32,8 @@ export function createRoom({
   maxClients = 200,
   posesPerSec = 20,
   opsPerSec = 10,
+  msgsPerSec = 10,
+  maxKeys = 2000,
   maxValueBytes = 4096,
   leaseMs = 5000,
   idleMs = 45000,
@@ -103,9 +105,9 @@ export function createRoom({
       if (clients.size >= maxClients) return fail('full', 'this event is full');
       const id = allocId();
       if (id == null) return fail('full', 'this event is full');
-      client = { id, token: token(), conn, name: msg.name, color: msg.color, pose: null, flags: 0, intent: null, lastSeen: 0, lastPose: 0, opBudget: opsPerSec, opRefill: 0, leases: new Set() };
+      client = { id, token: token(), conn, name: msg.name, color: msg.color, pose: null, flags: 0, intent: null, lastSeen: 0, lastPose: 0, opBudget: opsPerSec, opRefill: 0, msgBudget: msgsPerSec, msgRefill: 0, leases: new Set() };
     }
-    client.lastSeen = client.opRefill = now();
+    client.lastSeen = client.opRefill = client.msgRefill = now();
     clients.set(client.id, client);
     welcome(client);
     broadcast({ t: 'join', peer: peerOf(client) }, client);
@@ -134,6 +136,11 @@ export function createRoom({
     if (data.length > maxValueBytes + 512) { sendJson(client, { t: 'reject', key: '', reason: 'size' }); return; }
     const msg = parseMessage(clientMessage, data);
     if (!msg) return;
+    // everything but a ping is forwarded to the whole room, so each client gets a budget for it (ops have their own, below)
+    if (msg.t !== 'ping' && msg.t !== 'op' && !takeMsgBudget(client, t)) {
+      if (msg.key) sendJson(client, { t: 'reject', key: msg.key, reason: 'limit' });
+      return;
+    }
     switch (msg.t) {
       case 'ping': sendJson(client, { t: 'pong', c: msg.c, s: t }); break;
       case 'intent': {
@@ -156,6 +163,14 @@ export function createRoom({
     }
   }
 
+  function takeMsgBudget(client, t) {
+    client.msgBudget = Math.min(msgsPerSec, client.msgBudget + ((t - client.msgRefill) / 1000) * msgsPerSec);
+    client.msgRefill = t;
+    if (client.msgBudget < 1) return false;
+    client.msgBudget -= 1;
+    return true;
+  }
+
   function takeOpBudget(client, t) {
     client.opBudget = Math.min(opsPerSec, client.opBudget + ((t - client.opRefill) / 1000) * opsPerSec);
     client.opRefill = t;
@@ -176,6 +191,7 @@ export function createRoom({
     e.owner = null; e.until = undefined;
     clients.get(owner)?.leases.delete(key);
     ghosts.get(owner)?.client.leases.delete(key);
+    if (e.seq === 0 && state.get(key) === e) state.delete(key); // only ever grabbed, never written: nothing to keep
     if (announce) broadcast({ t: 'lease', key, owner: null });
   }
 
@@ -185,6 +201,7 @@ export function createRoom({
     if (!takeOpBudget(client, t)) { sendJson(client, { t: 'reject', key: msg.key, reason: 'limit' }); return; }
     const holder = leaseHolder(msg.key, t);
     const e = state.get(msg.key);
+    if (!e && state.size >= maxKeys) { sendJson(client, { t: 'reject', key: msg.key, reason: 'limit' }); return; }
     if (holder != null && holder !== client.id) { sendJson(client, { t: 'reject', key: msg.key, reason: 'leased', seq: e.seq, value: e.value }); return; }
     // `base` lets a client ask for compare-and-set: the op only lands on the version it saw
     if (msg.base != null && e && e.seq !== msg.base) { sendJson(client, { t: 'reject', key: msg.key, reason: 'stale', seq: e.seq, value: e.value }); return; }
@@ -200,8 +217,10 @@ export function createRoom({
 
   function grab(client, key, t) {
     const holder = leaseHolder(key, t);
-    const e = state.get(key) ?? (state.set(key, { value: undefined, seq: 0, by: null, owner: null, until: undefined }), state.get(key));
+    let e = state.get(key);
+    if (!e && state.size >= maxKeys) { sendJson(client, { t: 'reject', key, reason: 'limit' }); return; }
     if (holder != null && holder !== client.id) { sendJson(client, { t: 'reject', key, reason: 'leased', seq: e.seq, value: e.value }); return; }
+    if (!e) { e = { value: undefined, seq: 0, by: null, owner: null, until: undefined }; state.set(key, e); }
     e.owner = client.id; e.until = t + leaseMs;
     client.leases.add(key);
     broadcast({ t: 'lease', key, owner: client.id, until: e.until });

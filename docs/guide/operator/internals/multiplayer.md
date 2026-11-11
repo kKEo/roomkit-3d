@@ -35,7 +35,7 @@ Conventions:
 
 - A screen's state uses the screen's session key as a prefix: `<scene>:<poi>:<slot>/<screen id>.video` holds `{ playing, at, t0, rate }` for a video screen (`src/net/videoSync.js`): the media time `at` it had at server time `t0`, so a late joiner seeks to the right moment from the server clock, which every client estimates from its pings.
 - A prefab's own keys are given by the scene author, such as the control desk's `switch.key` (`booth.power` in the `cinema` scene).
-- Keys are limited to 200 characters, values to 4 kB, writes to 10 per second per visitor.
+- Keys are limited to 200 characters, values to 4 kB, writes to 10 per second per visitor, and an event holds at most 2000 keys (a write or a grab of a new key beyond that is rejected with `limit`). Every other message a visitor sends that is passed on to the room (flight intents, profile changes, grabs, drops) shares a second budget of 10 per second; beyond it the message is dropped, and a grab is answered with a `limit` reject. Pings are not counted.
 
 ### Leases
 
