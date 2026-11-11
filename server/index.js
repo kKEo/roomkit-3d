@@ -85,9 +85,12 @@ const wss = new WebSocketServer({
 server.on('upgrade', (req, socket, head) => {
   const m = /^\/ws\/([^/?#]+)/.exec(req.url || '');
   const origin = req.headers.origin;
-  if (!m || !EVENT_NAME.test(decodeURIComponent(m[1]))) { socket.write('HTTP/1.1 404 Not Found\r\n\r\n'); socket.destroy(); return; }
+  // a malformed escape (/ws/%E0%A4%A) makes decodeURIComponent throw: that is a bad name, not a reason to die
+  let event = '';
+  try { event = decodeURIComponent(m?.[1] ?? ''); } catch { /* not a name */ }
+  if (!EVENT_NAME.test(event)) { socket.write('HTTP/1.1 404 Not Found\r\n\r\n'); socket.destroy(); return; }
   if (ORIGINS.length && !ORIGINS.includes(origin)) { socket.write('HTTP/1.1 403 Forbidden\r\n\r\n'); socket.destroy(); return; }
-  wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req, decodeURIComponent(m[1])));
+  wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req, event));
 });
 
 wss.on('connection', (ws, req, event) => {
