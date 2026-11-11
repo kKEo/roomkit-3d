@@ -15,6 +15,7 @@ This page lists every command the project defines or relies on. Run them from th
 | `make scene-check` | `node tools/scene.js check`: every scene's config, references, object positions and cameras, without a browser; `SCENE=<name>` for one scene |
 | `node tools/scene.js describe <scene>` | the scene read back in words: where each object stands, what each stop's camera sees |
 | `node tools/scene.js plan <scene>` | the floor plan as text; `--svg=file.svg` writes a picture instead |
+| `node tools/scene.js new <name>` | a new scene folder with a room and one stop, added to `public/scenes/index.json`; `--title="My Room"` names it |
 | `node tools/scene.js prefabs [scene]` | every object type with its size, origin, props and clickable parts |
 | `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |

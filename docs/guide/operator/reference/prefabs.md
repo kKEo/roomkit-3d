@@ -60,6 +60,7 @@ A curved control-centre console made of desk segments on an arc, with sloped pan
 | `chairs` | `2` | chairs, spaced evenly around the middle of the arc |
 | `screens` | six `{}` | one entry per screen, filled **left to right, top row first**; see below |
 | `columns` | `3` | screens per row; rows = `ceil(screens / columns)` |
+| `switch` | `null` | a master switch on the console: `{ key, label?, on }`, where `key` is the shared state it flips and `on` what it starts as; adds the `switch` hotspot |
 | `screenWidth` | `1.6` | every screen |
 | `screenHeight` | `0.95` | every screen; the bottom row starts at 1.65 m |
 
@@ -67,7 +68,7 @@ Each entry of `screens` configures that screen alone:
 
 | Key | Used by | Notes |
 | --- | --- | --- |
-| `source` | all | `"rain"` (default), `"image"`, `"video"`, `"text"`, `"graph"`, `"stats"`, or the interactive `"terminal"`, `"dashboard"`, `"form"`; anything else falls back to rain with a console warning |
+| `source` | all | `"rain"` (default), `"image"`, `"video"`, `"text"`, `"graph"`, `"stats"`, or the interactive `"terminal"`, `"dashboard"`, `"form"`; anything else is an error when the scene loads |
 | `src` | `image`, `video` | file path, resolved against the scene folder. A video `src` ending in `.m3u8` is an HLS live stream (see below) |
 | `label` | `rain` | caption in the middle of this screen's **own** rain; without `label` and `color` the screen shows the shared rain with the POI's `screenLabel` |
 | `title` | all canvas-drawn sources | text in the title bar |
@@ -108,7 +109,7 @@ Placement (`top` = upper edge of the screen wall): focus `[0, (1.65 + top) / 2, 
 
 Every `ScreenSurface` inside a POI's objects is clickable unless its `zoom` is `false`. Screens in `decor` are not: `PoiObjects` (`src/scene/Experience.jsx`) provides the POI id through `PoiContext`, and decor has none. The first click on a screen of another POI calls `goTo` for that POI; a click on a screen of the current POI zooms into it (see [Navigation and the camera](../internals/camera.md#zooming-into-a-screen)).
 
-The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI index and the screen's `id` (the control desk passes `scr0`, `scr1`, … unless a screen has its own `id`). The state lives until the page reloads; it is not saved anywhere.
+The interactive sources keep their state per screen (`src/scene/screenState.js`), keyed by the POI's id and the screen's `id` (the control desk passes `scr0`, `scr1`, … unless a screen has its own `id`). The state lives until the page reloads; it is not saved anywhere.
 
 #### Live screens and streams
 
@@ -173,7 +174,7 @@ A screen in a frame, with an optional stage and speakers. Origin: **wall surface
 | `width` | `10` | screen width; the frame adds 0.5 |
 | `height` | `5.6` | |
 | `elevation` | `4.3` | height of the screen's centre |
-| `source` | `"rain"` | `"rain"`, `"image"` or `"video"` |
+| `source` | `"rain"` | any screen source (see `controlDesk` above): `"rain"`, `"image"`, `"video"`, `"text"`, `"graph"`, `"stats"`, `"terminal"`, `"dashboard"`, `"form"` |
 | `src` | `null` | media file for `source` (an `.m3u8` URL plays as an HLS live stream) |
 | `screen` | `null` | a full screen config, as for a [control desk screen](#controldesk) (`"stats"`, `"graph"`, a `feed`, …); when given it replaces `source` and `src` |
 | `zoom` | `true` | `false` makes the screen not clickable; so does `zoom: false` in `screen` |

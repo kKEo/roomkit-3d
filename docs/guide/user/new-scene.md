@@ -1,6 +1,8 @@
 # Making a new scene
 
-This page shows how to start a whole new room, with its own size, colours and points of interest, next to the existing ones. A scene is one folder; nothing outside it changes, except one optional line to make it the default.
+This page shows how to start a whole new room, with its own size, colours and points of interest, next to the existing ones. A scene is one folder; outside it only `public/scenes/index.json` changes, which lists every scene (and names the default).
+
+The quick way is `node tools/scene.js new my-office`: it makes the folder with a room and one point of interest and adds it to `index.json`. Then run `node tools/scene.js check my-office` after each edit; it lists every mistake, from a misspelt key to an object standing outside the room. The steps below do the same by hand.
 
 ## 1. Create the folder
 

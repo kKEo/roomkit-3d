@@ -17,6 +17,8 @@ Authors edit a scene in the browser (`edit.html`), download the folder and drop 
 
 The default scene, `cinema`, is the GitHub Pages home page: it opens on a cinema screen playing a short intro film. The film is rendered from the app itself by `tools/intro/` (`make intro-video`, needs ffmpeg and Playwright's Chromium); see [`tools/intro/README.md`](tools/intro/README.md).
 
+Coding agents start at [`AGENTS.md`](AGENTS.md): `node tools/scene.js check|describe|plan|prefabs|new` build and verify a scene without a browser.
+
 ## Documentation
 
 The guide in [`docs/guide/`](docs/guide/) has a landing page ([`docs/guide/index.html`](docs/guide/index.html)) and three books:

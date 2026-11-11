@@ -6,14 +6,19 @@
  *   node tools/scene.js describe <scene>                     the scene in words: where things stand, what each camera sees
  *   node tools/scene.js plan <scene> [--svg=file.svg]        the floor plan as text, or as an SVG file
  *   node tools/scene.js prefabs [scene]                      the object types a scene can place, with sizes and props
+ *   node tools/scene.js new <name> [--title="My Room"]       a new scene folder with one stop, listed in scenes/index.json
  *
  * With no scene name, every folder in public/scenes is checked. Exit code: 0 clean, 1 problems
  * (errors; with --strict also warnings), 2 wrong usage.
  */
 process.removeAllListeners('warning'); // Node's localStorage notice, raised by a browser-side import
 
-const { writeFile } = await import('node:fs/promises');
-const { checkScene, loadScene, sceneNames } = await import('./scene/load.js');
+const { writeFile, readFile, mkdir, access } = await import('node:fs/promises');
+const { join, dirname } = await import('node:path');
+const { checkScene, loadScene, sceneNames, SCENES } = await import('./scene/load.js');
+const { newSceneFiles } = await import('../src/editor/bundle.js');
+const { setAt } = await import('../src/editor/jsonEdit.js');
+const { SCENE_NAME } = await import('../src/config/loadScene.js');
 const { describeScene, describePrefabs } = await import('../src/lint/describe.js');
 const { planText, planSvg } = await import('../src/lint/plan.js');
 const { BUILTIN_REGISTRY } = await import('../src/prefabs/registry.js');
@@ -30,6 +35,7 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
   describe <scene>                     read the scene back in words, to compare with the brief it was built from
   plan <scene> [--svg=file.svg]        draw the floor plan as text, or write it as SVG
   prefabs [scene]                      list the object types with their sizes, props and clickable parts
+  new <name> [--title="My Room"]       start a scene folder (a room and one stop) and list it in scenes/index.json
 
 Scenes are the folders in public/scenes; with none named, all are used.`;
 
@@ -55,6 +61,24 @@ async function built() {
 }
 
 const commands = {
+  async new() {
+    const [name] = names;
+    if (names.length !== 1) fail('new takes one scene name');
+    if (!SCENE_NAME.test(name)) fail(`"${name}" is not a scene name: use letters, digits, "-" and "_"`);
+    const dir = join(SCENES, name);
+    if (await access(dir).then(() => true, () => false)) fail(`public/scenes/${name} already exists`);
+    const title = option('--title') ?? name.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
+    for (const [path, text] of newSceneFiles(title)) {
+      await mkdir(dirname(join(dir, path)), { recursive: true });
+      await writeFile(join(dir, path), text.endsWith('\n') ? text : `${text}\n`);
+    }
+    const indexFile = join(SCENES, 'index.json');
+    const text = await readFile(indexFile, 'utf8');
+    const listed = JSON.parse(text).scenes ?? [];
+    if (!listed.includes(name)) await writeFile(indexFile, setAt(text, ['scenes'], [...listed, name])); // keeps the file's layout
+    console.log(`created public/scenes/${name} (scene.json, poi/start.json, content/start.md) and listed it in scenes/index.json`);
+    console.log(`next: edit the files, then run: node tools/scene.js check ${name}`);
+  },
   async describe() {
     const { scene, pois } = await built();
     console.log(describeScene(scene, pois).join('\n'));
