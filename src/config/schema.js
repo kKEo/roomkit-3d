@@ -132,6 +132,11 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
       markers: z.boolean(),
     }),
     ui: uiSchema,
+    /** the live event this scene is shown in: the sync server (ws:// or wss://; default the page's origin) and the event name (`?event=` overrides) */
+    multiplayer: z.strictObject({
+      url: z.string().regex(/^wss?:\/\//, 'the sync server is a ws:// or wss:// URL').nullable(),
+      event: z.string().regex(/^[a-z0-9][a-z0-9-_]{0,63}$/i, 'an event name is letters, digits, "-" and "_"').nullable(),
+    }),
     // the scene's own prefab modules; defaulted here rather than in SCENE_DEFAULTS, see buildScene
     prefabs: prefabsDeclSchema.default({}),
     // functions that turn live feed responses into screen fields or block data; also defaulted here

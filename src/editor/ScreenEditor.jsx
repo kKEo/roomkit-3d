@@ -365,6 +365,7 @@ function Wall({ slots, columns, at, onPick, actions }) {
             <span className="cap">{captionOf(sc)}</span>
             <span className="badges" aria-hidden="true">
               {sc.feed && <span title="live data">⟳</span>}
+              {sc.source === 'video' && <span title="playback is shared with everyone in an event">⇄</span>}
               {s.hotspot && actions?.[s.hotspot] && <span title="click runs an action">↗</span>}
               {sc.zoom === false && <span title="not clickable">⊘</span>}
               {bad && <span title="has a problem">!</span>}

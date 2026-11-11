@@ -19,7 +19,11 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `hidePanel` / `showPanel` | `Hide content panel (H)` / `Show content panel (H)` | panel button |
 | `hideMarkers` / `showMarkers` | `Hide floating markers (M)` / `Show floating markers (M)` | marker button |
 | `options` | `Options` | Options button and panel heading |
-| `optionsTabs.general`, `.camera`, `.system` | `General`, `Camera`, `System` | Options tabs |
+| `optionsTabs.general`, `.camera`, `.system`, `.online` | `General`, `Camera`, `System`, `Online` | Options tabs (Online only in an event) |
+| `online` | `{n} online` | the header badge in an event |
+| `onlineTitle`, `onlineNobody`, `onlineYou`, `onlineHint` | `Visitors in this event`, … | Options → Online |
+| `onlineStatus.connecting`, `.reconnecting`, `.online`, `.closed`, `.idle` | `Connecting…`, … | the connection, in the badge's tooltip and Options → Online |
+| `yourName`, `yourColor` | `Your name`, `Your colour` | Options → Online |
 | `resolution`, `resolutionAuto` | `Render resolution`, `Auto (screen, up to 2×)` | General |
 | `fpsLimit`, `fpsUnlimited` | `Frame rate limit`, `Unlimited (display refresh)` | General |
 | `particlesLevel`, `particlesLevels.1`, `.0.5`, `.0` | `Dust particles`, `All`, `Half`, `Off` | General |

@@ -1,0 +1,26 @@
+# The sync server behind Caddy, which gets a TLS certificate by itself, so the viewer can connect over wss://.
+#   SYNC_HOST=sync.example.com ORIGINS=https://example.github.io docker compose -f server/compose.yml up -d
+# Then set `"multiplayer": { "url": "wss://sync.example.com" }` in the scene, or open the page with ?sync=wss://sync.example.com.
+services:
+  sync:
+    build: { context: .., dockerfile: server/Dockerfile }
+    restart: unless-stopped
+    environment:
+      ORIGINS: ${ORIGINS:-}            # comma-separated page origins allowed to connect; empty = any
+      TICK_HZ: ${TICK_HZ:-10}
+      MAX_CLIENTS: ${MAX_CLIENTS:-200}
+      STATE_DIR: /state                 # shared state survives a restart
+    volumes:
+      - sync-state:/state
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      SYNC_HOST: ${SYNC_HOST:?set SYNC_HOST to the public host name}
+    command: caddy reverse-proxy --from ${SYNC_HOST} --to sync:8787
+    volumes:
+      - caddy-data:/data
+volumes:
+  sync-state: {}
+  caddy-data: {}

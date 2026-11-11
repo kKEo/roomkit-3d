@@ -11,6 +11,8 @@ import { Options } from './ui/Options.jsx';
 import { ScreenOverlay } from './ui/ScreenOverlay.jsx';
 import { Confirm, Hint, Loader, Progress } from './ui/Overlays.jsx';
 import { PerfHud } from './ui/PerfHud.jsx';
+import { AvatarLabels } from './ui/AvatarLabels.jsx';
+import { startSync, useSync } from './net/sync.js';
 import { useInput, poiIdFromHash } from './ui/useInput.js';
 import { applyTheme } from './ui/theme.js';
 import { reducedMotion, hasWebGL2 } from './lib/env.js';
@@ -44,6 +46,7 @@ export function Viewer() {
   const introDone = useRef(false);
   const stage = useRef(null);
   const gfx = useStore(s => s.gfx);
+  const inEvent = useSync(s => s.active);
   // antialias and the GPU preference only take effect in a new WebGL context: keep the ones it was made with
   const [glAttrs] = useState(() => ({ antialias: gfx.antialias, powerPreference: gfx.power }));
   useEffect(() => { runtime.glAttrs = { antialias: glAttrs.antialias, power: glAttrs.powerPreference }; }, [glAttrs]);
@@ -91,6 +94,7 @@ export function Viewer() {
         <>
           <Progress />
           <Labels />
+          {inEvent && <AvatarLabels />}
           <ScreenOverlay />
           <Header />
           <Panel />
@@ -110,7 +114,7 @@ export function Viewer() {
 export function App() {
   useEffect(() => {
     loadScene()
-      .then(({ scene, pois }) => { applyTheme(scene); useStore.getState().setLoaded(scene, pois); })
+      .then(({ scene, pois }) => { applyTheme(scene); useStore.getState().setLoaded(scene, pois); startSync(scene); })
       .catch(err => { console.error(err); useStore.getState().setError(err); });
   }, []);
   return <Viewer />;

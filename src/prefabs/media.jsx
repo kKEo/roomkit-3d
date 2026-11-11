@@ -11,6 +11,7 @@ import {
 import { SCREEN_SOURCES, INTERACTIVE_SOURCES, screenSchema, isHls } from './screenSchema.js';
 import { useLiveScreen } from '../data/live.js';
 import { guardData } from '../config/origins.js';
+import { followVideo } from '../net/videoSync.js';
 
 export { SCREEN_SOURCES, INTERACTIVE_SOURCES };
 
@@ -37,14 +38,15 @@ function useMediaTexture(source, src, w, h, key) {
   const [texture, setTexture] = useState(null);
   useEffect(() => {
     if (!src || (source !== 'image' && source !== 'video')) return;
-    let tex = null, cancelled = false, video = null, hls = null, unregister = null;
+    let tex = null, cancelled = false, video = null, hls = null, unregister = null, unfollow = null;
     const ready = t => { if (cancelled) { t.dispose(); return; } cover(t, w, h); tex = t; setTexture(t); };
     if (source === 'image') {
       new THREE.TextureLoader().load(src, ready, undefined, () => console.warn(`Could not load image ${src}`));
     } else {
       video = Object.assign(document.createElement('video'), { muted: true, loop: true, playsInline: true, crossOrigin: 'anonymous' });
       unregister = registerVideo(key, video);
-      video.addEventListener('loadeddata', () => ready(new THREE.VideoTexture(video)), { once: true });
+      // in an event everyone sees the same moment of the film (src/net/videoSync.js)
+      video.addEventListener('loadeddata', () => { ready(new THREE.VideoTexture(video)); if (!cancelled) unfollow = followVideo(key, video); }, { once: true });
       video.addEventListener('error', () => console.warn(`Could not load video ${src}`), { once: true });
       if (!isHls(src) || video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src;
@@ -72,6 +74,7 @@ function useMediaTexture(source, src, w, h, key) {
     }
     return () => {
       cancelled = true;
+      unfollow?.();
       unregister?.();
       hls?.destroy();
       tex?.dispose();

@@ -50,6 +50,8 @@ export default defineConfig({
   // relative base so the build works from any sub-path; scenes are fetched at runtime from ./scenes/
   base: './',
   plugins: [react(), devFeeds(), viewerBundle()],
+  // the sync server for shared events (`make server`), reachable at the page's own origin as in production
+  server: { proxy: { '/ws': { target: process.env.SYNC_URL || 'ws://localhost:8787', ws: true } } },
   // three.js alone is ~700 kB minified
   build: {
     chunkSizeWarningLimit: 1600,

@@ -5,6 +5,7 @@ import { firstScreen, moveScreen } from '../lib/screenOrder.js';
 import { feeds } from '../data/feeds.js';
 import { runAction, openLink } from '../actions/registry.js';
 import { loadGfx, saveGfx, GFX_DEFAULTS } from '../lib/gfx.js';
+import { resetShared } from '../net/shared.js';
 
 const setHash = id => {
   try { history.replaceState(null, '', location.pathname + location.search + (id == null ? '' : '#' + id)); } catch { /* sandboxed or not a browser */ }
@@ -66,7 +67,7 @@ export const useStore = create((set, get) => ({
   setLoaded: (scene, pois) => {
     const prev = get();
     const fresh = prev.scene?.name !== scene.name;
-    if (fresh) { resetSessions(); feeds.prune(); }
+    if (fresh) { resetSessions(); feeds.prune(); resetShared(); }
     const keep = id => (!fresh && pois.some(p => p.id === id) ? id : null);
     set({
       status: 'ready', error: null, scene, pois,

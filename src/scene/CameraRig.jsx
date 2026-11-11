@@ -5,6 +5,8 @@ import { useStore, runtime } from '../state/store.js';
 import { EASE } from '../lib/easing.js';
 import { reducedMotion } from '../lib/env.js';
 import { DEG } from '../lib/math.js';
+import { flightCurve, flightDuration, posAt } from '../lib/flight.js';
+import { presence } from '../net/sync.js';
 
 const V3 = THREE.Vector3;
 const UP = new V3(0, 1, 0);
@@ -43,14 +45,6 @@ function steer(b, vel, speed, dt, tmp) {
   b.tgt.copy(b.pos).addScaledVector(f, reach);
 }
 
-function posAt(tr, e, out) {
-  if (!tr.curve) return out.copy(tr.p1);
-  const c = Math.min(1, Math.max(0, e));
-  tr.curve.getPointAt(c, out);
-  // easings like "back" overshoot 0..1 — extrapolate along the tangent
-  if (e !== c) out.addScaledVector(tr.curve.getTangentAt(c), (e - c) * tr.len);
-  return out;
-}
 
 /**
  * Flies the camera between POIs along an arc through the room centre:
@@ -75,7 +69,7 @@ export function CameraRig() {
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
   const returnPose = useRef(null); // where the camera was when a screen was zoomed into: where Esc takes it back
-  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0 }).current;
+  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0, wasFree: false }).current;
   const vel = useRef(new V3()).current; // free-fly velocity
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
@@ -84,21 +78,24 @@ export function CameraRig() {
     const b = base.current;
     const p0 = b.pos.clone();
     const dist = p0.distanceTo(p1);
-    let curve = null;
-    if (dist > 0.01 && arc) {
-      const mid = p0.clone().lerp(p1, 0.5);
-      mid.y = Math.min(scene.room.height - 0.6, mid.y + 1.2 + dist * 0.07);
-      mid.lerp(new V3(scene.room.centre[0], mid.y, scene.room.centre[1]), 0.3);
-      curve = new THREE.CatmullRomCurve3([p0, mid, p1], false, 'centripetal');
-    } else if (dist > 0.01) curve = new THREE.LineCurve3(p0, p1);
+    const curve = flightCurve(p0, p1, { arc, room: scene.room });
     const f0 = b.tgt.clone().sub(p0).normalize(), f1 = t1.clone().sub(p1).normalize();
+    const duration = dur || flightDuration(dist, reducedMotion);
     transit.current = {
       curve, len: curve ? curve.getLength() : 0, p1, t0: b.tgt.clone(), t1,
       start: performance.now(),
-      dur: dur || (reducedMotion ? 450 : Math.min(2800, Math.max(1500, 1300 + dist * 55))),
+      dur: duration,
       roll: arc ? Math.sign(new V3().crossVectors(f0, f1).y) || 1 : 0,
       warp: arc, poi, zoomed, resumeFree, reverse, shown: false,
     };
+    // tell the other visitors, who replay the same flight for this visitor's avatar
+    presence.flight({
+      kind: zoomed ? 'zoom' : poi != null || !resumeFree ? 'poi' : 'view',
+      from: { position: p0.toArray(), target: b.tgt.toArray() },
+      to: { position: p1.toArray(), target: t1.toArray() },
+      poi: zoomed ? undefined : poi, zoom: zoomed ? useStore.getState().zoom?.key : undefined,
+      duration, ease: useStore.getState().settings.ease, arc, reverse: reverse || undefined,
+    });
     runtime.transiting = true;
     runtime.zoomReady = false;
   }
@@ -168,9 +165,12 @@ export function CameraRig() {
     if (st.free) {
       // taking the camera by hand drops a flight where it is
       if (transit.current) { transit.current = null; runtime.transiting = false; warpFov = roll = 0; }
+      if (!tmp.wasFree) presence.flight({ kind: 'free', from: { position: b.pos.toArray(), target: b.tgt.toArray() } });
       const { width, depth } = scene.room;
       steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp);
+      presence.pose(b.pos, b.tgt);
     } else vel.set(0, 0, 0);
+    tmp.wasFree = st.free;
 
     // parallax: mouse, or a slow autonomous drift on touch devices
     const { mouse, ms } = runtime;

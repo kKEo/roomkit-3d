@@ -12,9 +12,11 @@ export const controlDesk = {
     screenWidth: z.number().positive().default(1.6),
     screenHeight: z.number().positive().default(0.95),
     screens: z.array(screenSchema).default(() => Array.from({ length: 6 }, () => screenSchema.parse({}))),
+    /** a master switch on the console: `key` is the shared state it flips (everyone in an event sees it), `on` what it starts as */
+    switch: z.strictObject({ key: z.string().min(1).max(200), label: z.string().optional(), on: z.boolean().default(true) }).nullable().default(null),
   }),
   media: ['screens[].src'],
-  hotspots: p => p.screens.map((s, k) => s.id ?? `scr${k}`),
+  hotspots: p => [...p.screens.map((s, k) => s.id ?? `scr${k}`), ...(p.switch ? ['switch'] : [])],
   placement: p => {
     const rows = Math.max(1, Math.ceil(p.screens.length / Math.max(1, p.columns)));
     const top = 1.65 + rows * (p.screenHeight + 0.1);

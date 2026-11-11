@@ -1,5 +1,6 @@
 import { useStore } from '../state/store.js';
-import { pad2 } from '../lib/text.js';
+import { pad2, fmt } from '../lib/text.js';
+import { useSync } from '../net/sync.js';
 
 function Brand({ text }) {
   const parts = text.split('/');
@@ -13,8 +14,11 @@ export function Header() {
   const collapsed = useStore(s => s.panelCollapsed);
   const optionsOpen = useStore(s => s.optionsOpen);
   const markersVisible = useStore(s => s.markersVisible);
-  const { goTo, togglePanel, toggleMarkers, toggleOptions } = useStore.getState();
+  const { goTo, togglePanel, toggleMarkers, toggleOptions, setOptionsTab } = useStore.getState();
   const ui = scene.ui;
+  const inEvent = useSync(s => s.active);
+  const status = useSync(s => s.status);
+  const online = useSync(s => s.peers.length + (s.me ? 1 : 0));
 
   return (
     <header className="top">
@@ -32,6 +36,12 @@ export function Header() {
       <button className="iconbtn" aria-pressed={!markersVisible} title={markersVisible ? ui.hideMarkers : ui.showMarkers} aria-label={markersVisible ? ui.hideMarkers : ui.showMarkers} onClick={toggleMarkers}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1.5 12.5 7 8 12.5 3.5 7Z" /><path d="M3.5 7h9" />{!markersVisible && <path d="M2 14.5 14 1.5" />}</svg>
       </button>
+      {inEvent && (
+        <button className={`online ${status}`} title={ui.onlineStatus?.[status] || status} aria-label={`${fmt(ui.online, { n: online })} — ${ui.onlineStatus?.[status] || status}`}
+          onClick={() => { setOptionsTab('online'); if (!optionsOpen) toggleOptions(); }}>
+          <i /> {fmt(ui.online, { n: online })}
+        </button>
+      )}
       <button className="iconbtn" aria-expanded={optionsOpen} aria-controls="options" title={ui.options} aria-label={ui.options} onClick={toggleOptions}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h7M13 4h1M2 12h1M7 12h7" /><circle cx="11" cy="4" r="1.8" /><circle cx="5" cy="12" r="1.8" /></svg>
       </button>

@@ -1,7 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, useWorld } from '../scene/core.jsx';
+import { Solid, useWorld, useHotspot } from '../scene/core.jsx';
+import { useShared } from '../net/shared.js';
 import { ScreenSurface } from './media.jsx';
 import { Chair } from './Desk.jsx';
 import { DEG } from '../lib/math.js';
@@ -15,8 +16,8 @@ function onArc(R, r, theta, y = 0) {
   return { position: [r * Math.sin(theta), y, R - r * Math.cos(theta)], rotation: [0, -theta, 0] };
 }
 
-/** Grid of console buttons on a sloped panel, blinking in the theme accent. */
-function ConsoleLeds({ width }) {
+/** Grid of console buttons on a sloped panel, blinking in the theme accent; dark while the desk is switched off. */
+function ConsoleLeds({ width, power = true }) {
   const { theme } = useWorld();
   const acc = useRef(0);
   const { geometry, on, off } = useMemo(() => {
@@ -37,10 +38,12 @@ function ConsoleLeds({ width }) {
 
   useFrame((_, dt) => {
     acc.current += dt;
-    if (reducedMotion || acc.current < 0.15) return;
+    if (acc.current < 0.15) return;
     acc.current = 0;
     const a = geometry.attributes.color.array;
-    for (let i = 0; i < a.length; i += 3) if (Math.random() < 0.08) (Math.random() > 0.4 ? on : off).toArray(a, i);
+    if (!power) { if (a[0] || a[1] || a[2]) { a.fill(0); geometry.attributes.color.needsUpdate = true; } return; }
+    if (reducedMotion && a[0] + a[1] + a[2] > 0) return;
+    for (let i = 0; i < a.length; i += 3) if (reducedMotion || Math.random() < 0.08) (Math.random() > 0.4 ? on : off).toArray(a, i);
     geometry.attributes.color.needsUpdate = true;
   });
 
@@ -51,15 +54,38 @@ function ConsoleLeds({ width }) {
   );
 }
 
+/**
+ * The master switch: a lever on a small box, up when on. Clicking flips the shared key (so everyone in
+ * the event sees the desk go dark), unless the scene bound an action to the `switch` hotspot instead.
+ */
+function MasterSwitch({ power, setPower, ...rest }) {
+  const { hot, handlers } = useHotspot('switch');
+  const bound = Object.keys(handlers).length > 0;
+  const [hover, setHover] = useState(false);
+  const own = bound ? {} : {
+    onPointerOver: e => { e.stopPropagation(); setHover(true); document.body.style.cursor = 'pointer'; },
+    onPointerOut: () => { setHover(false); document.body.style.cursor = ''; },
+    onClick: e => { e.stopPropagation(); if (e.delta < 8) setPower(!power); },
+  };
+  const line = hot || hover ? 'glow' : 'mid';
+  return (
+    <group {...rest} {...handlers} {...own}>
+      <Solid args={[0.26, 0.12, 0.2]} position={[0, 0.06, 0]} fill="fine" line={line} />
+      <Solid shape="cylinder" args={[0.02, 0.02, 0.22, 6]} position={[0, 0.12 + (power ? 0.1 : 0.02), power ? 0 : 0.08]} rotation={[power ? 0 : 1.1, 0, 0]} line={line} />
+      <Solid shape="sphere" args={[0.035, 8, 8]} position={[0, power ? 0.33 : 0.17, power ? 0 : 0.17]} fill={power ? 'main' : 'fine'} line={power ? 'glow' : line} />
+    </group>
+  );
+}
+
 /** One desk segment (local +Z towards the operators): body, top, sloped console, keyboard and knobs. */
-function Segment({ width }) {
+function Segment({ width, power }) {
   return (
     <group>
       <Solid args={[width, 0.92, 0.7]} position={[0, 0.46, -0.15]} />
       <Solid args={[width, 0.08, 1.1]} position={[0, 0.96, 0]} line="thick" />
       <group position={[0, 1.13, -0.3]} rotation={[0.45, 0, 0]}>
         <Solid args={[width * 0.92, 0.05, 0.42]} fill="fine" line="mid" />
-        <ConsoleLeds width={width * 0.92} />
+        <ConsoleLeds width={width * 0.92} power={power} />
         {[-0.3, 0, 0.3].map(x => (
           <Solid key={x} shape="cylinder" args={[0.035, 0.035, 0.06, 8]} position={[x * width, 0.05, 0.13]} line="thin" />
         ))}
@@ -77,6 +103,8 @@ function Segment({ width }) {
 export function ControlDesk({ props }) {
   const { radius: R, arc, segments, columns, screenWidth: sw, screenHeight: sh, chairs } = props;
   const screens = Array.isArray(props.screens) ? props.screens : [];
+  const [power, setPower] = useShared(props.switch?.key ?? '', props.switch?.on ?? true);
+  const on = props.switch ? !!power : true;
   const cols = Math.max(1, columns | 0);
   const rows = Math.max(1, Math.ceil(screens.length / cols));
   const top = SCREEN_BASE + rows * (sh + GAP);
@@ -91,9 +119,14 @@ export function ControlDesk({ props }) {
     <group>
       {Array.from({ length: segments }, (_, i) => (
         <group key={`seg${i}`} {...onArc(R, R, (i - (segments - 1) / 2) * segAngle)}>
-          <Segment width={segWidth} />
+          <Segment width={segWidth} power={on} />
         </group>
       ))}
+      {props.switch && (
+        <group {...onArc(R, R, ((segments - 1) / 2) * segAngle)}>
+          <MasterSwitch power={on} setPower={setPower} position={[segWidth * 0.32, 1.0, 0.25]} />
+        </group>
+      )}
 
       {Array.from({ length: cols }, (_, c) => (
         <group key={`post${c}`} {...onArc(R, Rs + 0.1, (c - (cols - 1) / 2) * colAngle)}>

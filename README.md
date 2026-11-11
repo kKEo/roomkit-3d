@@ -13,7 +13,7 @@ make docs-site-serve   # the documentation site at http://localhost:8000
 make               # every target
 ```
 
-Authors edit a scene in the browser (`edit.html`), download the folder and drop it into `scenes/`; visitors get the view-only room at `?scene=<folder>`. Rooms can be any polygon (`room.footprint`), and objects can carry click `actions`.
+Authors edit a scene in the browser (`edit.html`), download the folder and drop it into `scenes/`; visitors get the view-only room at `?scene=<folder>`. With the small sync server (`make server`, see the operator guide's [Shared events](docs/guide/operator/internals/multiplayer.md)) a room becomes an **event**: `?scene=<folder>&event=<name>` shows the other visitors as avatars and keeps the scene state (a paused film, a flipped switch) the same for everyone. Rooms can be any polygon (`room.footprint`), and objects can carry click `actions`.
 
 The default scene, `cinema`, is the GitHub Pages home page: it opens on a cinema screen playing a short intro film. The film is rendered from the app itself by `tools/intro/` (`make intro-video`, needs ffmpeg and Playwright's Chromium); see [`tools/intro/README.md`](tools/intro/README.md).
 

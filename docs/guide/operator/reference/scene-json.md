@@ -13,6 +13,7 @@ This page lists every key of a scene's `scene.json`. Every key is optional excep
 | `theme` | object | below | |
 | `camera` | object | below | |
 | `effects` | object | below | |
+| `multiplayer` | object | below | |
 | `ui` | object | English strings | see [Interface strings](ui-strings.md) |
 | `prefabs` | object | `{}` | the scene's own object types: type name → module path (relative to the scene folder) or URL; see [Scene-shipped prefabs](../extending/scene-prefabs.md) |
 | `transforms` | object | `{}` | functions that turn live feed responses into screen fields or block data: name → module path (relative to the scene folder) or URL, with `#exportName` to pick an export (default `transform`); see [Live data](../extending/live-data.md) |
@@ -85,3 +86,14 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `particles` | integer ≥ 0 | `520` | falling dust points |
 | `panelOffset` | number | `0.16` | fraction of the width the frame shifts left while the panel is open |
 | `markers` | boolean | `true` | whether the floating diamonds are shown at start (toggle: `M`) |
+
+## multiplayer
+
+Shown as a shared event, every visitor of the page sees the others and the same scene state; see [Shared events](../internals/multiplayer.md) and [Running the sync server](../deploy/sync-server.md).
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `url` | `ws://` or `wss://` URL, or `null` | `null` | the sync server; `null` means the page's own origin |
+| `event` | string or `null` | `null` | the event every visitor of this scene joins; `null` means the page is a plain viewer unless the address says `?event=` |
+
+`?event=<name>` and `?sync=<url>` in the address override both.

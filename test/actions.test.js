@@ -11,7 +11,7 @@ const fakeStore = () => ({
 
 describe('actionSchema', () => {
   it('lists every action and validates each one', () => {
-    expect(ACTION_TYPES).toEqual(['goTo', 'zoom', 'openUrl', 'togglePanel', 'emit']);
+    expect(ACTION_TYPES).toEqual(['goTo', 'zoom', 'openUrl', 'togglePanel', 'set', 'toggle', 'emit']);
     expect(actionSchema.parse({ type: 'goTo', poi: 'b' })).toEqual({ type: 'goTo', poi: 'b' });
     expect(actionSchema.parse({ type: 'goTo', poi: null }).poi).toBe(null);
     expect(actionSchema.parse({ type: 'openUrl', url: '/x' })).toEqual({ type: 'openUrl', url: '/x', newTab: true, confirm: false });
@@ -74,7 +74,22 @@ describe('runAction', () => {
 
 const minimal = type => ({
   goTo: { type, poi: null }, zoom: { type }, openUrl: { type, url: 'x' }, togglePanel: { type }, emit: { type, name: 'n' },
+  set: { type, key: 'k', value: 1 }, toggle: { type, key: 'k' },
 }[type]);
+
+describe('set and toggle', () => {
+  it('write a shared key, optimistically on this page', async () => {
+    const { getShared } = await import('../src/net/shared.js');
+    runAction({ type: 'set', key: 't.k', value: { a: 1 } }, fakeStore());
+    expect(getShared('t.k')).toEqual({ a: 1 });
+    runAction({ type: 'toggle', key: 't.on', initial: true }, fakeStore());
+    expect(getShared('t.on')).toBe(false);
+    runAction({ type: 'toggle', key: 't.on', initial: true }, fakeStore());
+    expect(getShared('t.on')).toBe(true);
+    expect(actionSchema.parse({ type: 'toggle', key: 'k' })).toEqual({ type: 'toggle', key: 'k', initial: false });
+    expect(actionSchema.safeParse({ type: 'set', key: '' }).success).toBe(false);
+  });
+});
 
 describe('objects with actions', () => {
   it('accepts actions on the prefab\'s hotspots and rejects others', () => {
