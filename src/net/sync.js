@@ -29,6 +29,22 @@ export function syncTarget(scene) {
   return { event, url };
 }
 
+/**
+ * What to tell the room right after a (re)connect, given the last intent this page reported (at local time
+ * `lastAt`) and where the camera is now (`here`). Resending the last flight as it was would make every peer
+ * replay it from its start: an avatar that sat at a POI would jump back and fly in again. So a visitor who is
+ * parked is reported as parked where the camera is, one who flies by hand as flying from here, and only one
+ * who is still in the middle of a flight gets the rest of that flight (straight on to where it was going).
+ */
+export function welcomeIntent(last, lastAt, here, transiting, now) {
+  if (last?.kind === 'free') return { kind: 'free', from: here };
+  if (last?.to && last.duration && transiting) {
+    const left = last.duration - (now - lastAt);
+    if (left > 150) return { ...last, from: here, duration: left, ease: 'linear', reverse: undefined };
+  }
+  return { kind: 'still', from: here };
+}
+
 /** Joins the event the page is part of (once per scene); returns a function that leaves it. */
 export function startSync(scene) {
   stop?.();
@@ -52,9 +68,8 @@ export function startSync(scene) {
   // tell the newcomers (and the room after a reconnect) where this visitor is: still, where the camera is now
   client.onWelcome(() => {
     const c = client;
-    const last = c.lastIntent;
-    if (last && last.kind !== 'free') c.intent(last);
-    else c.intent({ kind: last ? 'free' : 'still', from: { position: [...runtime.pose.position], target: [...runtime.pose.target] } });
+    const here = { position: [...runtime.pose.position], target: [...runtime.pose.target] };
+    c.intent(welcomeIntent(c.lastIntent, c.lastIntentAt, here, runtime.transiting, Date.now()));
     publish();
   });
   setSyncClient(client);

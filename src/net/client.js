@@ -162,9 +162,9 @@ export function createSyncClient({
   }
 
   /** Report a flight (an intent object, see protocol.js); kept so it is resent after a reconnect. */
-  let myIntent = null;
+  let myIntent = null, myIntentAt = 0;
   function intent(i) {
-    myIntent = i;
+    myIntent = i; myIntentAt = now();
     lastPose = null;
     return sendJson({ t: 'intent', intent: i });
   }
@@ -218,5 +218,7 @@ export function createSyncClient({
     get tickMs() { return tickMs; },
     get stats() { return { ...stats, peers: peers.size }; },
     get lastIntent() { return myIntent; },
+    /** When (local clock) the last intent was reported. */
+    get lastIntentAt() { return myIntentAt; },
   };
 }
