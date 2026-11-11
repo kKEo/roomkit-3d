@@ -8,14 +8,14 @@ Stack: Vite, React 19, react-three-fiber, three.js, zod 4, zustand. Plain JavaSc
 
 | Command | What it does |
 | --- | --- |
-| `make check` | lint, unit tests, scene checks and build: run before every commit |
+| `make check` | lint, unit tests, scene checks and build: run before every commit (after `npm install`, which `make` does when needed) |
 | `make test` / `make lint` / `make build` | each part alone |
 | `node tools/scene.js check [scene]` | every problem in a scene, in under a second, no browser |
 | `node tools/scene.js describe <scene>` | the scene in words: where each object stands, what each camera sees |
 | `node tools/scene.js plan <scene>` | the floor plan as text (`--svg=file.svg` for a picture) |
 | `node tools/scene.js prefabs [scene]` | every object type: size, origin, props with defaults, clickable parts |
 | `node tools/scene.js new <name>` | a new scene folder, listed in `public/scenes/index.json` |
-| `make dev PORT=5180` | the viewer at `http://localhost:5180/?scene=<name>`, the editor at `/edit.html?scene=<name>` |
+| `make dev` | the viewer at `http://localhost:5173/?scene=<name>`, the editor at `/edit.html?scene=<name>`; `PORT=5180` for another port |
 | `make docs-check` | the three books under `docs/guide/` build; needed when a page is added or renamed |
 
 ## Building or changing a scene
@@ -25,14 +25,14 @@ Follow `.claude/skills/build-scene/SKILL.md`. In short: write the files, run `ch
 What a scene folder holds:
 
 - `scene.json`: the room (`room.width/height/depth`, or a `room.footprint` polygon), theme, cameras, `decor` (objects that belong to no stop) and `poi` (the stop files, in tour order). It is merged over `src/config/defaults.js`, so only write what differs.
-- `poi/<id>.json`: one stop: `id`, `label`, `objects` (at least one), `content` (`{ "markdown": "content/<id>.md" }` or `{ "blocks": [...] }`), and optionally `camera` and `marker`. Leave `camera` out and it is placed in front of the first object.
+- `poi/<id>.json`: one stop: `id`, `label`, `objects` (at least one), `content` (`{ "markdown": "content/<id>.md" }` or `{ "blocks": [...] }`), and optionally `camera` and `marker`. Leave `camera` out and it is placed in front of the first object, 4 to 12 m back depending on the type; write it out when that spot is taken or the stop has several main objects.
 - `content/*.md`, `media/*`, `data/*`, `prefabs/*.js`: panel pages, pictures and video, feed data, the scene's own object types.
 
 Space: metres, `y` is up, the floor is `y = 0`. North is −Z, east is +X; a default room is centred on the origin, so a 20 × 30 room has walls at `x = ±10` and `z = ±15`. Rotation is degrees; an object faces its local +Z, so yaw 0 faces south, 90 faces east, 180 north, −90 west.
 
 Placing objects:
 
-- By a wall, let the loader compute it: `"at": { "wall": "north", "along": 0.4, "height": 3 }`. A wall object lands on the wall facing in; a floor object stands with its back to the wall. Use this whenever the brief says "on" or "against" a wall.
+- By a wall, let the loader compute it: `"at": { "wall": "north", "along": 0.4, "height": 3 }`. A wall object lands on the wall facing in; a floor object stands with its back to the wall. Use this whenever the brief says "on" or "against" a wall. Only `wall` is required: `along` defaults to 0.5 (the middle) and `height` to 0, which suits doors and floor objects; for a `pictureFrame`, `height` is its centre. All keys: `docs/guide/operator/reference/poi-json.md`, "Placing by wall".
 - Anywhere else: `"position": [x, y, z]` and `"rotation": [0, yaw, 0]`. Floor objects have `y = 0`; a `pictureFrame`'s `y` is its centre height.
 - Sizes come from `node tools/scene.js prefabs`; do not guess them and do not read the `.jsx` components for them.
 

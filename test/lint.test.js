@@ -70,6 +70,13 @@ describe('lintScene', () => {
     expect(await at({ position: [5, 2, 6], target: [0, 0.5, 0] })).toEqual([]);
   });
 
+  it('says so when the camera at fault is the automatic one, with where it is and how big the object is', async () => {
+    const fs = await lint(folder({ poi: { camera: undefined }, scene: { decor: [{ type: 'wardrobe', position: [0, 0, 5] }] } }));
+    expect(fs.map(f => f.code)).toEqual(['CAM_IN_OBJECT']);
+    expect(fs[0].message).toBe('the camera of "a" at [0, 2.5, 5] is inside wardrobe (decor:0), which is 2.4 m east–west by 1.31 m north–south around [0, 5.06]');
+    expect(fs[0].hint).toMatch(/^this is the automatic camera, placed in front of the stop's first object; give the stop its own "camera"/);
+  });
+
   it('references: POI ids, screens, links, fenced blocks, media, the index', async () => {
     const files = folder({
       poi: {

@@ -66,8 +66,8 @@ function cameraLines(poi, scene, all) {
   const side = c => (c[0] < -0.33 ? 'left' : c[0] > 0.33 ? 'right' : 'centre');
   const own = seen.filter(v => v.e.owner === poi.id).length;
   return [
-    `  camera at ${pt(position)} looking ${look} at ${pt(target)}, ${n(dist)} m away`,
-    `  in the picture: ${seen.length ? seen.map(v => `${name(v.e)} ${Math.round(v.f.cover * 100)}% ${side(v.f.centre)}`).join(', ') : 'nothing'}`,
+    `  camera at ${pt(position)} looking ${look} at ${pt(target)}, ${n(dist)} m away, ${scene.camera.fov}° tall view`,
+    `  in the picture: ${seen.length ? seen.map(v => `${name(v.e)} ${Math.round(v.f.cover * 100)}% ${side(v.f.centre)}${v.f.cut ? ' (cut off)' : ''}`).join(', ') : 'nothing'}`,
     ...(own ? [] : ['  NOTE: none of this stop\'s own objects fills 1% of the picture']),
   ];
 }

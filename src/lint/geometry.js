@@ -95,7 +95,7 @@ export function segmentHitsBox(box, a, b) {
 
 /**
  * Where a camera sees each box: the share of the picture its outline covers (0–1, clipped to the frame) and
- * whether any of it is in view. A 16:9 picture; `fov` is the vertical angle in degrees.
+ * whether any of it is in view; `cut` is true when a quarter or more of it falls outside the picture. A 16:9 picture; `fov` is the vertical angle in degrees.
  */
 export function framing(camera, fov, box, aspect = 16 / 9) {
   const cam = new THREE.PerspectiveCamera(fov, aspect, 0.05, 1000);
@@ -114,5 +114,7 @@ export function framing(camera, fov, box, aspect = 16 / 9) {
   }
   if (!front) return { visible: false, cover: 0, centre: null };
   const w = Math.max(0, Math.min(1, maxX) - Math.max(-1, minX)), h = Math.max(0, Math.min(1, maxY) - Math.max(-1, minY));
-  return { visible: w > 0 && h > 0, cover: (w * h) / 4, centre: [(minX + maxX) / 2, (minY + maxY) / 2] };
+  // cut off: a corner is behind the camera, or a quarter or more of the outline falls outside the frame
+  const cut = front < box.poly.length * 2 || w * h < 0.75 * (maxX - minX) * (maxY - minY);
+  return { visible: w > 0 && h > 0, cover: (w * h) / 4, centre: [(minX + maxX) / 2, (minY + maxY) / 2], cut };
 }

@@ -50,7 +50,7 @@ export async function lintScene(built, { files = new Map(), exists = async () =>
   }
   room({ scene, files, add, sceneFile });
   objects({ scene, all, add });
-  cameras({ scene, pois, all, add });
+  cameras({ scene, pois, all, files, add });
   return out;
 }
 
@@ -178,19 +178,26 @@ function objects({ scene, all, add }) {
   }
 }
 
-function cameras({ scene, pois, all, add }) {
+const span = (poly, i) => Math.max(...poly.map(p => p[i])) - Math.min(...poly.map(p => p[i]));
+
+function cameras({ scene, pois, all, files, add }) {
   const { footprint, height } = scene.room;
   const boxes = all.map(e => ({ ...e, box: objectBox(e.obj, scene.registry) })).filter(e => e.box && !e.box.tilted);
   for (const p of pois) {
     const file = `${scene.name}/${p.file}`, [x, y, z] = p.camera.position;
+    // a camera the file does not write is the automatic one, in front of the stop's first object
+    let auto = false;
+    try { auto = !JSON.parse(files.get(p.file) ?? '{}').camera; } catch { /* unreadable: treat as written */ }
+    const here = `at [${[x, y, z].map(fmt).join(', ')}]`;
+    const fix = auto ? `this is the automatic camera, placed in front of the stop's first object; give the stop its own "camera": { "position": [x, y, z], "target": [x, y, z] }` : 'move the camera';
     if (!insideOrNear(footprint, x, z, 0) || y < 0 || y > height) {
-      add('warn', 'CAM_OUTSIDE_ROOM', file, 'camera.position', `the camera of "${p.id}" at [${[x, y, z].map(fmt).join(', ')}] is outside the room`, 'visitors would look at the back of a wall; move it inside the floor plan and below the ceiling');
+      add('warn', 'CAM_OUTSIDE_ROOM', file, 'camera.position', `the camera of "${p.id}" ${here} is outside the room`, `visitors would look at the back of a wall; ${fix}, inside the floor plan and below the ceiling`);
       continue;
     }
     const inside = boxes.find(e => pointInBox(e.box, p.camera.position));
-    if (inside) { add('warn', 'CAM_IN_OBJECT', file, 'camera.position', `the camera of "${p.id}" is inside ${label(inside)}`, 'move the camera or the object'); continue; }
+    if (inside) { add('warn', 'CAM_IN_OBJECT', file, 'camera.position', `the camera of "${p.id}" ${here} is inside ${label(inside)}, which is ${fmt(span(inside.box.poly, 0))} m east–west by ${fmt(span(inside.box.poly, 1))} m north–south around [${inside.box.centre.map(fmt).join(', ')}]`, `${fix}, clear of that object, or move the object`); continue; }
     const blocker = boxes.find(e => e.owner !== p.id && segmentHitsBox(e.box, p.camera.position, p.camera.target));
-    if (blocker) add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" and what it looks at`, 'move the camera, or the object out of the line of sight');
+    if (blocker) add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, or move the object out of the line of sight`);
   }
 }
 

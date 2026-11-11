@@ -41,11 +41,12 @@ export function planText(scene, pois, { maxCols = 96 } = {}) {
     if (!it.box || !fill(it.box.poly, it.letter)) grid[rowOf(zz)][colOf(x)] = it.letter;
   }
   pois.forEach((p, i) => { grid[rowOf(p.camera.position[2])][colOf(p.camera.position[0])] = String((i + 1) % 10); });
+  const drawn = new Set(grid.flat());
   return [
     `${scene.name}: north is up, east is right; one character is ${step} m wide, one line ${row} m`,
     ...grid.map(r => r.join('').replace(/\s+$/, '')),
     '',
-    ...list.map(it => `${it.letter}  ${it.obj.name ?? it.obj.type} (${it.key})`),
+    ...list.map(it => `${it.letter}  ${it.obj.name ?? it.obj.type} (${it.key})${drawn.has(it.letter) ? '' : ' — not drawn: a camera number or another object covers it'}`),
     ...pois.map((p, i) => `${(i + 1) % 10}  camera of stop "${p.id}"`),
     '#  wall   .  floor   o  pillar',
   ];

@@ -3,3 +3,4 @@ dist
 site
 tools/intro/out/
 .DS_Store
+.claude/worktrees/

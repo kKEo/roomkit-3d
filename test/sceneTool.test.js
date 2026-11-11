@@ -27,7 +27,7 @@ describe('tools/scene.js', () => {
     expect((await run('frobnicate')).stderr).toMatch(/unknown command "frobnicate"/);
     const r = await run('check', 'nowhere');
     expect(r.code).toBe(2);
-    expect(r.stderr).toMatch(/no scene folder "nowhere" in public\/scenes \(there are: cinema, gallery, loft, neo-room\)/);
+    expect(r.stderr).toMatch(/no scene folder "nowhere" in public\/scenes \(there are: .*\bloft\b.*\)/);
     expect((await run('new', 'Bad/Name')).stderr).toMatch(/is not a scene name/);
     expect((await run('new', 'loft')).stderr).toMatch(/already exists/);
   });

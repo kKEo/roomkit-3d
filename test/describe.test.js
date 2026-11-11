@@ -20,7 +20,7 @@ describe('describeScene', () => {
     expect(line('door (decor:0)')).toBe('  door (decor:0): on the south wall (edge 2), 6 m from its left end of 12 m; from y 0 to 4.4; 2.7 m wide; facing north; nearest: desk (studio:0), 5.3 m north; placed at: wall 2, 50% along; click: door goes to the overview');
     expect(line('desk (studio:0)')).toMatch(/on the floor at \[8, 0, -7\]; 1\.9 m east–west by 2\.6 m north–south, y 0 to 2\.2; facing west; 3\.4 m from the east wall \(edge 1\)/);
     expect(line('pictureFrame (wall:0)')).toMatch(/on the north wall, 7 m from its left end of 24 m/);
-    expect(text.at(-2)).toBe('  camera at [-6, 3.4, 11.4] looking north at [-6, 2.5, 5], 6.5 m away');
+    expect(text.at(-2)).toBe('  camera at [-6, 3.4, 11.4] looking north at [-6, 2.5, 5], 6.5 m away, 55° tall view');
     expect(text.at(-1)).toMatch(/^ {2}in the picture: pedestal \(wing:0\) \d+% centre/);
   });
 
@@ -29,6 +29,12 @@ describe('describeScene', () => {
     const text = describeScene(scene, pois);
     expect(text.filter(l => l.includes('NOTE:'))).toEqual([]);
     expect(text.filter(l => l.startsWith('stop '))).toHaveLength(pois.length);
+  });
+
+  it('marks an object that is partly outside the picture', () => {
+    const close = loft.pois.map(p => (p.id === 'wing' ? { ...p, camera: { position: [-6, 2, 8], target: [-6, 2, 5] } } : p));
+    expect(describeScene(loft.scene, close).at(-1)).toMatch(/pedestal \(wing:0\) \d+% centre \(cut off\)/);
+    expect(describeScene(loft.scene, loft.pois).at(-1)).not.toMatch(/pedestal \(wing:0\) \d+% centre \(cut off\)/);
   });
 
   it('compass and gap', () => {

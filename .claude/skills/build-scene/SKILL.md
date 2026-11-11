@@ -33,21 +33,23 @@ Each type lists its size at default props, whether it is a floor or a wall objec
 node tools/scene.js new <name> --title="…"
 ```
 
+This makes a 20 × 20 × 7 m room with one stop, `start`, holding a pedestal. Set the room's size, and rename or delete that stop (its `poi/start.json`, its `content/start.md` and its line in `scene.json › poi`). Keep the lights inside the room and about 0.4 m under the ceiling.
+
 Then edit. Keep each file small: write only what differs from the defaults.
 
-- Objects on or against a wall use `at`: `{ "type": "pictureFrame", "at": { "wall": "north", "along": 0.25, "height": 3 } }`. `along` is 0 at the wall's left end as seen from inside, 1 at its right; `distance` gives the same in metres. Floor objects take `at` too and stand with their back to the wall.
+- Objects on or against a wall use `at`: `{ "type": "pictureFrame", "at": { "wall": "north", "along": 0.25, "height": 3 } }`. Only `wall` is required. `along` is 0 at the wall's left end as seen from inside, 1 at its right, and defaults to 0.5, the middle; `distance` gives the same in metres. `height` is the origin's y and defaults to 0: leave it out for doors and floor objects, and give a frame's centre height. Floor objects take `at` too and stand with their back to the wall.
 - Objects in the open use `position` and `rotation`. Yaw 0 faces south (+Z), 90 east, 180 north, −90 west.
-- The first object of a stop is the one its camera frames; put the main object first and leave `camera` out unless the automatic one is wrong.
+- The first object of a stop is the one its automatic camera frames, from 4 to 12 m in front of it depending on the type. That suits a stop with one main object and free floor in front of it. Write `"camera": { "position": [x, y, z], "target": [x, y, z] }` yourself when the stop has several main objects (aim between them) or when something else stands where the camera would. The view is 55° tall and about 87° wide: from distance d it takes in about 1.9 × d metres of wall across and 1.0 × d up and down.
 - Each stop needs content: `{ "markdown": "content/<id>.md" }` and that file, or inline `blocks`.
 - Look at a shipped scene for the shape of things you have not written before: `public/scenes/loft` (small, L-shaped, uses `at`), `gallery` (pictures), `cinema` (screens, video, own prefabs), `neo-room` (live data, control desk). `examples/` beside this file pairs briefs with the scenes built from them.
 
 ## 4. Check until clean
 
 ```sh
-node tools/scene.js check <name>
+node tools/scene.js check <name> --strict
 ```
 
-Each line names the file, the path inside it, what is wrong and what to do. Fix and rerun; it takes well under a second. Do not stop at errors: a warning (`OBJ_OVERLAP`, `CAM_BLOCKED`, `WALL_FACING`…) nearly always means the room is not what was asked for. `docs/guide/tester/running/scene-checks.md` explains every code.
+Each line names the file, the path inside it, what is wrong and what to do. Fix and rerun; it takes well under a second. `--strict` makes warnings fail the run as well as errors, which is what you want here: a warning (`OBJ_OVERLAP`, `CAM_BLOCKED`, `WALL_FACING`…) nearly always means the room is not what was asked for. `docs/guide/tester/running/scene-checks.md` explains every code.
 
 ## 5. Read it back against the layout
 
@@ -60,14 +62,14 @@ Go through your list from step 1 line by line against `describe`:
 
 - every object is there, on the wall or at the spot you intended, facing the way you intended;
 - neighbours are where the brief put them ("next to", "opposite", "between");
-- under each stop, "in the picture" starts with that stop's own main object, at a share of the picture that makes sense (a single exhibit: 10% or more), and no `NOTE:` line appears;
+- under each stop, "in the picture" starts with that stop's own main objects, at a share of the picture that makes sense (a single exhibit: 10% or more; several side by side: similar shares, left and right of centre), none of them marked `(cut off)`, and no `NOTE:` line appears;
 - the plan has the shape you expect.
 
 `check` cannot know that the desk was meant to be by the window; this step can. Fix what differs and go back to step 4.
 
 ## 6. Finish
 
-- `make check` passes (it runs the scene checks on every scene, and the unit tests require the scene to be listed in `public/scenes/index.json`, which `new` did).
+- `make check` passes (it runs the scene checks on every scene, and the unit tests require the scene to be listed in `public/scenes/index.json`, which `new` did). If a test fails only because a new scene exists, that is a fault in the test: report it, do not work around it.
 - Report: the layout you built, any choice you made that the brief did not, and that `check` is clean. Say plainly that colours, text fit and motion were not looked at; those need a person at `http://localhost:5180/?scene=<name>` (`make dev PORT=5180`).
 
 ## Things that go wrong
@@ -76,4 +78,5 @@ Go through your list from step 1 line by line against `describe`:
 - **Left and right swapped along a wall.** `along` runs left to right for someone inside the room facing the wall: on the north wall 0 is the west end, on the south wall 0 is the east end.
 - **The camera sees another stop's furniture.** Leave more room in front of the main object, or give the stop an explicit `camera` with `position` and `target`.
 - **Two south walls.** In an L-shaped room a compass name can match two walls; the error says which edge numbers to use instead.
-- **A big object by default.** A `pedestal` is 4.9 m across with its rings and a `cinemaScreen` nearly 14 m wide; check `prefabs` before placing several.
+- **A big object by default.** A `pedestal` is 4.9 m across (its base alone is 4.6 m) and a `cinemaScreen` nearly 14 m wide; check `prefabs` before placing several. `prefabs` shows sizes at default props; after changing a size prop, `describe` shows the real one.
+- **The automatic camera lands inside something.** In a small room, or with a large object in the middle, the spot in front of a stop's first object may be taken (`CAM_IN_OBJECT`, `CAM_BLOCKED`). Give that stop its own `camera`; do not shrink or move what the brief placed.
