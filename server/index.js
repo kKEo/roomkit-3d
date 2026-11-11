@@ -38,21 +38,24 @@ const rooms = new Map(); // event → { room, timer }
 
 function snapshotPath(event) { return path.join(STATE_DIR, `${event}.json`); }
 
+/** Closes an event that has nobody in it after EMPTY_TTL, unless someone joins before. */
+function armClose(event) {
+  const e = rooms.get(event);
+  if (!e) return;
+  if (e.timer) clearTimeout(e.timer);
+  e.timer = setTimeout(() => {
+    e.timer = null;
+    if (e.room.size) return; // someone came back in the meantime
+    persist(event, e.room); e.room.close(); rooms.delete(event); log(`event ${event}: closed (empty)`);
+  }, EMPTY_TTL);
+}
+
 function roomFor(event, scene) {
   let r = rooms.get(event);
   if (r) { if (r.timer) { clearTimeout(r.timer); r.timer = null; } return r.room; }
   const room = createRoom({
     scene, tickMs: TICK_MS, maxClients: MAX_CLIENTS, log: (...a) => debug(`[${event}]`, ...a),
-    onEmpty: () => {
-      const e = rooms.get(event);
-      if (!e) return;
-      if (e.timer) clearTimeout(e.timer);
-      e.timer = setTimeout(() => {
-        e.timer = null;
-        if (room.size) return; // someone came back in the meantime
-        persist(event, room); room.close(); rooms.delete(event); log(`event ${event}: closed (empty)`);
-      }, EMPTY_TTL);
-    },
+    onEmpty: () => armClose(event),
   });
   if (STATE_DIR) {
     try { room.restore(JSON.parse(fs.readFileSync(snapshotPath(event), 'utf8'))); log(`event ${event}: state restored`); } catch { /* none yet */ }
@@ -117,10 +120,15 @@ wss.on('connection', (ws, req, event) => {
       let scene;
       try { scene = JSON.parse(text)?.scene; } catch { /* the room reports it */ }
       // an event that is still open is joined through roomFor too: that is what calls off its closing when it was empty
-      room = rooms.has(event) || (typeof scene === 'string' && scene) ? roomFor(event, scene) : null;
+      const existed = rooms.has(event);
+      room = existed || (typeof scene === 'string' && scene) ? roomFor(event, scene) : null;
       if (!room) { ws.send(JSON.stringify({ t: 'error', code: 'invalid', message: 'the join must name a scene' })); ws.close(4000, 'invalid'); return; }
       client = room.join(conn, text);
       if (client) debug(`[${event}] join ${client.id} ${client.name} from ${req.socket.remoteAddress} (${room.size} online)`);
+      else if (!existed) {
+        // a refused join (wrong version, bad name) must not leave an empty room that pins the event to its scene
+        room.close(); rooms.delete(event); debug(`[${event}] dropped: the first join was refused`);
+      } else if (!room.size) armClose(event); // the attempt called off the closing of an empty event: call it on again
       return;
     }
     room.message(client, isBinary ? data : data.toString());
