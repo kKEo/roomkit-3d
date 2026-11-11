@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createSyncClient } from '../src/net/client.js';
 import { packPoses, unpackFrame, PROTOCOL_VERSION } from '../src/net/protocol.js';
 
@@ -33,6 +33,11 @@ function clock() {
         t = due[1].at; timers.delete(due[0]); due[1].fn();
       }
       t = end;
+    },
+    /** Time passes with no timer running (a sleeping laptop, a throttled background tab); then each due timer runs once. */
+    jump(ms) {
+      t += ms;
+      for (const [id, x] of [...timers]) if (x.at <= t) { timers.delete(id); x.fn(); }
     },
   };
 }
@@ -168,6 +173,69 @@ describe('shared state and clock', () => {
     s.serve({ t: 'pong', c: ping.c, s: ping.c + 40000 + 20 });
     expect(client.stats.rtt).toBe(40);
     expect(client.serverNow()).toBe(ck.now() + 40000);
+  });
+});
+
+describe('a connection that went silent', () => {
+  const online = () => { client.connect(); const s = sockets.all[0]; s.open(); s.serve(welcome()); return s; };
+  /** The server answers every ping, as it does when the network is fine. */
+  const answer = s => { const p = s.json().filter(m => m.t === 'ping').at(-1); s.serve({ t: 'pong', c: p.c, s: p.c + 40000 }); };
+
+  it('is replaced when pings go unanswered, although the socket never reports closing', () => {
+    const s = online();
+    s.close = () => {}; // a half-open socket: close() does nothing visible, no onclose follows
+    ck.advance(2000 * 4); // pings go out, nothing comes back
+    expect(client.status).toBe('online');
+    ck.advance(2000 * 3);
+    expect(client.status).toBe('reconnecting');
+    expect(client.peers.size).toBe(0);
+    ck.advance(1000);
+    expect(sockets.all.length).toBe(2); // and a new connection is being made
+  });
+
+  it('closes the dead socket with 4003 so it does not linger', () => {
+    const s = online();
+    const close = vi.fn(); s.close = close;
+    ck.advance(2000 * 8);
+    expect(close).toHaveBeenCalledWith(4003, 'timeout');
+  });
+
+  it('stays online while the pongs come back', () => {
+    const s = online();
+    for (let i = 0; i < 20; i++) { ck.advance(2000); answer(s); }
+    expect(client.status).toBe('online');
+    expect(sockets.all.length).toBe(1);
+  });
+
+  it('is not mistaken for dead when its timers were slowed down, as in a background tab', () => {
+    const s = online();
+    ck.advance(2200); answer(s);
+    ck.jump(60000); // one timer tick a minute: the last ping was answered, the next goes out now
+    expect(client.status).toBe('online');
+    answer(s);
+    ck.jump(60000);
+    expect(client.status).toBe('online');
+  });
+
+  it('checks within seconds when the page wakes up and the answer does not come', () => {
+    const s = online();
+    s.close = () => {};
+    ck.advance(300); answer(s);
+    ck.jump(30000); // asleep: no timers ran, then the next ping goes out and is lost with the network
+    client.retryNow();
+    expect(client.status).toBe('online'); // asked, waiting
+    ck.advance(3200);
+    expect(client.status).toBe('reconnecting');
+  });
+
+  it('keeps the connection when the page wakes up and the server answers', () => {
+    const s = online();
+    ck.advance(300); answer(s);
+    ck.jump(30000);
+    client.retryNow();
+    answer(s);
+    ck.advance(5000);
+    expect(client.status).toBe('online');
   });
 });
 

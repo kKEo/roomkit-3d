@@ -20,14 +20,15 @@ import {
 export function createSyncClient({
   url, event, scene, profile,
   WebSocket: WS, now = Date.now, setTimer = setTimeout, clearTimer = clearTimeout,
-  storage = null, log = console.warn, pingMs = 2000, poseMs = 66, maxSamples = 8,
+  storage = null, log = console.warn, pingMs = 2000, deadMs = 10000, wakeMs = 3000, poseMs = 66, maxSamples = 8,
 }) {
   const peers = new Map();
   const shared = new Map();
   const subs = new Set();
   const stats = { in: 0, out: 0, bytesIn: 0, bytesOut: 0, rtt: null };
   let ws = null, status = 'idle', me = null, seq = 0, tickMs = 100;
-  let attempts = 0, retryTimer = null, pingTimer = null, closed = false;
+  let attempts = 0, retryTimer = null, pingTimer = null, checkTimer = null, closed = false;
+  let unanswered = null;       // local time of the oldest ping the server has not answered yet
   let offsets = [];
   let lastPoseAt = 0, lastPose = null;
   let onWelcome = null;
@@ -59,17 +60,22 @@ export function createSyncClient({
     };
     sock.onmessage = ev => receive(ev.data);
     sock.onerror = () => { /* onclose follows */ };
-    sock.onclose = () => {
-      if (ws !== sock) return;
-      ws = null;
-      if (pingTimer) { clearTimer(pingTimer); pingTimer = null; }
-      for (const p of peers.values()) p.samples.length = 0;
-      peers.clear();
-      emit('peers');
-      if (closed) { setStatus('closed'); return; }
-      setStatus('reconnecting');
-      schedule();
-    };
+    sock.onclose = () => lost(sock);
+  }
+
+  /** The connection is gone (closed, or given up on): forget the peers and reconnect, unless the client was closed. */
+  function lost(sock) {
+    if (ws !== sock) return; // already handled, or a newer connection is the current one
+    ws = null;
+    unanswered = null;
+    if (pingTimer) { clearTimer(pingTimer); pingTimer = null; }
+    if (checkTimer) { clearTimer(checkTimer); checkTimer = null; }
+    for (const p of peers.values()) p.samples.length = 0;
+    peers.clear();
+    emit('peers');
+    if (closed) { setStatus('closed'); return; }
+    setStatus('reconnecting');
+    schedule();
   }
 
   function schedule() {
@@ -79,8 +85,29 @@ export function createSyncClient({
     retryTimer = setTimer(() => { retryTimer = null; connect(); }, delay);
   }
 
-  function ping() {
+  function sendPing() {
+    if (unanswered == null) unanswered = now();
     sendJson({ t: 'ping', c: now() });
+  }
+
+  /**
+   * A socket can stay OPEN long after the network is gone (a laptop that slept, a NAT that forgot the mapping):
+   * no close event comes until the operating system gives up on TCP, which takes minutes. If a ping has gone
+   * unanswered for `limit` ms the connection is declared dead and replaced. Only an unanswered ping counts, so a
+   * page whose timers the browser slowed down (a background tab) is not mistaken for a dead connection.
+   */
+  function checkAlive(limit) {
+    if (!ws || unanswered == null || now() - unanswered <= limit) return false;
+    const sock = ws;
+    log('sync: the server stopped answering, reconnecting');
+    try { sock.close(4003, 'timeout'); } catch { /* already gone */ }
+    lost(sock); // a close on a dead connection may not report for a long time: do not wait for it
+    return true;
+  }
+
+  function ping() {
+    if (checkAlive(deadMs)) return;
+    sendPing();
     pingTimer = setTimer(ping, pingMs);
   }
 
@@ -107,7 +134,7 @@ export function createSyncClient({
     if (!msg) { log('sync: unknown message', data.slice(0, 80)); return; }
     switch (msg.t) {
       case 'welcome': {
-        attempts = 0;
+        attempts = 0; unanswered = null;
         me = { id: msg.id, name: profile.name, color: profile.color };
         saveResume({ id: msg.id, token: msg.token });
         seq = msg.seq; tickMs = msg.tickMs;
@@ -143,6 +170,7 @@ export function createSyncClient({
       }
       case 'reject': emit('reject', msg); break;
       case 'pong': {
+        unanswered = null;
         const rtt = now() - msg.c;
         stats.rtt = rtt;
         offsets.push(msg.s + rtt / 2 - now());
@@ -183,7 +211,13 @@ export function createSyncClient({
   /** Reconnect right away (the page became visible again) instead of waiting out the backoff; online, just ping. */
   function retryNow() {
     if (closed) return;
-    if (ws && ws.readyState === 1) { sendJson({ t: 'ping', c: now() }); return; }
+    if (ws && ws.readyState === 1) {
+      // back from sleep or a background tab: ask now, and give the answer a few seconds instead of waiting for the next ping
+      sendPing();
+      if (checkTimer) clearTimer(checkTimer);
+      checkTimer = setTimer(() => { checkTimer = null; checkAlive(wakeMs); }, wakeMs + 100);
+      return;
+    }
     if (retryTimer) { clearTimer(retryTimer); retryTimer = null; }
     if (!ws) connect();
   }
@@ -192,6 +226,7 @@ export function createSyncClient({
     closed = true;
     if (retryTimer) { clearTimer(retryTimer); retryTimer = null; }
     if (pingTimer) { clearTimer(pingTimer); pingTimer = null; }
+    if (checkTimer) { clearTimer(checkTimer); checkTimer = null; }
     const sock = ws; ws = null;
     try { sock?.close(1000, 'bye'); } catch { /* already gone */ }
     peers.clear();
