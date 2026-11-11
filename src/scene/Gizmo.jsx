@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { useStore, editGroups } from '../state/store.js';
 import { configRotation } from '../lib/math.js';
+import { grabShared, dropShared } from '../net/shared.js';
 
 const MOVE_SNAP = 0.1, TURN_SNAP = THREE.MathUtils.degToRad(15);
 const isObjectKey = k => typeof k === 'string' && !k.startsWith('stop:') && /:\d+$/.test(k);
@@ -72,12 +73,15 @@ export function Gizmo() {
       const g = tc.object;
       drag.current = g && { key: useStore.getState().edit?.selected, position: g.position.clone(), rotation: g.rotation.clone() };
       document.body.style.cursor = 'grabbing';
+      // in an event, hold the object against other hands while it is dragged (src/net/shared.js; a no-op outside one)
+      if (drag.current) grabShared(`object:${drag.current.key}`);
     };
     const onUp = () => {
       document.body.style.cursor = '';
       const g = tc.object, start = drag.current;
       drag.current = null;
       if (!g || !start) return;
+      dropShared(`object:${start.key}`);
       const moved = !g.position.equals(start.position), turned = !g.rotation.equals(start.rotation);
       if (!moved && !turned) return;
       const ok = useStore.getState().edit?.transform?.(start.key, {

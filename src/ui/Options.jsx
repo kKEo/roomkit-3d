@@ -3,6 +3,7 @@ import { useStore, runtime } from '../state/store.js';
 import { EASE, EASE_NAMES } from '../lib/easing.js';
 import { GFX_CHOICES, GFX_RELOAD } from '../lib/gfx.js';
 import { fmtBytes, fmtCount, fmtMs, reportText, graphicsInfo, displayInfo, deviceInfo } from '../lib/sysinfo.js';
+import { useSync, setProfile } from '../net/sync.js';
 
 function EaseCurve({ ease, color }) {
   const ref = useRef(null);
@@ -163,6 +164,32 @@ function System({ ui, scene }) {
   );
 }
 
+/** Who is in the event, this visitor's name and colour, and the connection. */
+function Online({ ui }) {
+  const { status, me, peers, profile, rtt } = useSync();
+  const others = [...peers].sort((a, b) => a.name.localeCompare(b.name));
+  return (
+    <>
+      <p className="note">{ui.onlineStatus?.[status] || status}{rtt != null && status === 'online' && <> · {Math.round(rtt)} ms</>}</p>
+      <label>{ui.yourName}
+        <input type="text" maxLength={24} value={profile.name} onChange={e => setProfile({ name: e.target.value })} onBlur={e => setProfile({ name: e.target.value.trim() || 'Visitor' })} />
+      </label>
+      <label className="check">{ui.yourColor}
+        <input type="color" value={profile.color} onChange={e => setProfile({ color: e.target.value })} />
+      </label>
+      <section>
+        <h4>{ui.onlineTitle}</h4>
+        <ul className="people">
+          {me && <li><i style={{ background: profile.color }} />{profile.name} <span className="dim">({ui.onlineYou})</span></li>}
+          {others.map(p => <li key={p.id}><i style={{ background: p.color }} />{p.name}</li>)}
+        </ul>
+        {!others.length && <p className="dim">{ui.onlineNobody}</p>}
+      </section>
+      <p className="dim">{ui.onlineHint}</p>
+    </>
+  );
+}
+
 const TABS = ['general', 'camera', 'system'];
 
 /** The Options popover: rendering preferences, camera feel and a technical readout, one tab each. */
@@ -172,12 +199,14 @@ export function Options() {
   const scene = useStore(s => s.scene);
   const setTab = useStore(s => s.setOptionsTab);
   const ui = scene.ui;
+  const inEvent = useSync(s => s.active);
   if (!open) return null;
+  const tabs = inEvent ? [...TABS, 'online'] : TABS;
   const onKey = e => {
-    const i = TABS.indexOf(tab), d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    const i = tabs.indexOf(tab), d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
     if (!d) return;
     e.preventDefault(); e.stopPropagation();
-    const next = TABS[(i + d + TABS.length) % TABS.length];
+    const next = tabs[(i + d + tabs.length) % tabs.length];
     setTab(next);
     document.getElementById(`opt-tab-${next}`)?.focus();
   };
@@ -185,7 +214,7 @@ export function Options() {
     <div className="options" id="options" role="dialog" aria-label={ui.options}>
       <h3>{ui.options}</h3>
       <div className="tabs" role="tablist" onKeyDown={onKey}>
-        {TABS.map(t => (
+        {tabs.map(t => (
           <button key={t} id={`opt-tab-${t}`} type="button" role="tab" aria-selected={tab === t} aria-controls="opt-panel" tabIndex={tab === t ? 0 : -1} onClick={() => setTab(t)}>
             {ui.optionsTabs?.[t] || t}
           </button>
@@ -195,6 +224,7 @@ export function Options() {
         {tab === 'general' && <General ui={ui} />}
         {tab === 'camera' && <Camera ui={ui} scene={scene} />}
         {tab === 'system' && <System ui={ui} scene={scene} />}
+        {tab === 'online' && <Online ui={ui} />}
       </div>
     </div>
   );

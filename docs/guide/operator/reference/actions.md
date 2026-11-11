@@ -21,6 +21,8 @@ A hotspot with an action shows a hand cursor and a glowing outline on hover, and
 | `zoom` | `screen`: a screen id, `poi`: its POI (default: the current one); both optional | zooms into a screen. Bound to a screen's own hotspot with no `screen` key, it zooms into that screen |
 | `openUrl` | `url`, `newTab` (default `true`), `label`, `confirm` (default `false`) | opens a link in a new tab, or navigates the page. With `confirm` the viewer first shows a dialog with the `label` (a name for people) and the URL; `Esc` or *Stay here* cancels. The pending action sits in the store as `confirm`, so a prefab can react (the door swings ajar) |
 | `togglePanel` | — | hides or shows the content panel (the `H` key) |
+| `set` | `key`, `value` (any JSON) | writes a shared key: in an event everyone sees the value, outside one only this page ([Shared events](../internals/multiplayer.md)). Prefabs read keys with `useShared` |
+| `toggle` | `key`, `initial` (default `false`) | flips a boolean shared key; `initial` is what it counts as before anyone set it |
 | `emit` | `name`, `detail` (any JSON) | dispatches `new CustomEvent("scene-rooms:<name>", { detail })` on `window`, with the current POI id added to `detail`; for a page that embeds the viewer |
 
 The built-in interactions use the same actions: a marker click and the terminal's `goto` command dispatch `goTo`; a screen click zooms (`zoomTo` in the store), which also makes the screen's POI the current one.

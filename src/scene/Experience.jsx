@@ -11,6 +11,7 @@ import { Telemetry } from './Telemetry.jsx';
 import { Markers } from './Markers.jsx';
 import { PlacedObject } from '../prefabs/index.jsx';
 import { EditMarks } from './EditMarks.jsx';
+import { Avatars } from './Avatars.jsx';
 
 // the editor's move / rotate handles, in a chunk of their own that only the editor loads
 const Gizmo = lazy(() => import('./Gizmo.jsx').then(m => ({ default: m.Gizmo })));
@@ -66,6 +67,7 @@ export function Experience() {
       {scene.decor.map((o, i) => <PlacedObject key={i} slot={i} object={o} editKey={`decor:${i}`} />)}
       {pois.map(p => <PoiObjects key={p.id} poi={p} />)}
       <Markers />
+      <Avatars />
       {editing && <EditMarks />}
       {editing && <Suspense fallback={null}><Gizmo /></Suspense>}
       <Particles count={Math.round(scene.effects.particles * particles)} />

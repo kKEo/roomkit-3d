@@ -424,3 +424,22 @@ html.editing { --view-left: 440px }
 .add-menu .note .link { display: block; margin-top: 6px; padding: 0; background: none; border: 0; color: var(--accent); font: inherit; cursor: pointer }
 .add-menu .note .link:hover { text-decoration: underline }
 .editor-export .hosted { color: var(--text-dim) }
+
+/* ---- shared events: who is online, avatar name tags ---- */
+.top .online { background: none; border: 1px solid var(--line); height: 34px; padding: 0 10px; cursor: pointer; color: var(--text-dim); display: flex; align-items: center; gap: 7px; flex: none; font: inherit; font-size: 12px; letter-spacing: .04em }
+.top .online:hover { color: var(--accent); border-color: var(--accent) }
+.top .online i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); box-shadow: 0 0 6px currentColor }
+.top .online.online i { background: var(--accent); color: var(--accent) }
+.top .online.reconnecting i, .top .online.connecting i { background: #ffb347; color: #ffb347; animation: blink 1s infinite }
+.top .online.closed i { background: #ff5c5c; color: #ff5c5c }
+@keyframes blink { 50% { opacity: .2 } }
+.alabel { position: fixed; left: 0; top: 0; z-index: 4; transform: translate(-50%, -100%); background: rgba(0,0,0,.65); border: 1px solid var(--who, var(--line)); color: var(--text);
+  font-size: 11px; padding: 2px 7px; white-space: nowrap; pointer-events: none; letter-spacing: .04em }
+.alabel::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--who, var(--accent)); margin-right: 6px; vertical-align: 1px }
+.alabel.hidden { opacity: 0 }
+.options input[type=text] { width: 100%; margin-top: 4px; background: #000; border: 1px solid var(--line); color: var(--text); padding: 5px 7px; font: inherit }
+.options input[type=color] { width: 34px; height: 24px; padding: 0; border: 1px solid var(--line); background: #000; margin-left: auto }
+.options .people { list-style: none; margin: 0 0 8px; padding: 0 }
+.options .people li { display: flex; align-items: center; gap: 8px; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,.08); color: var(--text) }
+.options .people i { width: 9px; height: 9px; border-radius: 50%; flex: none }
+.options .dim { color: var(--text-dim) }

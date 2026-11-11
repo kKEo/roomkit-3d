@@ -114,6 +114,8 @@ A screen with a `feed` shows its own keys as placeholders, then the feed's value
 
 A `video` screen whose `src` ends in `.m3u8` plays an HLS live stream: natively where the browser supports it (Safari, recent Chrome), otherwise through hls.js, which is downloaded only then. The stream's playlist and segments must be served with CORS headers, like any video drawn in WebGL. Each stream runs its own decoder; keep to one or two per scene.
 
+With `switch: { "key": "booth.power", "label": "console power", "on": true }` the desk gets a master switch (hotspot `switch`) on its right segment. Clicking it flips the shared key, so in an event everyone sees the console lights go out; outside one the page alone does. Bind an action to `switch` to replace that default.
+
 ### serverRack
 
 A row of 1.05 m cabinets with blinking LEDs, a cable tray and cables to the ceiling, behind a four-panel centre-opening bi-fold door in a frame. Origin: floor centre of the row. The door folds open while its POI's panel is shown, like the wardrobe's: each side's outer panel swings out on the frame and its inner panel folds back onto it, so the pairs stack at the edges.

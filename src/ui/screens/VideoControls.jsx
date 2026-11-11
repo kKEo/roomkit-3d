@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { findVideo } from '../../scene/screenState.js';
+import { publishVideo } from '../../net/videoSync.js';
 
 const SPEEDS = [0.25, 0.5, 1, 2];
 const SPEED_LABEL = { 0.25: '¼×', 0.5: '½×', 1: '1×', 2: '2×' };
@@ -9,11 +10,14 @@ const clock = s => (Number.isFinite(s) ? `${pad(s / 60)}:${pad(s % 60)}` : '--:-
 /**
  * Transport bar over a zoomed-in video screen: play/pause, back to the start, ±10 s, a scrubber
  * and the playback speed. Steers the <video> behind the screen's texture (registered by its key),
- * so the big screen in the room follows. Keys while zoomed: Space, ← →, - +.
+ * so the big screen in the room follows, and in an event so does everyone else's (every action here
+ * is published, src/net/videoSync.js). Keys while zoomed: Space, ← →, - +.
  */
 export function VideoControls({ screenKey, ui }) {
   const video = findVideo(screenKey);
   const [state, setState] = useState(() => snapshot(video));
+  // run an action on the video, then tell the event about the new state (after the browser applied it)
+  const act = fn => { fn(video); requestAnimationFrame(() => publishVideo(screenKey, video)); };
 
   useEffect(() => {
     if (!video) return;
@@ -30,37 +34,38 @@ export function VideoControls({ screenKey, ui }) {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       const tag = e.target?.tagName;
       if (tag === 'INPUT' && e.target.type !== 'range') return;
-      if (e.key === ' ' || e.code === 'Space') toggle(video);
-      else if (e.key === 'ArrowLeft') seek(video, -5);
-      else if (e.key === 'ArrowRight') seek(video, 5);
-      else if (e.key === '-' || e.key === '_') stepSpeed(video, -1);
-      else if (e.key === '+' || e.key === '=') stepSpeed(video, 1);
+      if (e.key === ' ' || e.code === 'Space') act(toggle);
+      else if (e.key === 'ArrowLeft') act(v => seek(v, -5));
+      else if (e.key === 'ArrowRight') act(v => seek(v, 5));
+      else if (e.key === '-' || e.key === '_') act(v => stepSpeed(v, -1));
+      else if (e.key === '+' || e.key === '=') act(v => stepSpeed(v, 1));
       else return;
       e.preventDefault();
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [video]);
 
   if (!video) return null;
   const { paused, time, duration, rate } = state;
   return (
     <div className="vctl" role="group" aria-label={ui.zoomScreen}>
-      <button type="button" onClick={() => { video.currentTime = 0; video.play().catch(() => {}); }} title={ui.videoRestart} aria-label={ui.videoRestart}>⏮</button>
-      <button type="button" onClick={() => seek(video, -10)} title={ui.videoBack} aria-label={ui.videoBack}>◀◀</button>
-      <button type="button" className="vplay" onClick={() => toggle(video)} title={paused ? ui.videoPlay : ui.videoPause} aria-label={paused ? ui.videoPlay : ui.videoPause}>
+      <button type="button" onClick={() => act(v => { v.currentTime = 0; v.play().catch(() => {}); })} title={ui.videoRestart} aria-label={ui.videoRestart}>⏮</button>
+      <button type="button" onClick={() => act(v => seek(v, -10))} title={ui.videoBack} aria-label={ui.videoBack}>◀◀</button>
+      <button type="button" className="vplay" onClick={() => act(toggle)} title={paused ? ui.videoPlay : ui.videoPause} aria-label={paused ? ui.videoPlay : ui.videoPause}>
         {paused ? '▶' : '❚❚'}
       </button>
-      <button type="button" onClick={() => seek(video, 10)} title={ui.videoForward} aria-label={ui.videoForward}>▶▶</button>
+      <button type="button" onClick={() => act(v => seek(v, 10))} title={ui.videoForward} aria-label={ui.videoForward}>▶▶</button>
       <input
         type="range" min="0" max={Number.isFinite(duration) ? duration : 0} step="0.1" value={time}
-        onChange={e => { video.currentTime = Number(e.target.value); }} aria-label={clock(time)}
+        onChange={e => { const t = Number(e.target.value); act(v => { v.currentTime = t; }); }} aria-label={clock(time)}
       />
       <span className="vtime">{clock(time)} / {clock(duration)}</span>
       <span className="vspeed">
         <span>{ui.videoSpeed}</span>
         {SPEEDS.map(s => (
-          <button key={s} type="button" aria-pressed={rate === s} onClick={() => { video.playbackRate = s; }}>{SPEED_LABEL[s]}</button>
+          <button key={s} type="button" aria-pressed={rate === s} onClick={() => act(v => { v.playbackRate = s; })}>{SPEED_LABEL[s]}</button>
         ))}
       </span>
     </div>

@@ -5,7 +5,7 @@
   "screenLabel": "booth // live",
   "objects": [
     { "type": "controlDesk", "position": [-7, 0, 17.5], "rotation": [0, 180, 0],
-      "props": { "columns": 3, "radius": 4.2, "arc": 70, "chairs": 2, "screens": [
+      "props": { "columns": 3, "radius": 4.2, "arc": 70, "chairs": 2, "switch": { "key": "booth.power", "label": "console power" }, "screens": [
         { "source": "stats", "title": "HOUSE", "id": "house",
           "feed": { "url": "data/showtimes.json", "refresh": 20, "transform": "houseStats" } },
         { "source": "text", "title": "NOW SHOWING", "id": "now",

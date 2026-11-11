@@ -10,6 +10,7 @@ import { useStore, runtime } from '../state/store.js';
 import { reducedMotion } from '../lib/env.js';
 import { toRad, circlePts } from '../lib/math.js';
 import { META_SDK } from './metaSdk.js';
+import { useShared, useSharedOwner, getShared, setShared, toggleShared } from '../net/shared.js';
 
 /**
  * What a scene-shipped prefab's `component(sdk)` receives. A scene prefab is a plain ES module with
@@ -32,6 +33,8 @@ export function makeSdk(moduleUrl) {
     // the app's building blocks (see src/scene/core.jsx and src/prefabs/media.jsx)
     Solid, Segs, Outline, useGeometry, shapeArgs, ScreenSurface,
     useWorld, useHotspot, useStore, runtime, reducedMotion, toRad, circlePts,
+    // state shared by everyone in an event (src/net/shared.js)
+    useShared, useSharedOwner, getShared, setShared, toggleShared,
     // the prefab's own files
     moduleUrl,
     assetUrl,

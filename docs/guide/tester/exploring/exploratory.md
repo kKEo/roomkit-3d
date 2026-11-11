@@ -221,3 +221,15 @@ Open `/edit.html?scene=cinema` on the dev server.
 | `make serve`, then a deep link | same behaviour as the dev server |
 | `dist/viewer.json` | lists `index.html` and every `assets/*` file except `edit-*.js`; `edit.html` and `scenes/` are not in it |
 | Serve `dist/` under a sub-path, with and without a trailing slash | works with the slash; without it, assets 404 (known, documented in the operator guide) |
+
+## Shared events
+
+Needs `make server` running next to `make dev`. Open the same event in two browsers (two profiles, or Chrome and Brave): `http://localhost:5180/?scene=cinema&event=test`.
+
+1. The header shows **2 online** in both. Options → Online lists both names; change yours and the other browser's list follows.
+2. Fly between stops in one browser: the other sees an avatar (head, body, name tag) glide along the same arc and settle where that camera is. Zoom into a screen and back: the avatar moves to the screen and returns.
+3. Free flight (WASD) in one browser: the avatar follows at about 150 ms behind, without stutter. Stop moving: no traffic (the `net` line of the performance overlay shows ↑ near 0).
+4. In the booth, click the lever on the control desk: the console lights go out in both browsers. Reload one: still out.
+5. On the big screen, pause the film and seek: the other browser's film pauses at the same second; play again: both run in step (within a second).
+6. Stop the server for 10 seconds and start it again: the badge turns amber (*reconnecting*), then green; the avatars come back; the state is kept when the server was started with `STATE_DIR`.
+7. `make bots BOTS=100` against the server while a browser is in event `load`: 100 avatars circle the room, the frame rate holds, the overlay's ↓ shows about 13 kB/s.

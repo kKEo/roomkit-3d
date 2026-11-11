@@ -31,7 +31,11 @@ This page maps the source tree to the runtime data flow, so you know which file 
 | `src/scene/Markers.jsx` | The clickable diamonds (octahedron, ring and an invisible hit sphere). |
 | `src/scene/Room.jsx`, `Particles.jsx`, `rain.js`, `materials/hatch.js` | Room shell, dust, the Matrix-rain texture, shaders and line materials. |
 | `src/state/store.js` | The zustand store, plus `runtime`, a plain object for per-frame values. |
-| `src/actions/registry.js` | The actions a scene can bind to prefab hotspots (`goTo`, `zoom`, `openUrl`, `togglePanel`, `emit`): schema and `run`. `store.dispatch` runs one. |
+| `src/actions/registry.js` | The actions a scene can bind to prefab hotspots (`goTo`, `zoom`, `openUrl`, `togglePanel`, `set`, `toggle`, `emit`): schema and `run`. `store.dispatch` runs one. |
+| `src/net/protocol.js` | The wire protocol of shared events: binary pose frames and zod schemas of every JSON message; shared with the server. |
+| `src/net/client.js`, `sync.js`, `shared.js`, `videoSync.js` | The viewer's side of an event: the reconnecting client (pure), the browser glue and `useSync`, the shared key → value state with `useShared`, and video playback in step. See [Shared events](multiplayer.md). |
+| `src/scene/Avatars.jsx`, `src/ui/AvatarLabels.jsx`, `src/lib/flight.js` | The other visitors: instanced avatars replaying their flights or interpolating their poses, their name tags, and the flight path shared with `CameraRig`. |
+| `server/room.js`, `server/index.js` | The sync server: one pure room per event (poses per tick, ordered state, leases, liveness) behind `ws`. |
 | `src/scene/Telemetry.jsx` | Frame-rate cap and the performance probe behind Options → System and the overlay. |
 | `src/ui/*` | DOM overlays: header, panel, Markdown and blocks, labels, minimap, Options, performance overlay, progress bar, input. |
 

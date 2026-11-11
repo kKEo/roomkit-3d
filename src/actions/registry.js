@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { findScreenIn } from '../scene/screenState.js';
+import { setShared, toggleShared } from '../net/shared.js';
 
 /**
  * Actions a scene can bind to a prefab hotspot (`objects[].actions`). No React here.
@@ -41,6 +42,16 @@ export const ACTIONS = {
   togglePanel: {
     schema: z.strictObject({ type: z.literal('togglePanel') }),
     run: (_, st) => st.togglePanel(),
+  },
+  /** Set a shared key (src/net/shared.js) to `value` for everyone in the event (or this page alone outside one). */
+  set: {
+    schema: z.strictObject({ type: z.literal('set'), key: z.string().min(1).max(200), value: z.any() }),
+    run: a => setShared(a.key, a.value),
+  },
+  /** Flip a boolean shared key; `initial` is what it counts as before anyone set it. */
+  toggle: {
+    schema: z.strictObject({ type: z.literal('toggle'), key: z.string().min(1).max(200), initial: z.boolean().default(false) }),
+    run: a => toggleShared(a.key, a.initial),
   },
   /** Dispatch a DOM `CustomEvent` named `scene-rooms:<name>` on `window`, for a page that embeds the viewer. */
   emit: {

@@ -13,7 +13,7 @@ VITE_PORT   = $(if $(PORT),-- --port $(PORT))
 MDBOOK_PORT = $(if $(PORT),--port $(PORT))
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build serve test lint check docs docs-check docs-serve docs-site-serve intro-video all clean
+.PHONY: help install dev build serve test lint check server server-docker bots docs docs-check docs-serve docs-site-serve intro-video all clean
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -75,3 +75,16 @@ INTRO_URL ?= http://localhost:5180/
 intro-video: node_modules ## Re-render the cinema intro film (public/scenes/cinema/media/intro.mp4): needs ffmpeg, `npx playwright install chromium`, and a dev server at INTRO_URL
 	node tools/intro/footage.mjs $(INTRO_URL)
 	node tools/intro/render.mjs $(INTRO_URL)
+
+SYNC_PORT ?= 8787
+BOTS ?= 100
+
+server: node_modules ## Run the sync server for shared events (ws://localhost:8787, see docs/guide/operator/deploy/sync-server.md)
+	PORT=$(SYNC_PORT) npm run server
+
+server-docker: ## Build the sync server image and run it on SYNC_PORT (needs Docker)
+	docker build -f server/Dockerfile -t scene-rooms-sync .
+	docker run --rm -p $(SYNC_PORT):8787 scene-rooms-sync
+
+bots: node_modules ## Load-test a running sync server with BOTS fake visitors (default 100)
+	node tools/loadtest/bots.js --url ws://localhost:$(SYNC_PORT) --clients $(BOTS) --seconds 20
