@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EASE } from '../lib/easing.js';
 
 /**
  * The wire protocol between the viewer and the sync server (server/), shared by both ends. No browser
@@ -140,7 +141,7 @@ export const intentSchema = z.strictObject({
   poi: z.string().nullable().optional(),
   zoom: z.string().optional(),
   duration: z.number().min(0).max(60000).optional(),
-  ease: z.string().max(16).optional(),
+  ease: z.enum(Object.keys(EASE)).optional(),
   arc: z.boolean().optional(),
   /** the flight profile played backwards (the way back from a screen) */
   reverse: z.boolean().optional(),

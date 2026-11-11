@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { EASE } from '../src/lib/easing.js';
 import {
   packPose, packPoses, unpackFrame, gazeOf, dirOf, parseMessage, clientMessage, serverMessage, PROTOCOL_VERSION, POSE_ENTRY_BYTES,
 } from '../src/net/protocol.js';
@@ -80,6 +81,13 @@ describe('text messages', () => {
     const ok = { t: 'intent', intent: { kind: 'poi', from: view, to: view, poi: 'desk', duration: 1500, ease: 'quint', arc: true } };
     expect(parseMessage(clientMessage, JSON.stringify(ok))).toEqual(ok);
     expect(parseMessage(clientMessage, JSON.stringify({ t: 'intent', intent: { kind: 'poi', from: view, duration: -1 } }))).toBe(null);
+  });
+
+  it('accepts only known ease names, so a peer cannot name an inherited property', () => {
+    const view = { position: [0, 0, 0], target: [0, 0, -1] };
+    const intent = ease => JSON.stringify({ t: 'intent', intent: { kind: 'poi', from: view, to: view, duration: 1000, ease } });
+    for (const ease of Object.keys(EASE)) expect(parseMessage(clientMessage, intent(ease))).not.toBe(null);
+    for (const ease of ['__proto__', 'constructor', 'toString', 'hasOwnProperty', 'nope']) expect(parseMessage(clientMessage, intent(ease))).toBe(null);
   });
 
   it('validates server messages too', () => {

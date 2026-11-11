@@ -44,7 +44,7 @@ export function peerPose(peer, serverNow, now, room, out) {
   }
   const tr = intent.flight;
   const t = Math.min(1, Math.max(0, (serverNow - intent.at) / intent.duration));
-  const easeFn = EASE[intent.ease] ?? EASE.quint;
+  const easeFn = Object.hasOwn(EASE, intent.ease) ? EASE[intent.ease] : EASE.quint; // an own name only: "__proto__" would find Object.prototype
   const e = intent.reverse ? 1 - easeFn(1 - t) : easeFn(t);
   const gaze = intent.reverse ? 1 - EASE.cubic(Math.min(1, (1 - t) * 1.3)) : EASE.cubic(Math.min(1, t * 1.3));
   posAt(tr, e, out.position);

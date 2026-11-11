@@ -10,6 +10,7 @@ RUN node -e "const p=require('./package.json');require('fs').writeFileSync('pack
  && npm install --omit=dev --ignore-scripts --no-audit --no-fund
 COPY server ./server
 COPY src/net/protocol.js ./src/net/protocol.js
+COPY src/lib/easing.js ./src/lib/easing.js
 # a volume mounted on /state takes this ownership, so the unprivileged server can write its snapshots
 RUN mkdir /state && chown node:node /state
 EXPOSE 8787
