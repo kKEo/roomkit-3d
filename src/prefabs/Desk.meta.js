@@ -12,5 +12,6 @@ export const desk = {
   }),
   media: ['src', 'screen.src'],
   hotspots: p => [p.screen?.id ?? 'screen', 'chair'],
+  geometry: p => ({ min: [-1.3, 0, -0.6], max: [1.3, 2.19, p.chair ? 1.34 : 0.6], mount: 'floor' }),
   placement: () => ({ focus: [0, 1.6, 0], cameraDistance: 6, cameraHeight: 2.9, markerOffset: [0, 2.8, 0] }),
 };

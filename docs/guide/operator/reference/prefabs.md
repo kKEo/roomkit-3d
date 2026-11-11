@@ -4,6 +4,8 @@ This page lists every object type with its props, defaults, origin and the place
 
 How to read the placement columns: `focus` is the local point the camera looks at. The camera stands `distance` metres in front of it along local +Z, at world height `cam y` (`—` means `focus.y + 0.3`). The marker hangs at the local point `marker`. `h`, `w` and `e` stand for the `height`, `width` and `elevation` props.
 
+Each type also declares its **geometry**: the box of its solid body and what its origin sits on (floor, wall, ceiling or free). Scene checks use it to find objects outside the room or overlapping, and wall placement uses it to set an object flush. Print the current figures for every type, including a scene's own, with `node tools/scene.js prefabs [scene]`.
+
 ## Floor objects
 
 ### desk

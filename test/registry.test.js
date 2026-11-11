@@ -12,6 +12,26 @@ describe('PREFABS', () => {
     for (const v of [...h.focus, ...h.markerOffset, h.cameraDistance, h.cameraHeight ?? 0]) expect(Number.isFinite(v)).toBe(true);
   });
 
+  it.each(PREFAB_TYPES)('%s: geometry is a box that sits on its mount and holds the camera focus', type => {
+    const m = PREFABS[type];
+    const g = m.geometry(m.props);
+    expect(g.min.every((v, i) => v < g.max[i] || (v === g.max[i] && i === 2))).toBe(true);
+    if (g.mount === 'floor') expect(g.min[1]).toBe(0);
+    if (g.mount === 'wall') expect(g.min[2]).toBe(0); // the back of the box is the wall surface
+    const f = m.placement(m.props).focus;
+    f.forEach((v, i) => { expect(v).toBeGreaterThanOrEqual(g.min[i] - 1.5); expect(v).toBeLessThanOrEqual(g.max[i] + 1.5); });
+  });
+
+  it('geometry follows the size props', () => {
+    const box = (type, props) => PREFABS[type].geometry(PREFABS[type].schema.parse(props));
+    expect(box('bench', { width: 8 }).max[0]).toBe(4);
+    expect(box('pictureFrame', { width: 4, height: 2 }).min).toEqual([-2, -1, 0]);
+    expect(box('desk', { chair: false }).max[2]).toBeLessThan(box('desk', {}).max[2]);
+    expect(box('serverRack', { count: 8 }).max[0]).toBeGreaterThan(box('serverRack', {}).max[0]);
+    expect(box('primitive', { shape: 'box', args: [2, 4, 6] }).max).toEqual([1, 2, 3]);
+    expect(box('primitive', { shape: 'box', args: [2] })).toBe(null); // args that do not say the size
+  });
+
   it('media keys point at string-or-null props that exist', () => {
     for (const type of PREFAB_TYPES) {
       for (const key of PREFABS[type].media) {
@@ -35,6 +55,15 @@ describe('normalisePrefab and registries', () => {
     expect(m.media).toEqual([]);
     expect(m.hotspots(m.props)).toEqual(['shade']);
     expect(m.url).toBe('u');
+  });
+
+  it('geometry is optional, checked when given, and gets its defaults', () => {
+    expect(normalisePrefab('lamp', lamp).geometry).toBe(null);
+    const g = normalisePrefab('lamp', { ...lamp, geometry: p => ({ min: [-0.4, 0, -0.4], max: [0.4, p.height, 0.4], mount: 'floor' }) }).geometry({ height: 2 });
+    expect(g).toEqual({ min: [-0.4, 0, -0.4], max: [0.4, 2, 0.4], mount: 'floor', front: '+z', round: false });
+    expect(() => normalisePrefab('lamp', { ...lamp, geometry: [1] })).toThrow(/"geometry" must be a function/);
+    expect(() => normalisePrefab('lamp', { ...lamp, geometry: () => ({ min: [0, 0, 0], max: [1, 1, 1], mount: 'shelf' }) })).toThrow(/"geometry" must return/);
+    expect(() => normalisePrefab('lamp', { ...lamp, geometry: () => ({ min: [1, 0, 0], max: [0, 1, 1], mount: 'floor' }) })).toThrow(/min ≤ max/);
   });
 
   it('keeps the presentation fields and `requires` when they are well formed', () => {

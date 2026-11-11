@@ -65,6 +65,8 @@ export const lamp = {
 
 - Name the parts a scene may make clickable in `hotspots` (a list, or a function of the props), and give the matching `<Solid>` a `hotspot="name"` prop. A `ScreenSurface`'s hotspot is its `id`. For the lamp, `hotspots: ['shade']` and `<Solid ref={shade} hotspot="shade" …>` let a scene write `"actions": { "shade": { "type": "goTo", "poi": "…" } }`; see [Actions and hotspots](../reference/actions.md).
 
+- Add `geometry` so scene checks and wall placement know the object's size: a function of the props returning the solid body's box in local space, `{ min: [x,y,z], max: [x,y,z], mount }`, in metres before scale. `mount` is what the origin sits on: `'floor'`, `'wall'` (the back of the box, z = 0, is the wall surface), `'ceiling'` or `'free'`. Add `front: '-z'` if the prefab faces −Z and `round: true` for a disc-shaped footprint. Leave out lines such as cables and beams. For the lamp: `geometry: p => ({ min: [-0.4, 0, -0.4], max: [0.4, p.height + 0.25, 0.4], mount: 'floor', round: true })`. It is optional; without it the object renders the same but is skipped by the geometry checks.
+
 Then register it in `src/prefabs/registry.js`: import `lamp` and add it to `META`. `normalisePrefab` checks it (defaults validate, placement is finite, hotspots are names) and it becomes part of `BUILTIN`; every registry the loader builds includes the built-ins, so `lamp` is now a valid `type` and the "unknown type" error lists it. `make test` checks every built-in prefab the same way.
 
 ## 3. Map the type to the component

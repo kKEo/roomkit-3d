@@ -13,5 +13,6 @@ export const pictureFrame = {
   }),
   media: ['image'],
   hotspots: ['frame', 'image'],
+  geometry: p => ({ min: [-p.width / 2, -p.height / 2, 0], max: [p.width / 2, p.height / 2, p.exhibit ? 1.9 : 0.15], mount: 'wall' }),
   placement: p => ({ focus: [0, 0, 1.3], cameraDistance: 7, cameraHeight: null, markerOffset: [0, p.height / 2 + 0.7, 0.6] }),
 };

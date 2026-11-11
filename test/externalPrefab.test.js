@@ -10,6 +10,7 @@ describe('scene prefab contract (public/scenes/loft/prefabs/lamp.js)', () => {
     expect(m.props).toEqual({ height: 1.8, lit: true, spin: 0.3 });
     expect(m.hotspots(m.props)).toEqual(['shade']);
     expect(m.placement(m.props).focus[1]).toBeCloseTo(1.26);
+    expect(m.geometry(m.props)).toMatchObject({ mount: 'floor', round: true, max: [0.4, 2.05, 0.4] });
   });
 
   it('component is a factory of one argument, left alone here', () => {

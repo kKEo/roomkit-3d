@@ -31,6 +31,8 @@ export function meta({ z }) {
     media: [],                      // optional: props that hold a file path relative to the SCENE folder
     hotspots: ['shade'],            // optional: names a scene can bind actions to; a list or (props) => string[]
     placement: p => ({ focus: [0, p.height * 0.7, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
+    // optional: the solid body's box, for scene checks and wall placement (mount: floor | wall | ceiling | free)
+    geometry: p => ({ min: [-0.4, 0, -0.4], max: [0.4, p.height + 0.25, 0.4], mount: 'floor', round: true }),
     title: 'Floor lamp',            // optional: how the editor names the type (else the type name)
     blurb: 'a lamp on a pole',      // optional: one line under the name in the editor's Add palette
     glyph: '⚲',                     // optional: one or two characters for the editor's tree

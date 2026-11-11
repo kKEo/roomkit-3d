@@ -9,6 +9,12 @@
  *              when a POI leaves them out. Prefabs face local +Z.
  * - hotspots:  names of the clickable parts a scene can bind `actions` to; a list, or a
  *              function of the props when the parts depend on them (screens of a controlDesk)
+ * - geometry:  optional, a function of the props giving the solid body's box in local space, metres, before
+ *              scale: `{ min: [x,y,z], max: [x,y,z], mount, front?, round? }`. `mount` says what the origin sits
+ *              on: 'floor', 'wall' (the back of the box, z = 0, is the wall surface), 'ceiling' or 'free'.
+ *              `front` is the side it faces, '+z' (default) or '-z'; `round` marks a disc-shaped footprint.
+ *              Lines (cables, beams, captions) are left out. Scene checks and `at` placement use it; a prefab
+ *              without one still renders, its geometry is just not checked.
  * - title, blurb, glyph: optional, how an editor shows the type (a name, one line, one or two characters)
  * - requires:  optional, the SDK versions a scene-shipped prefab was written for (`^1.0.0`); see metaSdk.js
  *
@@ -34,6 +40,17 @@ const asFn = v => (typeof v === 'function' ? v : () => v ?? []);
 const finite = v => typeof v === 'number' && Number.isFinite(v);
 const vec3 = v => Array.isArray(v) && v.length === 3 && v.every(finite);
 
+export const MOUNTS = ['floor', 'wall', 'ceiling', 'free'];
+
+/** A prefab's `geometry()` result with the defaults filled in, or null when it has no solid body for these props. */
+function checkGeometry(g) {
+  if (g == null) return null;
+  const ok = typeof g === 'object' && vec3(g.min) && vec3(g.max) && g.min.every((v, i) => v <= g.max[i])
+    && MOUNTS.includes(g.mount) && (g.front == null || g.front === '+z' || g.front === '-z');
+  if (!ok) throw new Error(`"geometry" must return { min: [x,y,z], max: [x,y,z], mount: ${MOUNTS.join(' | ')}, front?: "+z" | "-z", round? } with min ≤ max, or null`);
+  return { min: g.min, max: g.max, mount: g.mount, front: g.front ?? '+z', round: !!g.round };
+}
+
 /**
  * Checks a prefab's meta and fills in the optional parts. Throws an Error whose message says what
  * is wrong, so a scene-shipped prefab's mistakes show on the loading screen. Extra fields (such as
@@ -56,9 +73,12 @@ export function normalisePrefab(type, meta) {
   const hotspots = asFn(meta.hotspots);
   const names = hotspots(props);
   if (!Array.isArray(names) || !names.every(n => typeof n === 'string')) throw new Error('"hotspots" must give a list of names');
+  if (meta.geometry != null && typeof meta.geometry !== 'function') throw new Error('"geometry" must be a function of the props');
+  const geometry = meta.geometry ? p => checkGeometry(meta.geometry(p)) : null;
+  if (geometry) geometry(props);
   for (const k of ['title', 'blurb', 'requires']) if (meta[k] != null && (typeof meta[k] !== 'string' || !meta[k].trim())) throw new Error(`"${k}" must be a non-empty string`);
   if (meta.glyph != null && (typeof meta.glyph !== 'string' || ![1, 2].includes([...meta.glyph.trim()].length))) throw new Error('"glyph" must be one or two characters');
-  return { ...meta, media: meta.media ?? [], hotspots, props };
+  return { ...meta, media: meta.media ?? [], hotspots, props, geometry };
 }
 
 /** The prefabs compiled into the app. */

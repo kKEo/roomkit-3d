@@ -24,6 +24,11 @@ export function meta({ z }) {
       legRest: z.boolean().default(true),
     }),
     hotspots: ['row'],
+    // the solid body, for scene checks and `at` placement; these seats face -Z
+    geometry: p => {
+      const w = p.count * p.pitch + (p.riser ? 0.6 : 0);
+      return { min: [-w / 2, 0, -1.4], max: [w / 2, p.riser + 1.75, 1.2], mount: 'floor', front: '-z' };
+    },
     placement: p => ({ focus: [0, p.riser + 0.9, 0], cameraDistance: 6, cameraHeight: p.riser + 2.8, markerOffset: [0, p.riser + 2.3, 0] }),
   };
 }
