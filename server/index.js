@@ -16,6 +16,7 @@ import { createRoom } from './room.js';
  *   TICK_HZ     pose broadcast rate (default 10)
  *   MAX_CLIENTS per event (default 200)
  *   STATE_DIR   directory for per-event state snapshots (default: none, state lives in memory only)
+ *   EMPTY_TTL_MS how long an event nobody is in stays open, with its state (default 60000)
  *   LOG         "debug" for per-client messages
  */
 const env = (k, d) => (process.env[k] == null || process.env[k] === '' ? d : process.env[k]);
@@ -28,7 +29,7 @@ const STATE_DIR = env('STATE_DIR', '');
 const DEBUG = env('LOG', '') === 'debug';
 const EVENT_NAME = /^[a-z0-9][a-z0-9-_]{0,63}$/i;
 const MAX_MESSAGE = 16 * 1024;
-const EMPTY_TTL = 60000; // an empty event (nobody left to resume) is dropped after this
+const EMPTY_TTL = +env('EMPTY_TTL_MS', 60000); // an empty event (nobody left to resume) is dropped after this
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const debug = DEBUG ? log : () => {};
@@ -45,7 +46,12 @@ function roomFor(event, scene) {
     onEmpty: () => {
       const e = rooms.get(event);
       if (!e) return;
-      e.timer = setTimeout(() => { persist(event, room); room.close(); rooms.delete(event); log(`event ${event}: closed (empty)`); }, EMPTY_TTL);
+      if (e.timer) clearTimeout(e.timer);
+      e.timer = setTimeout(() => {
+        e.timer = null;
+        if (room.size) return; // someone came back in the meantime
+        persist(event, room); room.close(); rooms.delete(event); log(`event ${event}: closed (empty)`);
+      }, EMPTY_TTL);
     },
   });
   if (STATE_DIR) {
@@ -110,8 +116,8 @@ wss.on('connection', (ws, req, event) => {
       const text = data.toString();
       let scene;
       try { scene = JSON.parse(text)?.scene; } catch { /* the room reports it */ }
-      const existing = rooms.get(event)?.room;
-      room = existing ?? (typeof scene === 'string' && scene ? roomFor(event, scene) : null);
+      // an event that is still open is joined through roomFor too: that is what calls off its closing when it was empty
+      room = rooms.has(event) || (typeof scene === 'string' && scene) ? roomFor(event, scene) : null;
       if (!room) { ws.send(JSON.stringify({ t: 'error', code: 'invalid', message: 'the join must name a scene' })); ws.close(4000, 'invalid'); return; }
       client = room.join(conn, text);
       if (client) debug(`[${event}] join ${client.id} ${client.name} from ${req.socket.remoteAddress} (${room.size} online)`);
