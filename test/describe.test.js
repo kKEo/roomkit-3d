@@ -17,7 +17,7 @@ describe('describeScene', () => {
       'pillars: [-6, 0]; lights: 3',
     ]);
     const line = start => text.find(l => l.trim().startsWith(start));
-    expect(line('door (decor:0)')).toBe('  door (decor:0): on the south wall (edge 2), 6 m from its left end of 12 m; from y 0 to 4.4; 2.7 m wide; facing north; nearest: desk (studio:0), 5.3 m north; click: door goes to the overview');
+    expect(line('door (decor:0)')).toBe('  door (decor:0): on the south wall (edge 2), 6 m from its left end of 12 m; from y 0 to 4.4; 2.7 m wide; facing north; nearest: desk (studio:0), 5.3 m north; placed at: wall 2, 50% along; click: door goes to the overview');
     expect(line('desk (studio:0)')).toMatch(/on the floor at \[8, 0, -7\]; 1\.9 m east–west by 2\.6 m north–south, y 0 to 2\.2; facing west; 3\.4 m from the east wall \(edge 1\)/);
     expect(line('pictureFrame (wall:0)')).toMatch(/on the north wall, 7 m from its left end of 24 m/);
     expect(text.at(-2)).toBe('  camera at [-6, 3.4, 11.4] looking north at [-6, 2.5, 5], 6.5 m away');

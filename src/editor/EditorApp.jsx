@@ -16,6 +16,7 @@ import {
   DECOR, sceneTree, errorsByKey, parseKey, objectKey, stopKey, addToScenery, moveObject, makeStop, dissolveStop, deleteStop,
   deleteObject, duplicateObject, moveStop, renameObject, renameNewStop, setField, setObjectField, stopRefs, viewSpot,
   prefabDecls, addPrefabDecls, removePrefabDecl,
+  detachPlacement, objectAt,
 } from './tree.js';
 import { Tree } from './Tree.jsx';
 import { Inspector } from './Inspector.jsx';
@@ -564,7 +565,8 @@ export function EditorApp() {
 
   const setTool = tool => useStore.getState().setEdit({ tool });
   /** The handles in the room dropped an object: its new position and / or rotation, one undo step; false if the file refused. */
-  const transform = (key, { position, rotation }) => !!change(f => {
+  const transform = (key, { position, rotation, pose }) => !!change(f => {
+    if (pose && objectAt(f, key)?.at) return { files: detachPlacement(f, key, pose), key };
     let next = f;
     if (position) next = setObjectField(next, key, ['position'], position);
     if (rotation) next = setObjectField(next, key, ['rotation'], rotation);

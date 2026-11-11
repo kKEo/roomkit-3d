@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { inspectScene, readerFromMap } from '../src/config/buildScene.js';
-import { lintScene, formatFinding, yawFor } from '../src/lint/rules.js';
+import { lintScene, formatFinding } from '../src/lint/rules.js';
+import { wallYaw } from '../src/config/placement.js';
 import { penetration, objectBox, segmentHitsBox } from '../src/lint/geometry.js';
 import { walls } from '../src/lib/footprint.js';
 import { BUILTIN_REGISTRY } from '../src/prefabs/registry.js';
@@ -135,6 +136,6 @@ describe('lint geometry', () => {
     expect(walls([[-5, -5], [5, -5], [5, 5], [-5, 5]]).map(w => w.name)).toEqual(['north wall', 'east wall', 'south wall', 'west wall']);
     const L = walls([[-12, -12], [12, -12], [12, 0], [0, 0], [0, 12], [-12, 12]]);
     expect(L.map(w => w.name)).toEqual(['north wall', 'east wall (edge 1)', 'south wall (edge 2)', 'east wall (edge 3)', 'south wall (edge 4)', 'west wall']);
-    expect(L.map(w => yawFor(w))).toEqual([0, -90, 180, -90, 180, 90]);
+    expect(L.map(w => wallYaw(w))).toEqual([0, -90, 180, -90, 180, 90]);
   });
 });

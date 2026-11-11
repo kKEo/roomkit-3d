@@ -1,6 +1,7 @@
 import { insideOrNear, nearestWall, walls, bounds } from '../lib/footprint.js';
 import { BLOCK_DATA, FEED_BLOCKS, feedBlockSchema, parseBlockData } from '../ui/blocks/schema.js';
 import { sceneRefs } from '../editor/export.js';
+import { wallYaw } from '../config/placement.js';
 import { PILLAR_HALF, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
 
 /**
@@ -150,7 +151,7 @@ function objects({ scene, all, add }) {
       if (near.distance > TOL) {
         add('warn', 'WALL_GAP', e.file, `${e.path}.position`, `${label(e)} hangs on a wall but is ${fmt(near.distance)} m from the nearest one (${near.wall.name})`, 'a wall object\'s position is a point on the wall line; `at: { wall }` puts it there');
       } else if (box.front[0] * near.wall.normal[0] + box.front[1] * near.wall.normal[1] < Math.cos((10 * Math.PI) / 180)) {
-        add('warn', 'WALL_FACING', e.file, `${e.path}.rotation`, `${label(e)} is on the ${near.wall.name} but does not face into the room`, `turn it so its front points away from the wall (yaw ${fmt(yawFor(near.wall, box.local.front))})`);
+        add('warn', 'WALL_FACING', e.file, `${e.path}.rotation`, `${label(e)} is on the ${near.wall.name} but does not face into the room`, `turn it so its front points away from the wall (yaw ${fmt(wallYaw(near.wall, box.local.front))})`);
       }
     }
     const worst = Math.max(...box.poly.map(([x, z]) => (insideOrNear(footprint, x, z, TOL) ? 0 : nearestWall(wallList, x, z).distance)));
@@ -175,13 +176,6 @@ function objects({ scene, all, add }) {
       if (depth > TOL && boxes[i].box.y0 < height) add('warn', 'PILLAR_OVERLAP', boxes[i].file, `${boxes[i].path}.position`, `${label(boxes[i])} overlaps the pillar at [${p[0]}, ${p[1]}] (room.pillars.${k}, ${PILLAR_HALF * 2} m base) by ${fmt(depth)} m`, 'move one of them apart by at least that much');
     });
   }
-}
-
-/** The yaw (degrees) that turns a prefab's front into the room from this wall. */
-export function yawFor(wall, front = '+z') {
-  const yaw = (Math.atan2(wall.normal[0], wall.normal[1]) * 180) / Math.PI + (front === '-z' ? 180 : 0);
-  const v = Math.round((((yaw + 180) % 360 + 360) % 360 - 180) * 10) / 10;
-  return v === -180 ? 180 : Object.is(v, -0) ? 0 : v;
 }
 
 function cameras({ scene, pois, all, add }) {

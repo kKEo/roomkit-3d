@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { alongWall, distToSegment, nearestWall, walls } from '../lib/footprint.js';
 import { framing, objectBox, penetration, sceneObjects } from './geometry.js';
 import { TYPE_INFO } from '../editor/types.js';
+import { placementText } from '../config/placement.js';
 
 /**
  * A scene read back in words, from the built config alone: where every object stands relative to the walls and
@@ -50,6 +51,7 @@ function objectLine(e, others, wallList) {
   }
   const next = others.filter(o => o !== e && o.box).map(o => ({ o, d: gap(box.poly, o.box.poly) })).sort((p, q) => p.d - q.d)[0];
   if (next) parts.push(`nearest: ${name(next.o)}, ${next.d <= 0.05 ? 'touching' : `${n(next.d)} m ${compass([next.o.box.centre[0] - box.centre[0], next.o.box.centre[1] - box.centre[1]])}`}`);
+  if (obj.at) parts.push(`placed at: ${placementText(obj.at)}`);
   const actions = Object.entries(obj.actions);
   if (actions.length) parts.push(`click: ${actions.map(actionText).join(', ')}`);
   return `${name(e)}: ${parts.join('; ')}`;

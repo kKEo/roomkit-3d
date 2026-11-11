@@ -25,7 +25,15 @@ Put these at height `0`.
 
 ## Things that hang on a wall
 
-Put these at the wall's position (for example `15` across for the right wall) and turn them to face into the room.
+The easy way is to name the wall and let the room work out the rest:
+
+```json
+{ "type": "pictureFrame", "at": { "wall": "west", "along": 0.4, "height": 3 } }
+```
+
+`wall` is `"north"` (the far wall when the room opens), `"south"`, `"east"` or `"west"`. `along` runs from `0`, the wall's left end as you face it, to `1`; leave it out for the middle. `height` is how high the object's origin sits: `0` for a door, the centre height for a frame. Things that stand on the floor take `at` too, and are set with their back against the wall.
+
+You can still give `position` and `rotation` yourself instead: put the object at the wall's position (for example `15` across for the right wall) and turn it to face into the room.
 
 | Type | What it is | Settings worth knowing |
 | --- | --- | --- |

@@ -19,6 +19,19 @@ export const prefabsDeclSchema = z.record(
 
 const color = z.string().min(3);
 
+/**
+ * `objects[].at`: placement by wall instead of by coordinates; src/config/placement.js works out the position
+ * and rotation. `wall` is a compass side (north is −Z) or the wall's number in `room.footprint`.
+ */
+export const atSchema = z.strictObject({
+  wall: z.union([z.enum(['north', 'south', 'east', 'west']), z.number().int().min(0)], { error: 'a wall is "north", "south", "east", "west" or its number in room.footprint' }),
+  along: z.number().min(0, 'a fraction 0–1; use "distance" for metres').max(1, 'a fraction 0–1; use "distance" for metres').optional(),
+  distance: z.number().min(0).optional(),
+  height: z.number().default(0),
+  offset: z.number().default(0),
+  turn: z.number().default(0),
+});
+
 /** Every interface string, typed from the defaults so a misspelt key is an error rather than silently ignored. */
 const uiSchema = z.strictObject(Object.fromEntries(
   Object.entries(SCENE_DEFAULTS.ui).map(([k, v]) => [k, typeof v === 'object' ? z.record(z.string(), z.string()) : z.string()]),
@@ -43,12 +56,17 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
     type: objectType,
     /** what the editor's tree calls the object; the viewer does not show it */
     name: z.string().optional(),
-    position: vec3.default([0, 0, 0]),
-    rotation: vec3.default([0, 0, 0]),
+    /** where it stands: `position` and `rotation` (degrees), or `at` a wall, which gives both */
+    position: vec3.optional(),
+    rotation: vec3.optional(),
+    at: atSchema.optional(),
     scale: z.union([positive, scale3]).default(1),
     props: z.record(z.string(), z.any()).default({}),
     actions: z.record(z.string(), actionSchema).default({}),
-  }).transform((o, ctx) => {
+  }).transform((raw, ctx) => {
+    if (raw.at && (raw.position || raw.rotation)) ctx.addIssue({ code: 'custom', path: ['at'], message: 'give "at" or "position"/"rotation", not both' });
+    if (raw.at?.along != null && raw.at.distance != null) ctx.addIssue({ code: 'custom', path: ['at'], message: 'give "along" (a fraction) or "distance" (metres), not both' });
+    const o = { ...raw, position: raw.position ?? [0, 0, 0], rotation: raw.rotation ?? [0, 0, 0] };
     const prefab = registry.get(o.type);
     const r = prefab.schema.safeParse(o.props);
     if (!r.success) {

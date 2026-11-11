@@ -6,6 +6,7 @@ import { isFeed } from '../data/feedSchema.js';
 import { satisfies, validRange } from '../lib/semver.js';
 import { autoPlacement, clampCamera, overviewCamera } from '../lib/autoCamera.js';
 import { withFootprint } from '../lib/footprint.js';
+import { resolvePlacement } from './placement.js';
 
 /**
  * Builds the `{ scene, pois }` the app renders from a scene folder's files. Pure: it knows nothing
@@ -81,6 +82,7 @@ async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
   scene.resolveUrl = resolveUrl;
   scene.room = withFootprint(scene.room);
   scene.camera.overview ??= overviewCamera(scene.room);
+  scene.decor = scene.decor.map((o, i) => resolvePlacement(o, scene.room, registry, (path, msg) => errors.push(`${label('scene.json')} › decor.${i}.${path}: ${msg}`)));
   scene.decor = scene.decor.map(o => resolveObjectMedia(o, resolveUrl, registry));
   checkFeeds(scene.decor, 'decor', transforms.extra, label('scene.json'), errors);
 
@@ -197,8 +199,10 @@ async function buildPoi(file, { read, resolveUrl, label, poiSchema, registry, tr
   const l = label(file);
   const poi = parseOrThrow(poiSchema, parseJson(await readLabelled(read, file, l), l), l);
   poi.file = file;
-  poi.objects = poi.objects.map(o => resolveObjectMedia(o, resolveUrl, registry));
   const feedErrors = [];
+  // without a room (scene.json has errors of its own) objects placed `at` a wall stay where the schema put them
+  if (room) poi.objects = poi.objects.map((o, i) => resolvePlacement(o, room, registry, (path, msg) => feedErrors.push(`${l} › objects.${i}.${path}: ${msg}`)));
+  poi.objects = poi.objects.map(o => resolveObjectMedia(o, resolveUrl, registry));
   checkFeeds(poi.objects, 'objects', transforms, l, feedErrors);
   if ('blocks' in poi.content) checkFeeds(poi.content.blocks, 'content.blocks', transforms, l, feedErrors);
   if (feedErrors.length) throw new ConfigError(feedErrors);

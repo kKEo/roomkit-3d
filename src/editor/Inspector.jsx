@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { DECOR, parseKey, objectAt, objectRaw, setObjectField, setObjectRaw, setField, renameObject, prefabDecls, typeUses } from './tree.js';
+import { DECOR, parseKey, objectAt, objectRaw, detachPlacement, setObjectField, setObjectRaw, setField, renameObject, prefabDecls, typeUses } from './tree.js';
 import { propFields, changed } from './form.js';
 import { glyphOf, isHosted } from './types.js';
 import { NumberField, TextField, JsonField, parseJson } from './fields.jsx';
 import { ScreenEditor, PartActions, screenProps } from './ScreenEditor.jsx';
+import { useStore } from '../state/store.js';
+import { placementText } from '../config/placement.js';
 
 /**
  * The selected node's settings under the tree. An object gets a form generated from its prefab's schema
@@ -49,6 +51,14 @@ function PropField({ f, written, def, onSet }) {
   );
 }
 
+/** Where the loader put an object (its built `position` and `rotation`), for one placed `at` a wall. */
+function builtPose(key) {
+  const { owner, index } = parseKey(key);
+  const { scene, pois } = useStore.getState();
+  const o = owner === DECOR ? scene?.decor[index] : pois?.find(p => p.file === owner)?.objects[index];
+  return o ? { position: o.position, rotation: o.rotation } : null;
+}
+
 function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
   const [tab, setTab] = useState('form');
   const obj = objectAt(files, node.key);
@@ -78,8 +88,19 @@ function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
       </div>
       {tab === 'json' ? <RawObject files={files} k={node.key} edit={edit} /> : (
         <div className="form">
-          <Vec label="position" value={obj.position} onCommit={v => set(['position'], v)} />
-          <Vec label="rotation" value={obj.rotation ?? [0, 0, 0]} onCommit={v => set(['rotation'], v)} />
+          {obj.at ? (
+            <div className="prop">
+              <span className="name">placed at</span>
+              <span className="sub">{placementText(obj.at)}</span>
+              <button type="button" title="Write the position and rotation this gives into the file, to move the object freely"
+                onClick={() => { const pose = builtPose(node.key); if (pose) edit(f => detachPlacement(f, node.key, pose)); }}>Convert to position</button>
+            </div>
+          ) : (
+            <>
+              <Vec label="position" value={obj.position ?? [0, 0, 0]} onCommit={v => set(['position'], v)} />
+              <Vec label="rotation" value={obj.rotation ?? [0, 0, 0]} onCommit={v => set(['rotation'], v)} />
+            </>
+          )}
           {Array.isArray(obj.scale)
             ? <Vec label="scale" value={obj.scale} onCommit={v => set(['scale'], v)} />
             : <div className="prop"><span className="name">scale</span><NumberField label="scale" value={obj.scale ?? 1} min={0.001} onCommit={v => set(['scale'], v === 1 ? undefined : v)} /></div>}

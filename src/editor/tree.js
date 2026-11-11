@@ -244,14 +244,21 @@ export function deleteObject(files, key) {
   return { files: with1(files, file, removeAt(files.get(file), [...list, index])), key: n > 1 ? objectKey(owner, Math.min(index, n - 2)) : (owner === DECOR ? 'scenery' : stopKey(owner)) };
 }
 
-/** A copy of an object right after it, a metre to the side, in the same layout. */
+/** A copy of an object right after it, a metre to the side (along its wall, if it is placed `at` one), in the same layout. */
 export function duplicateObject(files, key) {
   const { owner, index } = parseKey(key);
   const { file, list } = locate(owner);
   const obj = objectAt(files, key);
   let text = insertAt(files.get(file), list, index + 1, { raw: objectRaw(files, key) });
-  const p = Array.isArray(obj.position) ? obj.position : [0, 0, 0];
-  text = setAt(text, [...list, index + 1, 'position'], [Math.round((p[0] + 1) * 100) / 100, p[1], p[2]]);
+  if (obj.at && typeof obj.at === 'object') {
+    // placed at a wall: the copy goes a metre (or a tenth of the wall) further along it
+    const at = [...list, index + 1, 'at'];
+    if (typeof obj.at.distance === 'number') text = setAt(text, [...at, 'distance'], Math.round((obj.at.distance + 1) * 100) / 100);
+    else text = setAt(text, [...at, 'along'], Math.round(Math.min(1, (obj.at.along ?? 0.5) + 0.1) * 100) / 100);
+  } else {
+    const p = Array.isArray(obj.position) ? obj.position : [0, 0, 0];
+    text = setAt(text, [...list, index + 1, 'position'], [Math.round((p[0] + 1) * 100) / 100, p[1], p[2]]);
+  }
   if (obj.name) text = setAt(text, [...list, index + 1, 'name'], `${obj.name} copy`);
   return { files: with1(files, file, text), key: objectKey(owner, index + 1) };
 }
@@ -272,6 +279,16 @@ export function setObjectField(files, key, path, value) {
   const { owner, index } = parseKey(key);
   const { file, list } = locate(owner);
   return with1(files, file, setAt(files.get(file), [...list, index, ...path], value));
+}
+
+/**
+ * Turns an object placed `at` a wall into one with coordinates: writes `position` and `rotation` (what the loader
+ * worked out, or where the handles left it) and drops `at`. The object stays where it is on screen.
+ */
+export function detachPlacement(files, key, { position, rotation }) {
+  let next = setObjectField(files, key, ['position'], position);
+  next = setObjectField(next, key, ['rotation'], rotation);
+  return setObjectField(next, key, ['at'], undefined);
 }
 
 /** Names an object (shown in the tree); an empty name removes it, and the automatic label comes back. */

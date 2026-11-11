@@ -151,6 +151,8 @@ Open `/edit.html?scene=cinema` on the dev server.
 | Drag with `Shift` held; press `Esc` in the middle of a drag | free movement; the object jumps back and nothing is written |
 | In Select mode, click a handle without dragging, then click the floor | the first keeps the selection; the second clears it and the handles go |
 | Select a stop, or zoom into a screen | no handles |
+| `edit.html?scene=loft`: select Scenery › door | the inspector shows **placed at** `wall 2, 50% along` and a **Convert to position** button instead of position and rotation fields |
+| Drag that door along the wall with the handles, then undo | the JSON tab shows `position` and `rotation` and no `at`; one undo brings `at` back and the door returns |
 
 ## Editor: screens
 
