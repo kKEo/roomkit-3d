@@ -150,6 +150,43 @@ describe('shared state', () => {
     expect(cb).toBeTruthy();
   });
 
+  it('lets a visitor take its place back on a new connection before the old one is known to be dead', () => {
+    const a = conn(), b = conn(), a2 = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    room.message(ca, msg({ t: 'op', key: 'k', value: 1 }));
+    b.clear();
+    const again = room.join(a2, JOIN('Ada', { resume: { id: ca.id, token: ca.token } }));
+    expect(again).toBe(ca);                        // the same client, the same id
+    expect(a.closed).toEqual({ code: 4004, reason: 'replaced' });
+    expect(a2.json()[0]).toMatchObject({ t: 'welcome', id: ca.id, state: { k: { value: 1 } } });
+    expect(room.size).toBe(2);
+    expect(b.json()).toEqual([]);                  // Bob saw neither a leave nor a join
+    // the old connection closes late: it must not take the visitor out again
+    room.leave(ca, a);
+    expect(room.size).toBe(2);
+    expect(room.client(ca.id).conn).toBe(a2);
+    room.message(ca, msg({ t: 'op', key: 'k', value: 2 }));
+    expect(b.last()).toMatchObject({ t: 'state', value: 2, by: ca.id });
+    // the live connection closing does count
+    room.leave(ca, a2);
+    expect(room.size).toBe(1);
+    expect(b.last()).toMatchObject({ t: 'leave', id: ca.id });
+  });
+
+  it('announces a new name or colour when the visitor comes back changed, and refuses a wrong token', () => {
+    const a = conn(), b = conn(), a2 = conn(), x = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    b.clear();
+    room.join(a2, JOIN('Ada Lovelace', { resume: { id: ca.id, token: ca.token } }));
+    expect(b.json()).toEqual([{ t: 'profile', id: ca.id, name: 'Ada Lovelace', color: '#00ff66' }]);
+    const other = room.join(x, JOIN('Eve', { resume: { id: ca.id, token: 'not-the-token' } }));
+    expect(other.id).not.toBe(ca.id);              // a wrong token is a new visitor, and the live one stays
+    expect(room.size).toBe(3);
+    expect(room.client(ca.id).conn).toBe(a2);
+  });
+
   it('limits ops per second and the size of a value', () => {
     const a = conn();
     const ca = room.join(a, JOIN('Ada'));

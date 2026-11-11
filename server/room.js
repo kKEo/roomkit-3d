@@ -94,13 +94,24 @@ export function createRoom({
     const fail = (code, message) => { try { conn.send(JSON.stringify({ t: 'error', code, message })); conn.close(4000, code); } catch { /* gone */ } return null; };
     if (!msg || msg.t !== 'join') return fail(msg ? 'invalid' : 'version', 'the first message must be a join of this protocol version');
     if (msg.scene !== scene) return fail('scene', `this event is for the scene "${scene}"`);
-    let client = null;
+    let client = null, takeover = false, renamed = false;
     const ghost = msg.resume && ghosts.get(msg.resume.id);
+    const live = msg.resume && clients.get(msg.resume.id);
     if (ghost && ghost.client.token === msg.resume.token) {
       ghosts.delete(msg.resume.id);
       client = ghost.client;
       client.conn = conn; client.name = msg.name; client.color = msg.color;
       log(`resume ${client.id}`);
+    } else if (live && live.token === msg.resume.token) {
+      // the same visitor again before the server noticed its old connection is dead (a phone switching from Wi-Fi
+      // to mobile data): the new connection takes the place, so its peers see one avatar and no leave
+      client = live; takeover = true;
+      const old = client.conn;
+      client.conn = conn; // first, so the old connection's close no longer counts as this client leaving (see `leave`)
+      renamed = client.name !== msg.name || client.color !== msg.color;
+      client.name = msg.name; client.color = msg.color;
+      try { old?.close(4004, 'replaced'); } catch { /* gone */ }
+      log(`takeover ${client.id}`);
     } else {
       if (clients.size >= maxClients) return fail('full', 'this event is full');
       const id = allocId();
@@ -115,7 +126,8 @@ export function createRoom({
     const here = [];
     for (const c of clients.values()) if (c !== client && c.pose) here.push({ id: c.id, pose: c.pose, flags: c.flags });
     if (here.length) send(client, packPoses(here));
-    broadcast({ t: 'join', peer: peerOf(client) }, client);
+    if (!takeover) broadcast({ t: 'join', peer: peerOf(client) }, client);
+    else if (renamed) broadcast({ t: 'profile', id: client.id, name: client.name, color: client.color }, client);
     if (!tickTimer) start();
     return client;
   }
@@ -240,8 +252,9 @@ export function createRoom({
   /** The transport saw the client alive (a WebSocket pong): it is not idle, whatever it sent. */
   function touch(client) { client.lastSeen = now(); }
 
-  /** The connection went away: keep the client as a ghost for a while, so it can resume; its peers hear `leave` only when it is forgotten. */
-  function leave(client) {
+  /** The connection went away (pass it, so a late close of a replaced connection is ignored): keep the client as a ghost for a while, so it can resume; its peers hear `leave` only when it is forgotten. */
+  function leave(client, conn) {
+    if (conn !== undefined && client.conn !== conn) return; // a connection that was replaced (see `join`) closing late
     if (!clients.has(client.id)) return;
     clients.delete(client.id);
     dirty.delete(client.id);

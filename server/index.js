@@ -134,9 +134,10 @@ wss.on('connection', (ws, req, event) => {
       } else if (!room.size) armClose(event); // the attempt called off the closing of an empty event: call it on again
       return;
     }
+    if (client.conn !== conn) return; // this connection was replaced by a newer one of the same visitor
     room.message(client, isBinary ? data : data.toString());
   });
-  ws.on('close', () => { clearTimeout(joinTimer); if (client && room) { room.leave(client); debug(`[${event}] left ${client.id} (${room.size} online)`); } });
+  ws.on('close', () => { clearTimeout(joinTimer); if (client && room && client.conn === conn) { room.leave(client, conn); debug(`[${event}] left ${client.id} (${room.size} online)`); } });
   ws.on('error', e => debug(`[${event}] socket error: ${e.message}`));
 });
 

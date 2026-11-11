@@ -70,6 +70,23 @@ describe('the sync server process', () => {
     await sleep(100);
   });
 
+  it('gives a visitor who reconnects before its old connection died the same avatar, not a second one', async () => {
+    const first = await connect('swap', join('loft'));
+    await sleep(200);
+    const { id, token } = first.msgs[0];
+    const watcher = await connect('swap', join('loft', { name: 'Bob' }));
+    await sleep(200);
+    watcher.msgs.length = 0;
+    const second = await connect('swap', join('loft', { resume: { id, token } }));
+    await sleep(300);
+    expect(second.msgs[0]).toMatchObject({ t: 'welcome', id });
+    expect(first.ws.closedWith).toBe(4004);
+    expect((await status()).swap.clients).toBe(2);
+    expect(watcher.msgs.filter(m => m.t === 'leave' || m.t === 'join')).toEqual([]);
+    second.ws.close(); watcher.ws.close();
+    await sleep(100);
+  });
+
   it('keeps an event, and its state, when its only visitor leaves and comes back in time', async () => {
     const a = await connect('back', join('loft'));
     await sleep(200);

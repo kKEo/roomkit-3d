@@ -62,7 +62,7 @@ A connection opens at `/ws/<event>` and sends a `join` (`{ t, v, scene, name, co
 
 ## Liveness and reconnection
 
-The client pings every 2 s; the server pings the socket every 15 s and counts a pong as "still here", so a background tab (whose timers the browser slows down) keeps its place; a client silent for 45 s is dropped and its peers get `leave`. A dropped client is kept as a ghost for 30 s: a reconnect with its token gets the same id. The client reconnects by itself with exponential backoff (0.5 s to 15 s), at once when the tab becomes visible again, and resends its last intent after every `welcome`.
+The client pings every 2 s; the server pings the socket every 15 s and counts a pong as "still here", so a background tab (whose timers the browser slows down) keeps its place; a client silent for 45 s is dropped and its peers get `leave`. A dropped client is kept as a ghost for 30 s: a reconnect with its token gets the same id. A reconnect with the token of a client that is still connected (its old connection is dead but the server has not noticed yet) takes over that client: the old connection is closed with code 4004, the peers see no leave and no join, and a late close of the old connection is ignored. The client reconnects by itself with exponential backoff (0.5 s to 15 s), at once when the tab becomes visible again, and resends its last intent after every `welcome`.
 
 ## Limits and scaling
 
