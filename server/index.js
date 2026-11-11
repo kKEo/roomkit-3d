@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WebSocketServer } from 'ws';
 import { createRoom } from './room.js';
+import { sendGuarded } from './send.js';
 
 /**
  * The sync server: one process, one room per event, over `ws`. Clients connect to
@@ -15,6 +16,7 @@ import { createRoom } from './room.js';
  *   ORIGINS     comma-separated page origins allowed to connect (default: any)
  *   TICK_HZ     pose broadcast rate (default 10)
  *   MAX_CLIENTS per event (default 200)
+ *   MAX_BUFFERED_KB how much a client may be behind before it is dropped (default 1024; a quarter of it already stops its pose frames)
  *   STATE_DIR   directory for per-event state snapshots (default: none, state lives in memory only)
  *   EMPTY_TTL_MS how long an event nobody is in stays open, with its state (default 60000)
  *   LOG         "debug" for per-client messages
@@ -26,6 +28,7 @@ const ORIGINS = env('ORIGINS', '').split(',').map(s => s.trim()).filter(Boolean)
 const TICK_MS = Math.round(1000 / Math.max(1, +env('TICK_HZ', 10)));
 const MAX_CLIENTS = +env('MAX_CLIENTS', 200);
 const STATE_DIR = env('STATE_DIR', '');
+const MAX_BUFFERED = +env('MAX_BUFFERED_KB', 1024) * 1024; // see server/send.js
 const DEBUG = env('LOG', '') === 'debug';
 const EVENT_NAME = /^[a-z0-9][a-z0-9-_]{0,63}$/i;
 const MAX_MESSAGE = 16 * 1024;
@@ -106,7 +109,7 @@ wss.on('connection', (ws, req, event) => {
   ws.binaryType = 'arraybuffer';
   let client = null, room = null;
   const conn = {
-    send: data => { if (ws.readyState === ws.OPEN) ws.send(data); },
+    send: data => { if (sendGuarded(ws, data, MAX_BUFFERED) === 'terminated') log(`[${event}] dropped a client that stopped reading`); },
     close: (code, reason) => ws.close(code, reason),
   };
   // the first frame is the join (text); anything else is refused

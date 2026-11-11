@@ -20,6 +20,7 @@ Open two browsers on `http://localhost:5180/?scene=loft&event=demo` and fly abou
 | `ORIGINS` | any | comma-separated page origins allowed to connect, such as `https://example.github.io`. Set it in production: a browser sends its `Origin`, and the server refuses others with 403 |
 | `TICK_HZ` | `10` | how often changed poses go out |
 | `MAX_CLIENTS` | `200` | per event |
+| `MAX_BUFFERED_KB` | `1024` | how far a visitor's connection may fall behind before the server drops it. A quarter of this already stops sending it position frames (the next one replaces them anyway); beyond it the connection is closed and the page reconnects and resumes. It keeps a visitor who stopped reading from filling the server's memory |
 | `EMPTY_TTL_MS` | `60000` | how long an event with nobody in it stays open; coming back in time keeps it, and its state |
 | `STATE_DIR` | none | directory for one JSON snapshot per event (the shared state, not the visitors), written every 10 s when it changed and on shutdown, restored when the event opens again |
 | `LOG` | | `debug` logs every join and leave |
