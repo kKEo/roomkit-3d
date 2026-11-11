@@ -138,11 +138,15 @@ const COMPASS = [['north', 0, 1], ['south', 0, -1], ['east', -1, 0], ['west', 1,
  * The room's walls: `edges(poly)` with `index`, `compass` and `name`. North is −Z, so the north wall is the one
  * whose inner side faces +Z; `compass` is null for a wall that runs at an angle. `name` is what to call the wall
  * in a message: its compass side when only one wall has it, else "south wall (edge 2)" or "wall (edge 3)".
+ * `left` and `right` say which way the wall runs for someone standing in the room facing it.
  */
 export function walls(poly) {
   const list = edges(poly).map((e, index) => {
     const hit = COMPASS.find(([, nx, nz]) => e.normal[0] * nx + e.normal[1] * nz > 0.999);
-    return { ...e, index, compass: hit ? hit[0] : null };
+    // seen from inside, facing the wall: `right` is the unit direction to the right, `left` the wall's left end
+    const right = [e.normal[1], -e.normal[0]];
+    const left = e.a[0] * right[0] + e.a[1] * right[1] <= e.b[0] * right[0] + e.b[1] * right[1] ? e.a : e.b;
+    return { ...e, index, compass: hit ? hit[0] : null, right, left };
   });
   const count = c => list.filter(w => w.compass === c).length;
   return list.map(w => ({ ...w, name: !w.compass ? `wall (edge ${w.index})` : count(w.compass) === 1 ? `${w.compass} wall` : `${w.compass} wall (edge ${w.index})` }));
@@ -163,3 +167,6 @@ export function insideOrNear(poly, x, z, tol = 0.05) {
   if (containsPoint(poly, x, z)) return true;
   return poly.some((a, i) => distToSegment(x, z, a, poly[(i + 1) % poly.length]) <= tol);
 }
+
+/** How far along a wall a point is, in metres from the wall's left end (seen from inside). */
+export const alongWall = (wall, x, z) => (x - wall.left[0]) * wall.right[0] + (z - wall.left[1]) * wall.right[1];

@@ -51,6 +51,29 @@ Every prefab declares the box of its solid body and what its origin sits on (`ge
 - The boxes are a little generous (a desk's box includes its chair), and lines such as cables and light beams are not part of them. Objects closer than 5 cm are treated as touching, not overlapping.
 - An object placed on purpose where the check objects, such as a vase on a bench, is reported. Warnings do not fail `make scene-check`, but a shipped scene must be free of them; move the object or change the rule in `src/lint/rules.js` with a test.
 
+## Reading a scene back
+
+Three more commands print what a scene contains, so its layout can be checked against what was asked for without opening it:
+
+```sh
+node tools/scene.js describe loft             # the scene in words
+node tools/scene.js plan loft                 # the floor plan as text
+node tools/scene.js plan loft --svg=loft.svg  # the same plan as a picture
+node tools/scene.js prefabs loft              # the object types this scene can place
+```
+
+`describe` gives one line per object and two per stop:
+
+```text
+desk (studio:0): on the floor at [8, 0, -7]; 1.9 m east–west by 2.6 m north–south, y 0 to 2.2; facing west; 3.4 m from the east wall (edge 1); nearest: pictureFrame (wall:2), 1.8 m north-west
+  camera at [2, 2.9, -7] looking east at [8, 1.6, -7], 6.1 m away
+  in the picture: pictureFrame (wall:2) 14% left, desk (studio:0) 13% centre
+```
+
+North is −Z and east is +X, as on the minimap. A wall is called by its side (`north wall`); in a room where two walls face the same way they also carry their number in `room.footprint` (`south wall (edge 2)`). "In the picture" lists the objects that fill at least 1% of a 16:9 view from the stop's camera, largest first; a stop whose own objects are all missing from it gets a `NOTE:` line, and `test/describe.test.js` fails for a shipped scene with one.
+
+`plan` draws walls as `#`, floor as `.`, pillars as `o`, each object's outline as a letter and each stop's camera as its number, with a legend underneath. `prefabs` lists every type with its size at default props, where its origin sits, which way it faces, its props with defaults and limits, and its clickable parts; with a scene name it includes that scene's own types.
+
 ## What it misses
 
 How the scene looks: colours, whether a screen plays its video, text that is too long for a panel, motion. Those still need the browser pass in [Running the tests](running-the-tests.md).
