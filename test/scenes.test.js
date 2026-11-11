@@ -7,6 +7,8 @@ import { SCENE_NAME } from '../src/config/loadScene.js';
 import { isFeed } from '../src/data/feedSchema.js';
 import { liveScreenSchema } from '../src/prefabs/screenSchema.js';
 import { FEED_BLOCKS, feedBlockSchema, parseBlockData } from '../src/ui/blocks/schema.js';
+import { checkScene } from '../tools/scene/load.js';
+import { formatFinding } from '../src/lint/rules.js';
 
 /**
  * Every scene shipped in public/scenes/ must build: this is the config test suite.
@@ -64,6 +66,11 @@ describe.each(dirs)('scene %s', name => {
       expect(p.marker.position.length).toBe(3);
       expect(p.content.blocks.length).toBeGreaterThan(0);
     }
+  });
+
+  it('passes the scene checks: nothing outside the room or overlapping, every reference resolves, cameras see their stop', async () => {
+    const { findings } = await checkScene(name);
+    expect(findings.filter(f => f.level !== 'info').map(formatFinding)).toEqual([]);
   });
 
   it('every live feed with a file in the scene answers with valid screen fields or block data', async () => {

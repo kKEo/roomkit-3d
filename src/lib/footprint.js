@@ -124,3 +124,42 @@ export function withFootprint(room) {
   const b = bounds(footprint);
   return { ...room, footprint, bounds: b, centre: centroid(footprint), width: b.width, depth: b.depth };
 }
+
+/** Distance from a point to segment A→B. */
+export function distToSegment(x, z, [ax, az], [bx, bz]) {
+  const dx = bx - ax, dz = bz - az, len2 = dx * dx + dz * dz;
+  const t = len2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2)) : 0;
+  return Math.hypot(x - ax - dx * t, z - az - dz * t);
+}
+
+const COMPASS = [['north', 0, 1], ['south', 0, -1], ['east', -1, 0], ['west', 1, 0]];
+
+/**
+ * The room's walls: `edges(poly)` with `index`, `compass` and `name`. North is −Z, so the north wall is the one
+ * whose inner side faces +Z; `compass` is null for a wall that runs at an angle. `name` is what to call the wall
+ * in a message: its compass side when only one wall has it, else "south wall (edge 2)" or "wall (edge 3)".
+ */
+export function walls(poly) {
+  const list = edges(poly).map((e, index) => {
+    const hit = COMPASS.find(([, nx, nz]) => e.normal[0] * nx + e.normal[1] * nz > 0.999);
+    return { ...e, index, compass: hit ? hit[0] : null };
+  });
+  const count = c => list.filter(w => w.compass === c).length;
+  return list.map(w => ({ ...w, name: !w.compass ? `wall (edge ${w.index})` : count(w.compass) === 1 ? `${w.compass} wall` : `${w.compass} wall (edge ${w.index})` }));
+}
+
+/** The wall nearest to a point: `{ wall, distance }`. */
+export function nearestWall(wallList, x, z) {
+  let best = null;
+  for (const wall of wallList) {
+    const distance = distToSegment(x, z, wall.a, wall.b);
+    if (!best || distance < best.distance) best = { wall, distance };
+  }
+  return best;
+}
+
+/** Inside the polygon, or within `tol` metres of its outline (a point on a wall counts as inside). */
+export function insideOrNear(poly, x, z, tol = 0.05) {
+  if (containsPoint(poly, x, z)) return true;
+  return poly.some((a, i) => distToSegment(x, z, a, poly[(i + 1) % poly.length]) <= tol);
+}

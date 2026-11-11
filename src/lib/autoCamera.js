@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { objectMatrix } from './math.js';
+import { clipSegment, containsPoint } from './footprint.js';
 
 /**
  * Derive camera + marker placement for a POI from its first object when the
@@ -31,4 +32,18 @@ export function autoPlacement(obj, prefabDefaults) {
     camera: { position: pos.toArray(), target: focus.toArray() },
     marker: { position: marker.toArray() },
   };
+}
+
+/**
+ * Pulls a camera that stands outside the room back along its line of sight, to `margin` metres inside the
+ * wall it crossed. A camera already inside, or one whose target is outside too, is returned as is.
+ */
+export function clampCamera(camera, footprint, margin = 0.6) {
+  const [px, py, pz] = camera.position, [tx, , tz] = camera.target;
+  if (containsPoint(footprint, px, pz)) return camera;
+  const inside = clipSegment(footprint, tx, tz, px, pz)[0];
+  if (!inside) return camera;
+  const len = Math.hypot(px - tx, pz - tz), reach = Math.hypot(inside[2] - tx, inside[3] - tz);
+  const d = Math.max(reach - margin, reach / 2);
+  return { ...camera, position: [tx + ((px - tx) / len) * d, py, tz + ((pz - tz) / len) * d] };
 }

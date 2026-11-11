@@ -4,6 +4,7 @@
 
 - [Part I: Running the checks](running/README.md)
   - [Running the tests](running/running-the-tests.md)
+  - [Scene checks](running/scene-checks.md)
   - [What is tested where](running/what-is-tested-where.md)
   - [Gates and CI](running/gates.md)
 - [Part II: Writing tests](writing/README.md)

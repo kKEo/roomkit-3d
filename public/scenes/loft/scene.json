@@ -31,7 +31,7 @@
   },
   "decor": [
     { "type": "door", "position": [6, 0, 0], "rotation": [0, 180, 0], "actions": { "door": { "type": "goTo", "poi": null } } },
-    { "type": "bench", "position": [-6, 0, 8], "rotation": [0, 90, 0], "props": { "width": 3, "height": 0.5 } },
+    { "type": "bench", "position": [-6, 0, 9.4], "rotation": [0, 90, 0], "props": { "width": 3, "height": 0.5 } },
     { "type": "lamp", "position": [-10, 0, 10], "props": { "height": 2.2 }, "actions": { "shade": { "type": "goTo", "poi": "wing" } } }
   ],
   "poi": ["poi/wall.json", "poi/studio.json", "poi/wing.json"]

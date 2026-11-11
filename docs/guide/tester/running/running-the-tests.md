@@ -5,12 +5,12 @@ This page runs every check that exists today, in the order that finds problems f
 ## 0. Lint and unit tests
 
 ```bash
-make check           # make lint, make test, make build in one go
+make check           # make lint, make test, make scene-check, make build in one go
 ```
 
 **Pass:** eslint prints nothing, vitest ends with `Test Files … passed`, the build ends with `✓ built in …`.
 **Catches:** hook and scoping mistakes; every config and schema error in `public/scenes/`, with the same `file › path: message` lines the loading screen would show; wrong block or screen data in `content.blocks`; broken imports.
-**Misses:** anything that needs a browser: rendering, fenced blocks inside Markdown, media files, motion.
+**Misses:** anything that needs a browser: rendering and motion. Missing media files, broken fenced blocks inside Markdown, objects outside the room and blocked cameras are caught by the [scene checks](scene-checks.md) that `make check` runs.
 
 ## 1. Build
 

@@ -11,8 +11,9 @@ This page lists every command the project defines or relies on. Run them from th
 | `make build` | install if needed, then the production build into `dist/` |
 | `make serve` | `make build`, then serve `dist/` at `http://localhost:4173` |
 | `make test` | the unit tests (`vitest run`), including building every scene in `public/scenes/` |
-| `make lint` | `eslint .` over `src/` and `test/` |
-| `make check` | `make lint`, `make test`, `make build`: what a CI run does |
+| `make lint` | `eslint .` over everything except `dist/`, `site/` and `docs/` |
+| `make scene-check` | `node tools/scene.js check`: every scene's config, references, object positions and cameras, without a browser; `SCENE=<name>` for one scene |
+| `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |
 | `make docs-check` | build every book into a temporary folder; fails if a book does not build, for example when `SUMMARY.md` lists a missing file |
 | `make docs-serve BOOK=<book>` | live-preview one book (`user`, `operator` or `tester`) at `http://localhost:3000`, opening the browser |

@@ -13,7 +13,7 @@ VITE_PORT   = $(if $(PORT),-- --port $(PORT))
 MDBOOK_PORT = $(if $(PORT),--port $(PORT))
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build serve test lint check server server-docker bots docs docs-check docs-serve docs-site-serve intro-video all clean
+.PHONY: help install dev build serve test lint scene-check check server server-docker bots docs docs-check docs-serve docs-site-serve intro-video all clean
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -44,7 +44,10 @@ test: node_modules ## Run the unit tests (vitest)
 lint: node_modules ## Lint the source (eslint)
 	npm run lint
 
-check: lint test build ## Lint, test and build — what CI runs
+scene-check: node_modules ## Check scenes without a browser: config, references, positions, cameras (SCENE=name for one)
+	node tools/scene.js check $(SCENE)
+
+check: lint test scene-check build ## Lint, test, check the scenes and build — what CI runs
 
 docs: docs-check ## Build all three books and the landing page into site/ (ready for GitHub Pages)
 	rm -rf $(SITE)

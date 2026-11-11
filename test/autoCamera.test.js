@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoPlacement, overviewCamera } from '../src/lib/autoCamera.js';
+import { autoPlacement, clampCamera, overviewCamera } from '../src/lib/autoCamera.js';
 import { PREFABS } from '../src/prefabs/registry.js';
 
 const close = (a, b, eps = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < eps);
@@ -51,5 +51,24 @@ describe('autoPlacement', () => {
       const { camera, marker } = autoPlacement({ type, position: [0, 0, 0] }, meta.placement(meta.props));
       for (const v of [...camera.position, ...camera.target, ...marker.position]) expect(Number.isFinite(v), type).toBe(true);
     }
+  });
+});
+
+describe('clampCamera', () => {
+  const room = [[-5, -5], [5, -5], [5, 5], [-5, 5]];
+
+  it('leaves a camera inside the room alone', () => {
+    const cam = { position: [0, 2, 4], target: [0, 1, 0] };
+    expect(clampCamera(cam, room)).toBe(cam);
+  });
+
+  it('pulls a camera behind a wall back along its line of sight, keeping its height', () => {
+    const { position, target } = clampCamera({ position: [0, 2, 12], target: [0, 1, 0] }, room);
+    expect(position).toEqual([0, 2, 4.4]);
+    expect(target).toEqual([0, 1, 0]);
+  });
+
+  it('never gets closer than half way when the target is at the wall', () => {
+    expect(clampCamera({ position: [0, 2, 12], target: [0, 1, 4.5] }, room).position[2]).toBeCloseTo(4.75);
   });
 });
