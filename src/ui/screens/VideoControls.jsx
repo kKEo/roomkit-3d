@@ -59,7 +59,9 @@ export function VideoControls({ screenKey, ui }) {
       <button type="button" onClick={() => act(v => seek(v, 10))} title={ui.videoForward} aria-label={ui.videoForward}>▶▶</button>
       <input
         type="range" min="0" max={Number.isFinite(duration) ? duration : 0} step="0.1" value={time}
-        onChange={e => { const t = Number(e.target.value); act(v => { v.currentTime = t; }); }} aria-label={clock(time)}
+        // dragging steers the video here at once, but only the release is published: an op per input event would hit the server's write limit
+        onChange={e => { video.currentTime = Number(e.target.value); }}
+        onPointerUp={() => publishVideo(screenKey, video)} aria-label={clock(time)}
       />
       <span className="vtime">{clock(time)} / {clock(duration)}</span>
       <span className="vspeed">

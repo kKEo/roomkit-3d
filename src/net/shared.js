@@ -1,5 +1,5 @@
 import { useSyncExternalStore, useCallback } from 'react';
-import { syncClient, useSync } from './sync.js';
+import { syncClient, useSync } from './syncStore.js';
 
 /**
  * The scene state everyone in an event sees alike: a flat map key → JSON value, held by the sync
@@ -24,6 +24,8 @@ useSync.subscribe((s, prev) => {
   if (c) for (const [key, p] of pending) { const e = c.shared.get(key); if (e && e.seq > p.seq) pending.delete(key); }
   notify();
 });
+// the server refused a write of ours: stop showing it
+useSync.subscribe((s, prev) => { if (s.rejected && s.rejected !== prev.rejected) rejectShared(s.rejected.key); });
 useSync.subscribe((s, prev) => { if (s.active !== prev.active || s.status !== prev.status) { pending.clear(); notify(); } });
 
 /** The current value of `key`: a pending write of ours, else the server's (or the page's own, outside an event). */
@@ -56,6 +58,13 @@ export const toggleShared = (key, initial = false) => setShared(key, !getShared(
 /** Hold `key` against other writers while dragging something (the server lets it go after a few idle seconds). */
 export const grabShared = key => syncClient()?.grab(key) ?? true;
 export const dropShared = key => syncClient()?.drop(key) ?? true;
+
+/**
+ * The server refused our write of `key` (rate limit, a lease held by someone else, a stale base, too big):
+ * the guess we showed is wrong, so drop it and show what the server has. Without this the writer would keep
+ * its own value while everyone else keeps the server's, until somebody wrote the key again.
+ */
+export function rejectShared(key) { if (pending.delete(key)) notify(); }
 
 /** Forget the page-local values (a different scene was loaded). */
 export function resetShared() { local.clear(); pending.clear(); notify(); }

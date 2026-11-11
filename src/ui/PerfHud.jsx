@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useStore, runtime } from '../state/store.js';
 import { fmtMs } from '../lib/sysinfo.js';
 import { FrameGraph } from './Options.jsx';
@@ -9,7 +10,8 @@ export function PerfHud() {
   const on = useStore(s => s.gfx.hud);
   const accent = useStore(s => s.scene.theme.accent);
   const [s, setS] = useState(null);
-  const net = useSync(n => (n.active ? { status: n.status, peers: n.peers.length, rtt: n.rtt, rates: n.rates } : null));
+  // a new object per call would loop forever under zustand 5: useShallow compares its fields instead
+  const net = useSync(useShallow(n => (n.active ? { status: n.status, peers: n.peers.length, rtt: n.rtt, rates: n.rates } : null)));
   useEffect(() => {
     if (!on) return;
     const id = setInterval(() => setS(runtime.stats), 250);

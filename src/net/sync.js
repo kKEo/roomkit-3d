@@ -1,6 +1,8 @@
-import { create } from 'zustand';
 import { createSyncClient } from './client.js';
 import { runtime } from '../state/store.js';
+import { useSync, syncClient, setSyncClient, PROFILE_KEY } from './syncStore.js';
+
+export { useSync, syncClient };
 
 /**
  * The viewer's live connection to an event (browser glue around src/net/client.js). Started by the
@@ -13,33 +15,7 @@ import { runtime } from '../state/store.js';
  * `presence` (src/scene/CameraRig.jsx). Nothing here does anything until `startSync` has run, so a
  * page outside an event costs nothing.
  */
-const PROFILE_KEY = 'scene-rooms:profile';
-const COLORS = ['#ff5c5c', '#ffb347', '#ffe66d', '#7ddc7d', '#4de3ff', '#6f8cff', '#c77dff', '#ff7ad9', '#00ff66', '#f5f5f5'];
-
-function loadProfile() {
-  try {
-    const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
-    if (p && typeof p.name === 'string' && /^#[0-9a-f]{6}$/i.test(p.color)) return p;
-  } catch { /* none yet */ }
-  return { name: `Visitor ${Math.floor(1000 + Math.random() * 9000)}`, color: COLORS[Math.floor(Math.random() * COLORS.length)] };
-}
-
-export const useSync = create(() => ({
-  active: false,      // the page is part of an event
-  status: 'idle',     // idle | connecting | online | reconnecting | closed
-  event: null,
-  me: null,           // { id, name, color }
-  peers: [],          // [{ id, name, color }], for lists; poses live in the client
-  profile: loadProfile(),
-  version: 0,         // bumps on every shared-state change, for React subscribers (src/net/shared.js)
-  rtt: null,
-  rates: null,        // { inKb, outKb } per second, over the last couple of seconds
-}));
-
 let client = null, stop = null;
-
-/** The live client, or null outside an event. */
-export const syncClient = () => client;
 
 
 /** The event and server this page should join, from the address and the scene; null when it is not part of one. */
@@ -71,7 +47,7 @@ export function startSync(scene) {
   client.subscribe((what, arg) => {
     if (what === 'status' || what === 'peers') publish();
     else if (what === 'state' || what === 'lease') useSync.setState(s => ({ version: s.version + 1 }));
-    else if (what === 'reject') console.warn('sync: rejected', arg);
+    else if (what === 'reject') { useSync.setState({ rejected: arg }); console.warn('sync: rejected', arg); } // src/net/shared.js drops the write it refers to
   });
   // tell the newcomers (and the room after a reconnect) where this visitor is: still, where the camera is now
   client.onWelcome(() => {
@@ -81,6 +57,7 @@ export function startSync(scene) {
     else c.intent({ kind: last ? 'free' : 'still', from: { position: [...runtime.pose.position], target: [...runtime.pose.target] } });
     publish();
   });
+  setSyncClient(client);
   useSync.setState({ active: true, event: target.event, status: 'connecting' });
   client.connect();
   let last = { ...client.stats, at: performance.now() };
@@ -101,6 +78,7 @@ export function stopSync() {
   if (!client) return;
   client.close();
   client = null;
+  setSyncClient(null);
   useSync.setState({ active: false, status: 'idle', me: null, peers: [], rtt: null, rates: null });
 }
 

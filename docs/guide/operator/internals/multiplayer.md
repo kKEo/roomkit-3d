@@ -29,7 +29,7 @@ A peer's pose samples are interpolated 150 ms behind arrival (`src/scene/Avatars
 
 ## Shared state
 
-The state of an event is a flat map **key → JSON value** (`src/net/shared.js`). A prefab reads a key with `useShared(key, initial)` and writes it with the setter it gets back; a scene author writes one from a click with the `set` and `toggle` actions. Writes are optimistic: the page shows the new value at once, sends it, and replaces it with the server's ordered version when that arrives, so everyone converges on the same order. Late joiners receive the whole map in the `welcome`.
+The state of an event is a flat map **key → JSON value** (`src/net/shared.js`). A prefab reads a key with `useShared(key, initial)` and writes it with the setter it gets back; a scene author writes one from a click with the `set` and `toggle` actions. Writes are optimistic: the page shows the new value at once, sends it, and replaces it with the server's ordered version when that arrives, so everyone converges on the same order. When the server refuses the write instead (`reject`: over the rate limit, held by another visitor, stale, too big), the page drops its guess and shows the server's value again. A control that changes a value continuously, like the video scrubber, should send it once at the end of the gesture, not on every movement. Late joiners receive the whole map in the `welcome`.
 
 Conventions:
 

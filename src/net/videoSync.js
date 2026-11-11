@@ -1,6 +1,5 @@
 import { getShared, setShared } from './shared.js';
-import { syncClient } from './sync.js';
-import { useSync } from './sync.js';
+import { syncClient, useSync } from './syncStore.js';
 
 /**
  * Keeps a video screen in step for everyone in an event. The shared key `<screen key>.video` holds
