@@ -1,0 +1,19 @@
+{
+  "text": "An L-shaped loft in cyan. On the long north wall hang three exhibits in frames, the middle one taller. In the north-east corner there is a desk facing west into the room. Round the corner, in the south wing, a pedestal with a dodecahedron. A door in the inner wall leads back to the overview, and there is a bench and a floor lamp at the far end of the wing.",
+  "expect": [
+    { "room": { "width": 24, "depth": 24, "height": 7 } },
+    { "stops": ["wall", "studio", "wing"] },
+    { "count": "pictureFrame", "is": 3, "wall": "north" },
+    { "stop": "wall", "sees": ["left frame", "middle frame", "right frame"], "share": 0.04 },
+    { "stop": "wall", "order": ["left frame", "middle frame", "right frame"] },
+    { "object": "desk", "corner": "north-east", "within": 6 },
+    { "object": "desk", "facing": "west" },
+    { "stop": "studio", "sees": ["desk"], "share": 0.1 },
+    { "stop": "wing", "sees": ["pedestal"], "share": 0.2 },
+    { "object": "door", "wall": 2 },
+    { "object": "door", "click": "door", "goTo": null },
+    { "object": "bench", "side": "south", "of": "pedestal" },
+    { "object": "bench", "wall": 4, "within": 1.5 },
+    { "object": "lamp", "near": "bench", "within": 4 }
+  ]
+}

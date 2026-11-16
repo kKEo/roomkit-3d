@@ -15,8 +15,9 @@ This page lists every command the project defines or relies on. Run them from th
 | `make scene-check` | `node tools/scene.js check`: every scene's config, references, object positions and cameras, without a browser; `SCENE=<name>` for one scene |
 | `node tools/scene.js describe <scene>` | the scene read back in words: where each object stands, what each stop's camera sees |
 | `node tools/scene.js plan <scene>` | the floor plan as text; `--svg=file.svg` writes a picture instead |
-| `node tools/scene.js new <name>` | a new scene folder with a room and one stop, added to `public/scenes/index.json`; `--title="My Room"` names it |
+| `node tools/scene.js new <name>` | a new scene folder with a room and one stop, added to `public/scenes/index.json`; `--title="My Room"` names it, `--brief="…"` also writes the description into a [`brief.json`](../reference/brief-json.md) |
 | `node tools/scene.js prefabs [scene]` | every object type with its size, origin, props and clickable parts |
+| `node tools/scene.js keys [section]` | every key of a scene's files with its type, default and meaning, printed from the schemas; without a section, the list of sections |
 | `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |
 | `make docs-check` | build every book into a temporary folder; fails if a book does not build, for example when `SUMMARY.md` lists a missing file |
@@ -41,6 +42,12 @@ Variables: `PORT=<n>` changes the port of `dev`, `serve` and `docs-serve`; `SITE
 | `mdbook serve docs/guide/<book>` | preview one book with live reload |
 
 There is no format command; see the [Tester guide](../../tester/README.md) for what the tests cover.
+
+## Variables for the tools
+
+| Variable | Effect |
+| --- | --- |
+| `ROOMKIT_SCENES` | the folder of scene folders `tools/scene.js` works on, instead of `public/scenes/`: for a sandbox or a test that must not touch the shipped scenes. It needs its own `index.json` |
 
 ## Build-time variables
 

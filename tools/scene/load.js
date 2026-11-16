@@ -1,12 +1,13 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inspectScene } from '../../src/config/buildScene.js';
-import { lintScene } from '../../src/lint/rules.js';
+import { inspectFindings } from '../../src/lint/rules.js';
 
 /** Reading a scene folder from disk for the scene tools (tools/scene.js) and the test suite. */
 
-export const SCENES = join(import.meta.dirname, '..', '..', 'public', 'scenes');
+/** The folder of scene folders: `public/scenes`, or `ROOMKIT_SCENES` for a run that must not touch the shipped ones (tests, a sandbox). */
+export const SCENES = process.env.ROOMKIT_SCENES ? resolve(process.env.ROOMKIT_SCENES) : join(import.meta.dirname, '..', '..', 'public', 'scenes');
 
 /** A buildScene `read` over a folder. */
 export const readerFromDir = dir => async path => {
@@ -47,14 +48,17 @@ export async function loadScene(name, root = SCENES) {
   return { ...built, dir, files: await textFiles(dir) };
 }
 
-/** Every finding for a scene folder (see src/lint/rules.js). */
+/**
+ * Every finding for a scene folder (see src/lint/rules.js), with what its `brief.json` came to:
+ * `expectations` is `{ total, held }` and `brief` the description the scene was built from, or null.
+ */
 export async function checkScene(name, root = SCENES) {
   const loaded = await loadScene(name, root);
   const { listed } = await sceneNames(root);
-  const findings = await lintScene(loaded, {
+  const result = await inspectFindings(loaded, {
     files: loaded.files,
     exists: path => stat(join(loaded.dir, path)).then(s => s.isFile(), () => false),
     listed: listed ? listed.includes(name) : undefined,
   });
-  return { ...loaded, findings };
+  return { ...loaded, ...result };
 }

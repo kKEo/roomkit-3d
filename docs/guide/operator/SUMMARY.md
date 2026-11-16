@@ -16,6 +16,7 @@
 - [Part III: Configuration reference](reference/README.md)
   - [scene.json reference](reference/scene-json.md)
   - [POI file reference](reference/poi-json.md)
+  - [brief.json reference](reference/brief-json.md)
   - [Prefab reference](reference/prefabs.md)
   - [Actions and hotspots](reference/actions.md)
   - [Interface strings](reference/ui-strings.md)

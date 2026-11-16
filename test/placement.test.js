@@ -32,7 +32,7 @@ describe('objectSchema › at', () => {
     expect(msg({ wall: 'up' })).toEqual(['at.wall: a wall is "north", "south", "east", "west" or its number in room.footprint']);
     expect(msg({ wall: 'north', along: 1.4 })).toEqual(['at.along: a fraction 0–1; use "distance" for metres']);
     expect(msg({ wall: 'north', along: 0.2, distance: 3 })).toEqual(['at: give "along" (a fraction) or "distance" (metres), not both']);
-    expect(msg({ wall: 'north', hight: 2 })[0]).toMatch(/^at: Unrecognized key/);
+    expect(msg({ wall: 'north', hight: 2 })[0]).toMatch(/^at: unknown key "hight": did you mean "height"\? \(known: wall, corner, centre, near, /);
   });
 
   it('takes a corner, the centre or a neighbour, each with its own defaults', () => {

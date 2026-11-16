@@ -20,7 +20,7 @@ Before anything is validated, `scene.json › prefabs` (type → module path or 
 
 ## Scene file
 
-`scene.json` is fetched, merged **over** `SCENE_DEFAULTS` with `deepMerge` (plain objects merge key by key; arrays and scalars replace), then validated with `sceneSchema`. Every section of the schema is strict: because the defaults supply every known key, a key the schema does not know can only be a typo, and it is reported (`scene.json › room: Unrecognized key: "hieght"`). The same holds for POI files, objects, props, screens and blocks. So a scene may give only `theme.accent` and keep every other theme key. It also means arrays such as `room.lights` or `room.pillars` replace the default list entirely.
+`scene.json` is fetched, merged **over** `SCENE_DEFAULTS` with `deepMerge` (plain objects merge key by key; arrays and scalars replace), then validated with `sceneSchema`. Every section of the schema is strict: because the defaults supply every known key, a key the schema does not know can only be a typo, and it is reported with the key that was probably meant and the keys there are (`scene.json › room: unknown key "hieght": did you mean "height"? (known: width, height, depth, …)`; `unknownKeys` in `src/config/keyHelp.js`). The same holds for POI files, objects, `at` and props; screens and blocks report zod's own `Unrecognized key`. So a scene may give only `theme.accent` and keep every other theme key. It also means arrays such as `room.lights` or `room.pillars` replace the default list entirely.
 
 `decor` objects are then normalised the same way as POI objects (below).
 

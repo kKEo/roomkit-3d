@@ -6,7 +6,8 @@
  *   node tools/scene.js describe <scene>                     the scene in words: where things stand, what each camera sees
  *   node tools/scene.js plan <scene> [--svg=file.svg]        the floor plan as text, or as an SVG file
  *   node tools/scene.js prefabs [scene]                      the object types a scene can place, with sizes and props
- *   node tools/scene.js new <name> [--title="My Room"]       a new scene folder with one stop, listed in scenes/index.json
+ *   node tools/scene.js keys [section]                       every key a scene's files can hold: type, default, meaning
+ *   node tools/scene.js new <name> [--title="My Room"] [--brief="…"]   a new scene folder with one stop, listed in scenes/index.json
  *
  * With no scene name, every folder in public/scenes is checked. Exit code: 0 clean, 1 problems
  * (errors; with --strict also warnings), 2 wrong usage.
@@ -23,6 +24,8 @@ const { describeScene, describePrefabs } = await import('../src/lint/describe.js
 const { planText, planSvg } = await import('../src/lint/plan.js');
 const { BUILTIN_REGISTRY } = await import('../src/prefabs/registry.js');
 const { formatFinding } = await import('../src/lint/rules.js');
+const { keysText, SECTIONS } = await import('../src/lint/keys.js');
+const { briefFile } = await import('../src/lint/expect.js');
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--')).map(a => a.split('=')[0]));
@@ -35,7 +38,9 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
   describe <scene>                     read the scene back in words, to compare with the brief it was built from
   plan <scene> [--svg=file.svg]        draw the floor plan as text, or write it as SVG
   prefabs [scene]                      list the object types with their sizes, props and clickable parts
-  new <name> [--title="My Room"]       start a scene folder (a room and one stop) and list it in scenes/index.json
+  keys [section]                       list every key of a scene's files with its type, default and meaning
+  new <name> [--title="My Room"] [--brief="what was asked for"]
+                                       start a scene folder (a room and one stop) and list it in scenes/index.json
 
 Scenes are the folders in public/scenes; with none named, all are used.`;
 
@@ -68,7 +73,9 @@ const commands = {
     const dir = join(SCENES, name);
     if (await access(dir).then(() => true, () => false)) fail(`public/scenes/${name} already exists`);
     const title = option('--title') ?? name.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
-    for (const [path, text] of newSceneFiles(title)) {
+    const brief = option('--brief');
+    if (flags.has('--brief') && !brief) fail('give the description: --brief="a gallery with three pictures on the north wall"');
+    for (const [path, text] of [...newSceneFiles(title), ...(brief ? [['brief.json', briefFile(brief)]] : [])]) {
       await mkdir(dirname(join(dir, path)), { recursive: true });
       await writeFile(join(dir, path), text.endsWith('\n') ? text : `${text}\n`);
     }
@@ -76,12 +83,20 @@ const commands = {
     const text = await readFile(indexFile, 'utf8');
     const listed = JSON.parse(text).scenes ?? [];
     if (!listed.includes(name)) await writeFile(indexFile, setAt(text, ['scenes'], [...listed, name])); // keeps the file's layout
-    console.log(`created public/scenes/${name} (scene.json, poi/start.json, content/start.md) and listed it in scenes/index.json`);
-    console.log(`next: edit the files, then run: node tools/scene.js check ${name}`);
+    console.log(`created public/scenes/${name} (scene.json, poi/start.json, content/start.md${brief ? ', brief.json' : ''}) and listed it in scenes/index.json`);
+    console.log(brief ? `next: write what the brief expects into brief.json › expect (node tools/scene.js keys brief), edit the files, then run: node tools/scene.js check ${name}`
+      : `next: edit the files, then run: node tools/scene.js check ${name}`);
   },
   async describe() {
-    const { scene, pois } = await built();
-    console.log(describeScene(scene, pois).join('\n'));
+    const { scene, pois, files } = await built();
+    let brief = null;
+    try { brief = JSON.parse(files.get('brief.json') ?? 'null')?.text; } catch { /* `check` reports a brief that does not parse */ }
+    console.log(describeScene(scene, pois, { brief: typeof brief === 'string' ? brief : null }).join('\n'));
+  },
+  keys() {
+    if (names.length > 1) fail('keys takes at most one section');
+    if (names.length && !Object.hasOwn(SECTIONS, names[0])) fail(`no section "${names[0]}" (there are: ${Object.keys(SECTIONS).join(', ')})`);
+    console.log(keysText(names[0]).join('\n'));
   },
   async plan() {
     const { scene, pois } = await built();
@@ -98,13 +113,15 @@ const commands = {
     const strict = flags.has('--strict'), all = [];
     let bad = false;
     for (const name of await targets()) {
-      const { findings } = await checkScene(name);
+      const { findings, expectations: { total, held } } = await checkScene(name);
       all.push(...findings.map(f => ({ scene: name, ...f })));
       const count = level => findings.filter(f => f.level === level).length;
       if (count('error') || (strict && count('warn'))) bad = true;
       if (flags.has('--json')) continue;
       for (const f of findings) console.log(formatFinding(f));
-      console.log(`${name}: ${findings.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}`);
+      // what the brief expects, when the scene has one: all of it holding is part of "ok"
+      const brief = total ? (held === total ? `, ${total} expectation${total === 1 ? '' : 's'} hold` : `, ${held} of ${total} expectations hold`) : '';
+      console.log(`${name}: ${findings.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}${brief}`);
     }
     if (flags.has('--json')) console.log(JSON.stringify(all, null, 2));
     process.exitCode = bad ? 1 : 0;

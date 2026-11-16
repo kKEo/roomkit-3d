@@ -73,12 +73,13 @@ function cameraLines(poi, scene, all) {
   ];
 }
 
-/** The read-back as lines of text. */
-export function describeScene(scene, pois) {
+/** The read-back as lines of text; `brief` is the description the scene was built from (its `brief.json › text`), printed first. */
+export function describeScene(scene, pois, { brief = null } = {}) {
   const { room } = scene, wallList = walls(room.footprint);
   const all = sceneObjects(scene, pois).map(e => ({ ...e, box: objectBox(e.obj, scene.registry) }));
   const out = [
     `${scene.name}: "${scene.title}"`,
+    ...(brief ? [`brief: ${brief}`] : []),
     `room: ${n(room.width)} m east–west by ${n(room.depth)} m north–south, ${n(room.height)} m high; x grows east, z grows south, y is up, the floor is y 0`,
     `walls: ${wallList.map(w => `${w.name} ${n(w.length)} m`).join(', ')}`,
     `pillars: ${room.pillars.length ? room.pillars.map(pt).join(' ') : 'none'}; lights: ${room.lights.length}`,

@@ -92,4 +92,20 @@ Open the site with `?scene=my-office` at the end of the address. To make it the 
 { "default": "my-office", "scenes": ["neo-room", "gallery", "my-office"] }
 ```
 
+## Keeping the description
+
+If the room was built from a description ("a desk in the corner, three pictures on the far wall"), keep it next to the scene in a `brief.json`, with a list of what must therefore be true:
+
+```json
+{
+  "text": "A desk in the north-east corner, three pictures on the far wall.",
+  "expect": [
+    { "object": "desk", "corner": "north-east" },
+    { "count": "pictureFrame", "is": 3, "wall": "north" }
+  ]
+}
+```
+
+`node tools/scene.js check my-office` then tells you whether the room still matches, also after later changes. `node tools/scene.js new my-office --brief="…"` starts the file for you. The forms are listed in the [brief.json reference](../operator/reference/brief-json.md).
+
 Every other setting, such as the camera fly-in, where the room opens (`camera.start`: a stop or a fixed view), whether visitors may fly freely (`camera.freeFly`), fog and particles, is listed in the [scene.json reference](../operator/reference/scene-json.md).

@@ -16,6 +16,8 @@ warn  OBJ_OVERLAP  loft/poi/wing.json › objects.0.position: pedestal (wing:0) 
 loft: 0 errors, 1 warnings, 0 notes
 ```
 
+A scene with a [`brief.json`](../../operator/reference/brief-json.md) also says how much of it holds: `loft: ok, 14 expectations hold`.
+
 The command exits with 0 when no scene has an error, 1 when one has (with `--strict`, also for a warning), and 2 for a wrong command line. The test suite is stricter: `test/scenes.test.js` fails on any error or warning in a shipped scene.
 
 ## What it checks
@@ -42,7 +44,23 @@ Unlike the loading screen, which stops at the first broken file, the check reads
 | `CAM_OUTSIDE_ROOM` | warn | a POI's camera is behind a wall or above the ceiling |
 | `CAM_IN_OBJECT` | warn | a POI's camera is inside an object |
 | `CAM_BLOCKED` | warn | another POI's object or a decor object stands between a camera and its target |
+| `CAM_FRAMING` | warn | from a POI's camera none of the POI's own objects fills 1% of the picture |
+| `THEME_CONTRAST` | warn | text would be hard to read: `text` on `background` or on `surface`, or `accentInk` on `accent`, under 4.5:1; `textDim` on `surface` or `accent` on `background` under 3:1 |
+| `EXPECT_FAILED` | error | the scene is not what its `brief.json` says; the message says what is true instead |
+| `EXPECT_INVALID` | error | an entry of `brief.json` cannot be read: an unknown key, a name no object has, a wall the room does not have |
+| `EXPECT_SKIPPED` | info | the scene has config errors, so its brief was not checked |
 | `GEO_UNKNOWN`, `GEO_TILTED`, `GEO_SKIPPED` | info | positions were not checked: the prefab declares no size, the object is tilted, or `scene.json` has errors |
+
+## Checking a scene against its brief
+
+`check` cannot know that the desk was meant to stand by the window, unless the scene says so. A scene folder may hold a `brief.json` with the description it was built from and a list of expectations: which wall an object is on, what stands next to what, which way something faces, what each stop's camera sees, how many of a type there are, what a click does. Every one is evaluated on each run:
+
+```text
+error EXPECT_FAILED  loft/brief.json › expect.6: "desk" faces south, not west (the brief expects {"object":"desk","facing":"west"}; change the scene, or the expectation if the brief changed)
+loft: 1 errors, 0 warnings, 0 notes, 13 of 14 expectations hold
+```
+
+An expectation is to a scene what a test is to code: written once from the brief, it also catches a later edit that quietly breaks the layout. When the brief itself changes, change the expectation. The forms are listed in the [brief.json reference](../../operator/reference/brief-json.md) and by `node tools/scene.js keys brief`; `test/expect.test.js` covers each of them, holding and failing.
 
 ## How positions are known
 
@@ -71,6 +89,8 @@ desk (studio:0): on the floor at [8, 0, -7]; 1.9 m east–west by 2.6 m north–
 ```
 
 North is −Z and east is +X, as on the minimap. A wall is called by its side (`north wall`); in a room where two walls face the same way they also carry their number in `room.footprint` (`south wall (edge 2)`). "In the picture" lists the objects that fill at least 1% of a 16:9 view from the stop's camera, largest first, marked `(cut off)` when a quarter or more of one falls outside the picture; a stop whose own objects are all missing from it gets a `NOTE:` line, and `test/describe.test.js` fails for a shipped scene with one.
+
+`describe` opens with the brief's text when the scene has one, so the description and the read-back can be compared in one place.
 
 `plan` draws walls as `#`, floor as `.`, pillars as `o`, each object's outline as a letter and each stop's camera as its number, with a legend underneath. `prefabs` lists every type with its size at default props, where its origin sits, which way it faces, its props with defaults and limits, and its clickable parts; with a scene name it includes that scene's own types.
 

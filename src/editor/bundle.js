@@ -31,6 +31,8 @@ export async function fetchBundle(base) {
   const files = new Map();
   const sceneText = await fetchText(new URL('scene.json', base));
   files.set('scene.json', sceneText);
+  // the scene's brief (what it was built from, and what must stay true of it) travels with it; most scenes have none
+  try { files.set('brief.json', await fetchText(new URL('brief.json', base))); } catch { /* no brief */ }
   let scene;
   try { scene = JSON.parse(sceneText); } catch { return files; } // the editor will show the JSON error
   for (const file of Array.isArray(scene.poi) ? scene.poi : []) {

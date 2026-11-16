@@ -156,6 +156,7 @@ export function importZip(entries) {
   const files = new Map(), assets = new Map();
   const text = p => { const b = bytes.get(p); if (b) { files.set(p, utf8.decode(b)); bytes.delete(p); } };
   text('scene.json');
+  text('brief.json'); // what the scene was built from, if it has one: kept as text, like the files the loader reads
   const scene = parse(files.get('scene.json'));
   for (const f of Array.isArray(scene?.poi) ? scene.poi : []) {
     if (typeof f !== 'string') continue;

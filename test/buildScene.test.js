@@ -59,7 +59,7 @@ describe('buildScene', () => {
     expect(e).toBeInstanceOf(ConfigError);
     expect(e.lines).toEqual(expect.arrayContaining([
       expect.stringMatching(/^x\/poi\/a\.json: invalid JSON — /),
-      expect.stringMatching(/^x\/poi\/b\.json › objects\.0\.props: Unrecognized key.*chairs/),
+      'x/poi/b.json › objects.0.props: unknown key "chairs": did you mean "chair"? (known: screen, src, chair, zoom)',
     ]));
     expect(e.lines.length).toBe(2); // a missing markdown is not reported for a POI that already failed validation
   });
@@ -93,7 +93,7 @@ describe('buildScene', () => {
     e = await fails(build({ 'scene.json': json({ poi: [], ui: { hnt: 'typo' } }) }));
     expect(e.lines).toEqual(expect.arrayContaining([
       'x/scene.json › poi: list at least one POI file',
-      expect.stringMatching(/^x\/scene\.json › ui: Unrecognized key.*hnt/),
+      'x/scene.json › ui: unknown key "hnt": did you mean "hint"?', // the list of 70 interface strings is left out
     ]));
   });
 

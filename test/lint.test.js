@@ -146,3 +146,33 @@ describe('lint geometry', () => {
     expect(L.map(w => wallYaw(w))).toEqual([0, -90, 180, -90, 180, 90]);
   });
 });
+
+describe('lintScene: the look and the view', () => {
+  const at = fs => fs.map(f => `${f.code} ${f.path}`);
+
+  it('text that would be hard to read against what is behind it', async () => {
+    expect(await lint(folder({ scene: { theme: { accent: '#4de3ff', accentInk: '#001a22', text: '#cdf3ff', textDim: '#5e9fb3', surface: 'rgba(0,14,20,.78)' } } }))).toEqual([]);
+    const fs = await lint(folder({ scene: { theme: { text: '#1c3b24', textDim: '#143019', accent: '#0b2b14', accentInk: '#0a2010' } } }));
+    expect(at(fs)).toEqual(['THEME_CONTRAST theme.text', 'THEME_CONTRAST theme.text', 'THEME_CONTRAST theme.textDim', 'THEME_CONTRAST theme.accent', 'THEME_CONTRAST theme.accentInk']);
+    expect(formatFinding(fs[0])).toBe('warn  THEME_CONTRAST  s/scene.json › theme.text: panel text on the room\'s background: #1c3b24 on #000000 has a contrast of 1.7:1, under 4.5:1 (make "text" lighter, or change "background")');
+    // a light room wants darker text, and says so
+    const light = await lint(folder({ scene: { theme: { background: '#f4f1e8', surface: 'rgba(255,255,255,.9)', text: '#d9d4c5', textDim: '#6b6657', accent: '#5a3d00', accentInk: '#fff8e6' } } }));
+    expect(light.map(f => f.hint)).toEqual(['make "text" darker, or change "background"', 'make "text" darker, or change "surface"']);
+  });
+
+  it('reads the colours a theme may give, and leaves alone what it cannot read', async () => {
+    const theme = over => lint(folder({ scene: { theme: over } }));
+    expect(at(await theme({ text: 'rgb(20, 40, 25)' }))).toEqual(['THEME_CONTRAST theme.text', 'THEME_CONTRAST theme.text']);
+    expect(at(await theme({ text: 'darkgreen' }))).toEqual(['THEME_CONTRAST theme.text', 'THEME_CONTRAST theme.text']);
+    expect(at(await theme({ text: '#bff7cf', surface: 'rgba(191,247,207,.95)' }))).toEqual(['THEME_CONTRAST theme.text', 'THEME_CONTRAST theme.textDim']); // pale text on a pale panel
+    expect(await theme({ text: 'var(--mine)' })).toEqual([]);
+    expect(await theme({ background: 'linear-gradient(red, blue)' })).toEqual([]);
+  });
+
+  it('a camera that does not show its own stop', async () => {
+    const away = await lint(folder({ poi: { camera: { position: [0, 2, 6], target: [0, 2, 9] } } }));
+    expect(away.map(formatFinding)).toEqual(['warn  CAM_FRAMING  s/poi/a.json › camera: from the camera of "a" at [0, 2, 6] none of the stop\'s own objects fills 1% of the picture (bench (a:0): not in view) (move the camera so that it looks at them from 4 to 12 m away)']);
+    const far = await lint(folder({ scene: { room: { width: 20, height: 8, depth: 120, lights: [[0, 7.6, 0]] } }, poi: { camera: { position: [0, 2, 55], target: [0, 0.5, 0] } } }));
+    expect(far.map(f => `${f.code}: ${f.message}`)).toEqual(['CAM_FRAMING: from the camera of "a" at [0, 2, 55] none of the stop\'s own objects fills 1% of the picture (bench (a:0): 0.07%)']);
+  });
+});

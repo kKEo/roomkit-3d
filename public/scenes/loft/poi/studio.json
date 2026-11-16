@@ -4,7 +4,7 @@
   "kicker": "east wing",
   "screenLabel": "studio // loft",
   "objects": [
-    { "type": "desk", "position": [8, 0, -7], "facing": "west",
+    { "type": "desk", "name": "desk", "position": [8, 0, -7], "facing": "west",
       "props": { "screen": { "source": "text", "title": "NOTES", "lines": ["> footprint: L", "> corners: 6", "> walls: 6", "> ok"] } } }
   ],
   "content": { "markdown": "content/studio.md" }

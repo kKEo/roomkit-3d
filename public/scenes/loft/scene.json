@@ -30,9 +30,9 @@
     "hint": "[←][→] — walk, [1]–[{keys}] corners, [0] whole loft, or click a marker"
   },
   "decor": [
-    { "type": "door", "at": { "wall": 2 }, "actions": { "door": { "type": "goTo", "poi": null } } },
-    { "type": "bench", "position": [-6, 0, 9.4], "facing": "east", "props": { "width": 3, "height": 0.5 } },
-    { "type": "lamp", "position": [-10, 0, 10], "props": { "height": 2.2 }, "actions": { "shade": { "type": "goTo", "poi": "wing" } } }
+    { "type": "door", "name": "door", "at": { "wall": 2 }, "actions": { "door": { "type": "goTo", "poi": null } } },
+    { "type": "bench", "name": "bench", "position": [-6, 0, 9.4], "facing": "east", "props": { "width": 3, "height": 0.5 } },
+    { "type": "lamp", "name": "lamp", "position": [-10, 0, 10], "props": { "height": 2.2 }, "actions": { "shade": { "type": "goTo", "poi": "wing" } } }
   ],
   "poi": ["poi/wall.json", "poi/studio.json", "poi/wing.json"]
 }

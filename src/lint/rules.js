@@ -2,7 +2,9 @@ import { insideOrNear, nearestWall, walls, bounds } from '../lib/footprint.js';
 import { BLOCK_DATA, FEED_BLOCKS, feedBlockSchema, parseBlockData } from '../ui/blocks/schema.js';
 import { sceneRefs } from '../editor/export.js';
 import { wallYaw } from '../config/placement.js';
-import { PILLAR_HALF, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
+import * as THREE from 'three';
+import { PILLAR_HALF, framing, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
+import { checkBrief } from './expect.js';
 
 /**
  * The scene checks behind `node tools/scene.js check`: everything a scene can get wrong that the loader does
@@ -32,13 +34,20 @@ function fromLine(line) {
  * - `exists` async path → whether that file is in the scene folder (media, data, modules)
  * - `listed` whether `scenes/index.json` names this scene (omit when not known)
  */
-export async function lintScene(built, { files = new Map(), exists = async () => true, listed } = {}) {
+export const lintScene = async (built, ctx) => (await inspectFindings(built, ctx)).findings;
+
+/**
+ * The same checks with what `brief.json` came to: `{ findings, expectations: { total, held }, brief }`, where
+ * `brief` is the description the scene was built from (null without one). See src/lint/expect.js.
+ */
+export async function inspectFindings(built, { files = new Map(), exists = async () => true, listed } = {}) {
   const out = built.errors.map(fromLine);
+  const result = brief => ({ findings: out, expectations: { total: brief?.total ?? 0, held: brief?.held ?? 0 }, brief: brief?.text ?? null });
   const add = (level, code, file, path, message, hint = '') => out.push({ level, code, file, path, message, hint });
   const { scene, pois } = built;
   if (!scene) {
-    add('info', 'GEO_SKIPPED', '', '', 'scene.json has errors, so positions and references were not checked');
-    return out;
+    add('info', 'GEO_SKIPPED', '', '', 'scene.json has errors, so positions, references and the brief were not checked');
+    return result();
   }
   const sceneFile = `${scene.name}/scene.json`;
   if (listed === false) add('warn', 'INDEX_MISSING', 'scenes/index.json', 'scenes', `"${scene.name}" is not listed`, `add "${scene.name}" to the list, or the test suite fails and no scene picker shows it`);
@@ -49,9 +58,50 @@ export async function lintScene(built, { files = new Map(), exists = async () =>
     if (!(await exists(path))) add('error', 'REF_MEDIA', sceneFile, '', `the scene refers to "${path}", which is not in the folder`, 'add the file or correct the path (paths are relative to the scene folder)');
   }
   room({ scene, files, add, sceneFile });
+  theme({ scene, add, sceneFile });
   objects({ scene, all, add });
   cameras({ scene, pois, all, files, add });
-  return out;
+  // what the brief expects is only worth evaluating on a scene that loads: a config error would fail half of it
+  const brief = built.errors.length ? null : checkBrief(scene, pois, files.get('brief.json'));
+  if (brief) out.push(...brief.findings);
+  else if (files.has('brief.json')) add('info', 'EXPECT_SKIPPED', `${scene.name}/brief.json`, '', 'the scene has config errors, so the brief was not checked');
+  return result(brief);
+}
+
+/** A CSS colour as [r, g, b, alpha] with channels 0–1, or null when it is not one this can read (a gradient, a variable). */
+function rgbaOf(css) {
+  const m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/i.exec(String(css).trim());
+  if (m) return [+m[1] / 255, +m[2] / 255, +m[3] / 255, m[4] == null ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]];
+  if (!/^#[0-9a-f]{3,8}$/i.test(String(css).trim()) && !Object.hasOwn(THREE.Color.NAMES, String(css).trim().toLowerCase())) return null;
+  const hex = String(css).trim(), long = hex.length === 9, short = hex.length === 5;
+  const c = new THREE.Color().setStyle(long ? hex.slice(0, 7) : short ? hex.slice(0, 4) : hex, THREE.LinearSRGBColorSpace);
+  return [c.r, c.g, c.b, long ? parseInt(hex.slice(7), 16) / 255 : short ? parseInt(hex[4] + hex[4], 16) / 255 : 1];
+}
+
+/** The contrast ratio of two opaque colours (WCAG 2): 1 is none, 21 black on white. */
+function contrast(a, b) {
+  const lum = ([r, g, bl]) => [r, g, bl].map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Text a visitor has to read must stand out from what is behind it: the checks a look at the page would make. */
+function theme({ scene, add, sceneFile }) {
+  const t = scene.theme, bg = rgbaOf(t.background);
+  if (!bg) return;
+  const over = c => c && [0, 1, 2].map(i => c[i] * c[3] + bg[i] * (1 - c[3]));
+  const panel = over(rgbaOf(t.surface)) ?? bg;
+  const pairs = [
+    ['text', 'background', bg, 4.5, 'panel text on the room\'s background'], ['text', 'surface', panel, 4.5, 'panel text on the panel'],
+    ['textDim', 'surface', panel, 3, 'secondary text on the panel'], ['accent', 'background', bg, 3, 'lines and titles on the room\'s background'],
+    ['accentInk', 'accent', over(rgbaOf(t.accent)), 4.5, 'button text on a button'],
+  ];
+  for (const [key, on, behind, least, what] of pairs) {
+    const front = over(rgbaOf(t[key]));
+    if (!front || !behind) continue;
+    const ratio = contrast(front, behind);
+    if (ratio < least) add('warn', 'THEME_CONTRAST', sceneFile, `theme.${key}`, `${what}: ${t[key]} on ${t[on]} has a contrast of ${fmt(ratio)}:1, under ${least}:1`, `make "${key}" ${contrast(behind, [1, 1, 1]) > contrast(behind, [0, 0, 0]) ? 'lighter' : 'darker'}, or change "${on}"`);
+  }
 }
 
 function refs({ scene, pois, all, files, add }) {
@@ -198,7 +248,13 @@ function cameras({ scene, pois, all, files, add }) {
     const inside = boxes.find(e => pointInBox(e.box, p.camera.position));
     if (inside) { add('warn', 'CAM_IN_OBJECT', file, 'camera.position', `the camera of "${p.id}" ${here} is inside ${label(inside)}, which is ${fmt(span(inside.box.poly, 0))} m east–west by ${fmt(span(inside.box.poly, 1))} m north–south around [${inside.box.centre.map(fmt).join(', ')}]`, `${fix}, clear of that object, or move the object`); continue; }
     const blocker = boxes.find(e => e.owner !== p.id && segmentHitsBox(e.box, p.camera.position, p.camera.target));
-    if (blocker) add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, or move the object out of the line of sight`);
+    if (blocker) { add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, or move the object out of the line of sight`); continue; }
+    // the stop's own objects: at least one of them should be something to look at from here
+    const own = boxes.filter(e => e.owner === p.id).map(e => ({ e, f: framing(p.camera, scene.camera.fov, e.box) }));
+    if (own.length && !own.some(v => v.f.visible && v.f.cover >= 0.01)) {
+      const best = own.sort((a, b) => b.f.cover - a.f.cover)[0];
+      add('warn', 'CAM_FRAMING', file, 'camera', `from the camera of "${p.id}" ${here} none of the stop's own objects fills 1% of the picture (${label(best.e)}: ${best.f.visible ? `${fmt(best.f.cover * 100)}%` : 'not in view'})`, `${fix} so that it looks at them from 4 to 12 m away`);
+    }
   }
 }
 
