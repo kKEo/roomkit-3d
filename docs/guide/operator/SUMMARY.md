@@ -27,6 +27,7 @@
   - [Live data](extending/live-data.md)
 - [Part V: Operations](operations/README.md)
   - [Commands](operations/commands.md)
+  - [Working with coding agents](operations/agents.md)
   - [Monitoring](operations/monitoring.md)
   - [Day-two operations and troubleshooting](operations/runbook.md)
 - [Appendix](appendix/README.md)

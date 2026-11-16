@@ -23,6 +23,7 @@ This page lists every command the project defines or relies on. Run them from th
 | `node tools/scene.js prefab catalog <scene>` | writes `prefabs/catalog.json`, the list the editor offers the scene's own types from, out of their metas |
 | `node tools/scene.js showroom <scene>` | lays the scene out as a gallery of its own types: a bay, a stop, a camera and a page for each, plus the catalog; see [A showroom for a set of types](../extending/scene-prefabs.md#a-showroom-for-a-set-of-types) |
 | `make shots SCENE=<name>`, `node tools/scene.js shots <scene>` | pictures taken by the real viewer in a headless browser: the whole room and every stop on one labelled sheet, `tools/scene/out/<scene>.png`; `--views=…`, `--size=640x360`, `--out=file.png`, `--measure`. Needs `npx playwright install chromium`; see [Scene checks](../../tester/running/scene-checks.md#looking-at-a-scene-one-picture) |
+| `node tools/mcp.js` | the scene tools as an MCP server over stdio, for clients without a shell; registered for this repository in `.mcp.json`. See [Working with coding agents](agents.md#the-mcp-server) |
 | `node tools/scene.js keys [section]` | every key of a scene's files with its type, default and meaning, printed from the schemas; without a section, the list of sections |
 | `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |

@@ -1,6 +1,6 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inspectScene } from '../../src/config/buildScene.js';
 import { inspectFindings } from '../../src/lint/rules.js';
 import { lintPrefab } from '../../src/lint/prefabRules.js';
@@ -37,6 +37,17 @@ export async function sceneNames(root = SCENES) {
   return { dirs, listed };
 }
 
+/**
+ * Imports a scene's module as it is on disk now. Node keeps a module for as long as the process lives, which is right
+ * for one command and wrong for a server that outlives an edit (tools/mcp.js): the file's time and size ride along as
+ * a query, so a changed file is a new module.
+ */
+async function freshImport(url) {
+  let version = '';
+  try { if (url.startsWith('file:')) { const s = await stat(fileURLToPath(url)); version = `?v=${s.mtimeMs}-${s.size}`; } } catch { /* the import says what is wrong */ }
+  return import(`${url}${version}`);
+}
+
 /** Builds a scene folder without throwing: `{ scene, pois, errors, files, dir }`. */
 export async function loadScene(name, root = SCENES) {
   const dir = join(root, name);
@@ -44,7 +55,7 @@ export async function loadScene(name, root = SCENES) {
     name,
     read: readerFromDir(dir),
     resolveUrl: p => pathToFileURL(join(dir, p)).href,
-    loadModule: url => import(url),
+    loadModule: freshImport,
   });
   return { ...built, dir, files: await textFiles(dir) };
 }

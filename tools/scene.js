@@ -20,21 +20,10 @@
  */
 process.removeAllListeners('warning'); // Node's localStorage notice, raised by a browser-side import
 
-const { writeFile, readFile, mkdir, access, rm } = await import('node:fs/promises');
-const { join, dirname } = await import('node:path');
-const { checkScene, checkPrefabs, loadScene, ownPrefabs, sceneNames, SCENES } = await import('./scene/load.js');
-const { newSceneFiles } = await import('../src/editor/bundle.js');
-const { setAt } = await import('../src/editor/jsonEdit.js');
-const { SCENE_NAME } = await import('../src/config/loadScene.js');
-const { describeScene, describePrefabs } = await import('../src/lint/describe.js');
-const { planText, planSvg } = await import('../src/lint/plan.js');
-const { BUILTIN_REGISTRY } = await import('../src/prefabs/registry.js');
-const { formatFinding } = await import('../src/lint/rules.js');
-const { keysText, SECTIONS } = await import('../src/lint/keys.js');
-const { briefFile } = await import('../src/lint/expect.js');
-const { describePrefab, prefabTemplate, MOUNT_NAMES } = await import('../src/lint/prefabDescribe.js');
-const { BUILTIN, TYPE_NAME } = await import('../src/prefabs/registry.js');
-const { showroomFiles, catalogFile } = await import('../src/lint/showroom.js');
+// What each command does lives in ./scene/commands.js, shared with the MCP server (tools/mcp.js); this file reads
+// the command line, prints what comes back and sets the exit code.
+const { writeFile } = await import('node:fs/promises');
+const cmds = await import('./scene/commands.js');
 const { splitViews } = await import('../src/lib/still.js');
 
 const args = process.argv.slice(2);
@@ -64,192 +53,69 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
 
 Scenes are the folders in public/scenes; with none named, all are used.`;
 
-async function targets() {
-  const { dirs } = await sceneNames();
-  const unknown = names.filter(n => !dirs.includes(n));
-  if (unknown.length) fail(`no scene folder "${unknown[0]}" in public/scenes (there are: ${dirs.join(', ')})`);
-  return names.length ? names : dirs;
-}
-
 function fail(message) {
   console.error(message);
   process.exit(2);
 }
+/** The one scene a command is about. */
+const one = () => (names.length === 1 ? names[0] : fail(`${cmd} takes one scene name`));
+/** A flag that needs a value: the value, undefined when the flag is absent; `hint` is said when it is bare. */
+const valued = (name, hint) => (flags.has(name) ? option(name) || fail(hint) : undefined);
 
-/** One scene that builds, for the commands that need positions. */
-async function built() {
-  if (names.length !== 1) fail(`${cmd} takes one scene name`);
-  await targets();
-  const loaded = await loadScene(names[0]);
-  if (!loaded.scene || loaded.errors.length) fail(`${names[0]} has config errors; run: node tools/scene.js check ${names[0]}`);
-  return loaded;
-}
-
+/** Each resolves to what the command gave back, `{ lines, code? }`; its lines are printed and its code is the exit code. */
 const commands = {
-  async new() {
-    const [name] = names;
-    if (names.length !== 1) fail('new takes one scene name');
-    if (!SCENE_NAME.test(name)) fail(`"${name}" is not a scene name: use letters, digits, "-" and "_"`);
-    const dir = join(SCENES, name);
-    if (await access(dir).then(() => true, () => false)) fail(`public/scenes/${name} already exists`);
-    const title = option('--title') ?? name.replace(/[-_]+/g, ' ').replace(/^./, c => c.toUpperCase());
-    const brief = option('--brief');
-    if (flags.has('--brief') && !brief) fail('give the description: --brief="a gallery with three pictures on the north wall"');
-    for (const [path, text] of [...newSceneFiles(title), ...(brief ? [['brief.json', briefFile(brief)]] : [])]) {
-      await mkdir(dirname(join(dir, path)), { recursive: true });
-      await writeFile(join(dir, path), text.endsWith('\n') ? text : `${text}\n`);
-    }
-    const indexFile = join(SCENES, 'index.json');
-    const text = await readFile(indexFile, 'utf8');
-    const listed = JSON.parse(text).scenes ?? [];
-    if (!listed.includes(name)) await writeFile(indexFile, setAt(text, ['scenes'], [...listed, name])); // keeps the file's layout
-    console.log(`created public/scenes/${name} (scene.json, poi/start.json, content/start.md${brief ? ', brief.json' : ''}) and listed it in scenes/index.json`);
-    console.log(brief ? `next: write what the brief expects into brief.json › expect (node tools/scene.js keys brief), edit the files, then run: node tools/scene.js check ${name}`
-      : `next: edit the files, then run: node tools/scene.js check ${name}`);
+  async check() {
+    const r = await cmds.check({ scenes: names, strict: flags.has('--strict') });
+    return flags.has('--json') ? { lines: [JSON.stringify(r.findings, null, 2)], code: r.code } : r;
   },
-  async describe() {
-    const { scene, pois, files } = await built();
-    let brief = null;
-    try { brief = JSON.parse(files.get('brief.json') ?? 'null')?.text; } catch { /* `check` reports a brief that does not parse */ }
-    console.log(describeScene(scene, pois, { brief: typeof brief === 'string' ? brief : null }).join('\n'));
+  describe: () => cmds.describe({ scene: one() }),
+  async plan() {
+    const file = valued('--svg', 'give the file to write: --svg=plan.svg');
+    const r = await cmds.plan({ scene: one(), svg: !!file });
+    if (!file) return r;
+    await writeFile(file, r.svg);
+    return { lines: [`wrote ${file}`] };
+  },
+  prefabs: () => (names.length > 1 ? fail('prefabs takes at most one scene name') : cmds.prefabs({ scene: names[0] ?? null })),
+  keys: () => (names.length > 1 ? fail('keys takes at most one section') : cmds.keys({ section: names[0] ?? null })),
+  new() {
+    if (names.length !== 1) fail('new takes one scene name');
+    return cmds.newScene({ name: names[0], title: option('--title') ?? null, brief: valued('--brief', 'give the description: --brief="a gallery with three pictures on the north wall"') ?? null });
   },
   async prefab() {
     const [sub, scene, type, ...more] = names;
     const subs = { new: 'prefab new <scene> <type>', check: 'prefab check <scene> [type]', describe: 'prefab describe <scene> <type>', catalog: 'prefab catalog <scene>' };
     if (!Object.hasOwn(subs, sub ?? '')) fail(`prefab takes one of: ${Object.values(subs).join(', ')}`);
     if (!scene || more.length || (!type && sub !== 'check' && sub !== 'catalog') || (type && sub === 'catalog')) fail(`usage: node tools/scene.js ${subs[sub]}`);
-    const { dirs } = await sceneNames();
-    if (!dirs.includes(scene)) fail(`no scene folder "${scene}" in public/scenes (there are: ${dirs.join(', ')})`);
-    const loaded = await loadScene(scene);
-
-    if (sub === 'new') {
-      const mount = option('--mount') ?? 'floor', path = `prefabs/${type}.js`, file = join(SCENES, scene, path);
-      if (!TYPE_NAME.test(type)) fail(`"${type}" is not a type name: letters, digits and "_", starting with a lowercase letter`);
-      if (Object.hasOwn(BUILTIN, type)) fail(`"${type}" is a built-in type; pick another name`);
-      if (!MOUNT_NAMES.includes(mount)) fail(`--mount is one of: ${MOUNT_NAMES.join(', ')}`);
-      let decl;
-      try { decl = JSON.parse(loaded.files.get('scene.json')); } catch { fail(`${scene}/scene.json is not valid JSON; fix it first`); }
-      if (decl.prefabs?.[type] != null) fail(`${scene} already declares "${type}" (${decl.prefabs[type]})`);
-      if (await access(file).then(() => true, () => false)) fail(`public/scenes/${scene}/${path} already exists`);
-      await mkdir(dirname(file), { recursive: true });
-      await writeFile(file, prefabTemplate(type, { mount, title: option('--title'), scene }));
-      await writeFile(join(SCENES, scene, 'scene.json'), setAt(loaded.files.get('scene.json'), ['prefabs', type], path));
-      console.log(`created public/scenes/${scene}/${path} (a ${mount} object, one box) and declared it in scene.json › prefabs`);
-      console.log(`next: give it its parts, then run: node tools/scene.js prefab check ${scene} ${type}`);
-      console.log('a type that is declared must also be placed somewhere in the scene, or the test suite fails');
-      return;
-    }
-
-    const own = ownPrefabs(loaded), known = own.map(o => o.type);
-    if (sub === 'catalog') {
-      if (!own.length) fail(`${scene} has no object types of its own to list (it declares none in scene.json › prefabs)`);
-      let title = scene;
-      try { title = JSON.parse(loaded.files.get('scene.json')).title ?? scene; } catch { /* the folder's name will do */ }
-      await mkdir(join(loaded.dir, 'prefabs'), { recursive: true });
-      await writeFile(join(loaded.dir, 'prefabs', 'catalog.json'), catalogFile({ own, previous: loaded.files.get('prefabs/catalog.json'), title: `${title} objects` }));
-      console.log(`wrote public/scenes/${scene}/prefabs/catalog.json: ${known.join(', ')}`);
-      return;
-    }
-    if (type && !known.includes(type)) {
-      const broken = loaded.errors.filter(l => l.includes(` › prefabs.${type}:`));
-      fail(broken.length ? broken.join('\n') : `${scene} has no type "${type}" of its own (${known.length ? `it has: ${known.join(', ')}` : 'it declares none in scene.json › prefabs'})`);
-    }
-    if (sub === 'check') {
-      const loadErrors = loaded.errors.filter(l => l.includes(' › prefabs.'));
-      for (const l of loadErrors) console.log(`error CONFIG  ${l}`);
-      const findings = await checkPrefabs(loaded, { exists: p => access(join(loaded.dir, p)).then(() => true, () => false), only: type ?? null });
-      for (const f of findings) console.log(formatFinding(f));
-      const count = level => findings.filter(f => f.level === level).length + (level === 'error' ? loadErrors.length : 0);
-      const what = type ?? `${known.length} type${known.length === 1 ? '' : 's'}`;
-      console.log(`${scene} › ${what}: ${findings.length || loadErrors.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}`);
-      process.exitCode = count('error') || (flags.has('--strict') && count('warn')) ? 1 : 0;
-      return;
-    }
-    const entry = own.find(o => o.type === type).entry;
-    let props = entry.props;
+    if (sub === 'new') return cmds.prefabNew({ scene, type, mount: option('--mount') ?? 'floor', title: option('--title') });
+    if (sub === 'check') return cmds.prefabCheck({ scene, type: type ?? null, strict: flags.has('--strict') });
+    if (sub === 'catalog') return cmds.prefabCatalog({ scene });
+    let props = null;
     if (flags.has('--props')) {
-      let raw;
-      try { raw = JSON.parse(option('--props') ?? ''); } catch (e) { fail(`--props must be JSON, such as --props='{"height":2}' (${e.message})`); }
-      const r = entry.schema.safeParse(raw);
-      if (!r.success) fail(r.error.issues.map(i => `props${i.path.length ? `.${i.path.join('.')}` : ''}: ${i.message}`).join('\n'));
-      props = r.data;
+      try { props = JSON.parse(option('--props') ?? ''); } catch (e) { fail(`--props must be JSON, such as --props='{"height":2}' (${e.message})`); }
     }
-    const svgFile = option('--svg');
-    if (flags.has('--svg') && !svgFile) fail('give the file to write: --svg=lamp.svg');
-    const { lines, svg } = await describePrefab(type, entry, { props });
-    console.log(lines.join('\n'));
-    if (svgFile && svg) { await writeFile(svgFile, svg); console.log(`\nwrote ${svgFile}`); }
+    const file = valued('--svg', 'give the file to write: --svg=lamp.svg');
+    const r = await cmds.prefabDescribe({ scene, type, props });
+    if (!file || !r.svg) return r;
+    await writeFile(file, r.svg);
+    return { lines: [...r.lines, '', `wrote ${file}`] };
   },
-  async shots() {
-    if (names.length !== 1) fail('shots takes one scene name');
-    await targets();
-    const [scene] = names;
-    const size = (option('--size') ?? '640x360').split('x').map(Number);
-    if (size.length !== 2 || !size.every(v => Number.isInteger(v) && v >= 160 && v <= 2560)) fail('--size is WIDTHxHEIGHT in pixels, such as --size=640x360');
+  showroom: () => cmds.showroom({ scene: one() }),
+  shots() {
+    const scene = one(), size = (option('--size') ?? '640x360').split('x').map(Number);
     const views = flags.has('--views') ? splitViews(option('--views')) : null;
-    if (flags.has('--views') && !views.length) fail('name the views: --views=overview,studio (overview, top, a stop\'s id, or a pose x,y,z,tx,ty,tz)');
-    if (flags.has('--out') && !option('--out')) fail('give the file to write: --out=loft.png');
-    const { takeShots } = await import('./scene/shots.js');
-    let r;
-    try { r = await takeShots(scene, { views, size, measure: flags.has('--measure'), ...(option('--out') ? { out: option('--out') } : {}) }); } catch (e) { console.error(e.message); process.exit(1); }
-    console.log(`${scene}: ${r.frames.length} picture${r.frames.length === 1 ? '' : 's'} (${r.frames.map(f => f.view).join(', ')}) on one sheet, ${r.width} × ${r.height} px, in ${(r.ms / 1000).toFixed(1)} s`);
-    console.log(r.file);
-    for (const line of r.notes) console.log(line);
-    for (const line of r.errors) console.log(`error in the page: ${line}`);
-    console.log('look at the picture: each frame is labelled; the panel, markers\' labels and dust are left out, and a stop\'s objects are shown as when nobody is at it');
-    process.exitCode = r.errors.length ? 1 : 0;
-  },
-  async showroom() {
-    if (names.length !== 1) fail('showroom takes one scene name');
-    await targets();
-    const [scene] = names, loaded = await loadScene(scene);
-    const broken = loaded.errors.filter(l => l.includes(' › prefabs.'));
-    if (broken.length) fail(`${broken.join('\n')}\nfix the types first: node tools/scene.js prefab check ${scene}`);
-    let made;
-    try { made = showroomFiles({ name: scene, files: loaded.files, own: ownPrefabs(loaded) }); } catch (e) { fail(e.message); }
-    for (const [path, text] of made.files) {
-      await mkdir(dirname(join(loaded.dir, path)), { recursive: true });
-      await writeFile(join(loaded.dir, path), text);
-    }
-    for (const path of made.removed) await rm(join(loaded.dir, path), { force: true });
-    console.log(made.summary.join('\n'));
-    console.log(`next: node tools/scene.js check ${scene} --strict`);
-  },
-  keys() {
-    if (names.length > 1) fail('keys takes at most one section');
-    if (names.length && !Object.hasOwn(SECTIONS, names[0])) fail(`no section "${names[0]}" (there are: ${Object.keys(SECTIONS).join(', ')})`);
-    console.log(keysText(names[0]).join('\n'));
-  },
-  async plan() {
-    const { scene, pois } = await built();
-    const svg = option('--svg');
-    if (flags.has('--svg') && !svg) fail('give the file to write: --svg=plan.svg');
-    if (svg) { await writeFile(svg, planSvg(scene, pois)); console.log(`wrote ${svg}`); } else console.log(planText(scene, pois).join('\n'));
-  },
-  async prefabs() {
-    if (names.length > 1) fail('prefabs takes at most one scene name');
-    const registry = names.length ? (await built()).scene.registry : BUILTIN_REGISTRY;
-    console.log(describePrefabs(registry).join('\n'));
-  },
-  async check() {
-    const strict = flags.has('--strict'), all = [];
-    let bad = false;
-    for (const name of await targets()) {
-      const { findings, expectations: { total, held } } = await checkScene(name);
-      all.push(...findings.map(f => ({ scene: name, ...f })));
-      const count = level => findings.filter(f => f.level === level).length;
-      if (count('error') || (strict && count('warn'))) bad = true;
-      if (flags.has('--json')) continue;
-      for (const f of findings) console.log(formatFinding(f));
-      // what the brief expects, when the scene has one: all of it holding is part of "ok"
-      const brief = total ? (held === total ? `, ${total} expectation${total === 1 ? '' : 's'} hold` : `, ${held} of ${total} expectations hold`) : '';
-      console.log(`${name}: ${findings.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}${brief}`);
-    }
-    if (flags.has('--json')) console.log(JSON.stringify(all, null, 2));
-    process.exitCode = bad ? 1 : 0;
+    if (views && !views.length) fail('name the views: --views=overview,studio (overview, top, a stop\'s id, or a pose x,y,z,tx,ty,tz)');
+    return cmds.shots({ scene, views, size, out: valued('--out', 'give the file to write: --out=loft.png'), measure: flags.has('--measure') });
   },
 };
 
 if (!cmd || flags.has('--help')) { console.log(USAGE); process.exit(cmd ? 0 : 2); }
 if (!Object.hasOwn(commands, cmd)) fail(`unknown command "${cmd}"\n\n${USAGE}`);
-await commands[cmd]();
+try {
+  const r = await commands[cmd]();
+  if (r.lines.length) console.log(r.lines.join('\n'));
+  process.exitCode = r.code ?? 0;
+} catch (e) {
+  if (!(e instanceof cmds.UsageError)) throw e;
+  fail(e.message);
+}
