@@ -27,6 +27,43 @@ describe('tools/scene.js', () => {
     expect(r.stderr).toMatch(/^no section "walls" \(there are: scene, room, theme, /);
   });
 
+  it('prefab: a new type from the template, checked, read back, and refused when it is wrong', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'roomkit-scenes-'));
+    try {
+      await writeFile(join(root, 'index.json'), '{ "default": "demo", "scenes": [] }\n');
+      const sandbox = runIn({ ROOMKIT_SCENES: root });
+      await sandbox('new', 'demo');
+      const made = await sandbox('prefab', 'new', 'demo', 'sideTable', '--mount=wall', '--title=Console table');
+      expect(made.stdout).toMatch(/^created public\/scenes\/demo\/prefabs\/sideTable\.js \(a wall object, one box\) and declared it in scene\.json › prefabs/);
+      expect(JSON.parse(await readFile(join(root, 'demo', 'scene.json'), 'utf8')).prefabs).toEqual({ sideTable: 'prefabs/sideTable.js' });
+      expect(await sandbox('prefab', 'check', 'demo')).toEqual({ code: 0, stdout: 'demo › 1 type: ok\n', stderr: '' });
+      const text = (await sandbox('prefab', 'describe', 'demo', 'sideTable', '--props={"width":2}')).stdout;
+      expect(text).toMatch(/^sideTable: "Console table", say in a line what it is\ndeclared: a wall object, faces \+z; 2 wide × 1 high × 1 deep: x -1…1, y -0\.5…0\.5, z 0…1\n/);
+      expect(text).toContain('   1  "body" box 2 × 1 × 1 at [0, 0, 0.5]; clickable as "body"');
+      expect((await sandbox('prefabs', 'demo')).stdout).toMatch(/^ {2}props: width: number \(> 0\) = 1 \[metres across\]; /m);
+      // declared, but nothing in the scene uses it yet
+      expect((await sandbox('check', 'demo')).stdout).toMatch(/^warn {2}PREFAB_UNUSED {2}demo\/scene\.json › prefabs\.sideTable: "sideTable" is declared but no object uses it/);
+
+      // the box stops following the width: caught when the check tries a wider one
+      const file = join(root, 'demo', 'prefabs', 'sideTable.js');
+      await writeFile(file, (await readFile(file, 'utf8')).replace('max: [p.width / 2, p.height / 2, p.depth]', 'max: [0.5, p.height / 2, p.depth]'));
+      const bad = await sandbox('prefab', 'check', 'demo', 'sideTable', '--strict');
+      expect(bad.code).toBe(1);
+      expect(bad.stdout).toMatch(/^warn {2}PREFAB_GEO_SMALL {2}demo\/prefabs\/sideTable\.js › geometry: "body" reaches x 1 with \{ "width": 2 \}, 0\.5 m past the declared box \(max x 0\.5\)/);
+      expect(bad.stdout).toMatch(/\ndemo › sideTable: 0 errors, 1 warnings, 0 notes\n$/);
+
+      for (const [args, message] of [
+        [['prefab', 'new', 'demo', 'door'], /^"door" is a built-in type/], [['prefab', 'new', 'demo', 'sideTable'], /^demo already declares "sideTable"/],
+        [['prefab', 'new', 'demo', 'Sofa'], /^"Sofa" is not a type name/], [['prefab', 'new', 'demo', 'sofa', '--mount=shelf'], /^--mount is one of: floor, wall, ceiling, free/],
+        [['prefab', 'check', 'demo', 'sofa'], /^demo has no type "sofa" of its own \(it has: sideTable\)/], [['prefab', 'describe', 'demo', 'sideTable', '--props={"width":"wide"}'], /^props\.width: /],
+        [['prefab', 'paint', 'demo'], /^prefab takes one of: prefab new <scene> <type>, /], [['prefab', 'describe', 'demo'], /^usage: node tools\/scene\.js prefab describe <scene> <type>/],
+      ]) {
+        const r = await sandbox(...args);
+        expect([r.code, r.stderr], args.join(' ')).toEqual([2, expect.stringMatching(message)]);
+      }
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('new --brief starts a scene with its brief; a broken expectation fails the check and is named', async () => {
     const root = await mkdtemp(join(tmpdir(), 'roomkit-scenes-'));
     try {

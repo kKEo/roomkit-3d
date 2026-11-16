@@ -3,7 +3,7 @@ import { META_SDK } from '../src/prefabs/metaSdk.js';
 import { normalisePrefab } from '../src/prefabs/registry.js';
 import * as lamp from '../public/scenes/loft/prefabs/lamp.js';
 
-/** The sample scene-shipped prefab follows the module contract; its component is never run in Node. */
+/** The sample scene-shipped prefab follows the module contract. What its component really makes is measured in test/stage.test.js. */
 describe('scene prefab contract (public/scenes/loft/prefabs/lamp.js)', () => {
   it('meta(META_SDK) normalises into a registry entry', () => {
     const m = normalisePrefab('lamp', lamp.meta(META_SDK));
@@ -13,7 +13,7 @@ describe('scene prefab contract (public/scenes/loft/prefabs/lamp.js)', () => {
     expect(m.geometry(m.props)).toMatchObject({ mount: 'floor', round: true, max: [0.4, 2.05, 0.4] });
   });
 
-  it('component is a factory of one argument, left alone here', () => {
+  it('component is a factory of one argument', () => {
     expect(typeof lamp.component).toBe('function');
     expect(lamp.component.length).toBe(1);
   });

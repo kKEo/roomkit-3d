@@ -101,7 +101,7 @@ function propText(key, s, def) {
   const kind = a => (a.enum ? a.enum.map(v => JSON.stringify(v)).join(' | ') : [a.type ?? 'any'].flat().join(' | '));
   const type = s.anyOf ? [...new Set(s.anyOf.map(kind))].join(' | ') : kind(s);
   const range = [s.minimum != null && `≥ ${s.minimum}`, s.exclusiveMinimum != null && `> ${s.exclusiveMinimum}`, s.maximum != null && s.maximum < Number.MAX_SAFE_INTEGER && `≤ ${s.maximum}`].filter(Boolean).join(', ');
-  return `${key}: ${type}${range ? ` (${range})` : ''} = ${fmtDefault(def)}`;
+  return `${key}: ${type}${range ? ` (${range})` : ''} = ${fmtDefault(def)}${s.description ? ` [${s.description}]` : ''}`;
 }
 
 /**

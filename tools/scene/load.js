@@ -3,6 +3,7 @@ import { join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inspectScene } from '../../src/config/buildScene.js';
 import { inspectFindings } from '../../src/lint/rules.js';
+import { lintPrefab } from '../../src/lint/prefabRules.js';
 
 /** Reading a scene folder from disk for the scene tools (tools/scene.js) and the test suite. */
 
@@ -55,10 +56,37 @@ export async function loadScene(name, root = SCENES) {
 export async function checkScene(name, root = SCENES) {
   const loaded = await loadScene(name, root);
   const { listed } = await sceneNames(root);
-  const result = await inspectFindings(loaded, {
-    files: loaded.files,
-    exists: path => stat(join(loaded.dir, path)).then(s => s.isFile(), () => false),
-    listed: listed ? listed.includes(name) : undefined,
-  });
+  const exists = path => stat(join(loaded.dir, path)).then(s => s.isFile(), () => false);
+  const result = await inspectFindings(loaded, { files: loaded.files, exists, listed: listed ? listed.includes(name) : undefined });
+  result.findings.push(...await checkPrefabs(loaded, { exists }), ...unplaced(loaded, name));
   return { ...loaded, ...result };
+}
+
+/** A type the scene declares but places nowhere: nothing shows it, and nothing would notice it break. */
+function unplaced(loaded, name) {
+  if (!loaded.scene) return [];
+  const used = new Set([...loaded.scene.decor, ...loaded.pois.flatMap(p => p.objects)].map(o => o.type));
+  return ownPrefabs(loaded).filter(o => !used.has(o.type)).map(o => ({
+    level: 'warn', code: 'PREFAB_UNUSED', file: `${name}/scene.json`, path: `prefabs.${o.type}`, message: `"${o.type}" is declared but no object uses it`,
+    hint: `place one, or run \`node tools/scene.js showroom ${name}\` for a room that shows every type, or take it out of "prefabs"`,
+  }));
+}
+
+/** The scene's own object types whose module is a file in its folder: `[{ type, path, entry }]`. */
+export function ownPrefabs(loaded) {
+  let decl = {};
+  try { decl = JSON.parse(loaded.files.get('scene.json') ?? '{}').prefabs ?? {}; } catch { /* reported as a config error */ }
+  const extra = loaded.registry?.extra ?? {};
+  return Object.entries(decl).filter(([type, path]) => typeof path === 'string' && !/^([a-z]+:|\/)/i.test(path) && extra[type]).map(([type, path]) => ({ type, path, entry: extra[type] }));
+}
+
+/** Every finding for those types (src/lint/prefabRules.js): each is rendered without a browser and measured. `only` names one type. */
+export async function checkPrefabs(loaded, { exists, only = null } = {}) {
+  const out = [], sceneUrl = pathToFileURL(loaded.dir + sep).href;
+  for (const { type, path, entry } of ownPrefabs(loaded)) {
+    if (only && type !== only) continue;
+    const source = await readFile(join(loaded.dir, path), 'utf8').catch(() => null);
+    out.push(...await lintPrefab({ type, entry, file: `${loaded.dir.split(sep).pop()}/${path}`, source, sceneUrl, exists }));
+  }
+  return out;
 }

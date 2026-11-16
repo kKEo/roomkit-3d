@@ -16,6 +16,9 @@ export function meta({ z }) {
       spin: z.number().min(0).default(0.3),
     }),
     hotspots: ['shade'],
+    title: 'Floor lamp',
+    blurb: 'a lamp on a pole whose shade turns',
+    glyph: '⚲',
     geometry: p => ({ min: [-0.4, 0, -0.4], max: [0.4, p.height + 0.25, 0.4], mount: 'floor', round: true }),
     placement: p => ({ focus: [0, p.height * 0.7, 0], cameraDistance: 4, cameraHeight: 2, markerOffset: [0, p.height + 0.6, 0] }),
   };

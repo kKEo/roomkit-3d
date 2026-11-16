@@ -44,12 +44,13 @@ async function buildPois(files, ctx) {
 
 /**
  * The same build for tools that report on a scene (`node tools/scene.js check`): it never throws for a config
- * mistake. Resolves to `{ scene, pois, errors }`, where `errors` are the ConfigError lines; when `scene.json`
- * itself is wrong `scene` is null, yet the POI files are still read so their mistakes are listed in the same run.
+ * mistake. Resolves to `{ scene, pois, errors, registry }`, where `errors` are the ConfigError lines; when
+ * `scene.json` itself is wrong `scene` is null, yet the POI files are still read so their mistakes are listed in the
+ * same run, and `registry` still holds the scene's own prefabs that loaded (null when `scene.json` cannot be read).
  */
 export async function inspectScene(opts) {
   try { return await assemble(opts, true); } catch (e) {
-    if (e instanceof ConfigError) return { scene: null, pois: [], errors: e.lines };
+    if (e instanceof ConfigError) return { scene: null, pois: [], errors: e.lines, registry: null };
     throw e;
   }
 }
@@ -74,7 +75,7 @@ async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
     const files = Array.isArray(raw?.poi) ? raw.poi.filter(f => typeof f === 'string') : [];
     const built = await buildPois(files, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra });
     for (const p of built.pois) autoViews(p, null, registry);
-    return { scene: null, pois: built.pois, errors: [...errors, ...built.errors] };
+    return { scene: null, pois: built.pois, errors: [...errors, ...built.errors], registry };
   }
   scene.name = name;
   scene.registry = registry;
@@ -107,7 +108,7 @@ async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
     seen.add(p.id);
   }
   if (typeof scene.camera.start === 'string' && !seen.has(scene.camera.start)) errors.push(`${label('scene.json')} › camera.start: no POI has the id "${scene.camera.start}"`);
-  return { scene, pois, errors };
+  return { scene, pois, errors, registry };
 }
 
 /**

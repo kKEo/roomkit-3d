@@ -1,4 +1,4 @@
-import { Solid, Segs } from '../scene/core.jsx';
+import { Solid, Segs } from '../scene/core.js';
 import { ScreenSurface } from './media.jsx';
 import { circlePts } from '../lib/math.js';
 

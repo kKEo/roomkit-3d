@@ -49,6 +49,7 @@ Unlike the loading screen, which stops at the first broken file, the check reads
 | `EXPECT_FAILED` | error | the scene is not what its `brief.json` says; the message says what is true instead |
 | `EXPECT_INVALID` | error | an entry of `brief.json` cannot be read: an unknown key, a name no object has, a wall the room does not have |
 | `EXPECT_SKIPPED` | info | the scene has config errors, so its brief was not checked |
+| `PREFAB_…` | error, warn, info | a type the scene ships itself (`scene.json › prefabs`) is rendered without a browser and measured: see [The scene's own object types](#the-scenes-own-object-types) |
 | `GEO_UNKNOWN`, `GEO_TILTED`, `GEO_SKIPPED` | info | positions were not checked: the prefab declares no size, the object is tilted, or `scene.json` has errors |
 
 ## Checking a scene against its brief
@@ -61,6 +62,18 @@ loft: 1 errors, 0 warnings, 0 notes, 13 of 14 expectations hold
 ```
 
 An expectation is to a scene what a test is to code: written once from the brief, it also catches a later edit that quietly breaks the layout. When the brief itself changes, change the expectation. The forms are listed in the [brief.json reference](../../operator/reference/brief-json.md) and by `node tools/scene.js keys brief`; `test/expect.test.js` covers each of them, holding and failing.
+
+## The scene's own object types
+
+A scene may ship object types as JavaScript modules (`prefabs/*.js`). Everything the checks above know about an object's size comes from what such a module *declares*; these checks hold the declaration to what the module *does*. Each type is rendered with the real React and React Three Fiber reconciler on a canvas that draws nothing, for its default props and with each prop changed in turn, and the result is measured:
+
+```text
+warn  PREFAB_GEO_SMALL  cinema/prefabs/seats.js › geometry: box (part 5) reaches z 1.7 with { "recline": 60 }, 0.5 m past the declared box (max z 1.2) (make `geometry` contain every solid part for every prop: scene checks and placement by wall trust it)
+```
+
+That line is a real one: the first run of this check found that the cinema's seats declared a box that ignored how far the backrests lean. The codes (`PREFAB_THROWS`, `PREFAB_GEO_SMALL`, `PREFAB_MOUNT`, `PREFAB_HOTSPOT`, `PREFAB_MOTION`, `PREFAB_MATERIAL`, `PREFAB_PLACEMENT` and the rest) are listed in the operator guide's [Scene-shipped prefabs](../../operator/extending/scene-prefabs.md#writing-one-and-checking-it-without-a-browser). `node tools/scene.js prefab check <scene> [type]` runs them alone, and `prefab describe <scene> <type>` prints what a type really makes: its parts, sizes and outline.
+
+The stage draws nothing, shows a screen as a plain plane and does not load models, so these checks say nothing about how a type looks.
 
 ## How positions are known
 

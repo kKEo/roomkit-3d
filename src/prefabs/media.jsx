@@ -1,7 +1,7 @@
 import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld, PoiContext, ActionsContext, SlotContext, EditKeyContext } from '../scene/core.jsx';
+import { useWorld, PoiContext, ActionsContext, SlotContext, EditKeyContext } from '../scene/core.js';
 import { useStore, editScreens } from '../state/store.js';
 import { getSession, sessionKey, registerScreen, registerVideo } from '../scene/screenState.js';
 import {

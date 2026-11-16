@@ -7,6 +7,9 @@
  *   node tools/scene.js plan <scene> [--svg=file.svg]        the floor plan as text, or as an SVG file
  *   node tools/scene.js prefabs [scene]                      the object types a scene can place, with sizes and props
  *   node tools/scene.js keys [section]                       every key a scene's files can hold: type, default, meaning
+ *   node tools/scene.js prefab new <scene> <type> [--mount=floor|wall|ceiling|free] [--title="…"]   a new object type for a scene
+ *   node tools/scene.js prefab check <scene> [type]          render a scene's own types without a browser and list what is wrong
+ *   node tools/scene.js prefab describe <scene> <type> [--props='{…}'] [--svg=file.svg]   its parts, sizes and outline
  *   node tools/scene.js new <name> [--title="My Room"] [--brief="…"]   a new scene folder with one stop, listed in scenes/index.json
  *
  * With no scene name, every folder in public/scenes is checked. Exit code: 0 clean, 1 problems
@@ -16,7 +19,7 @@ process.removeAllListeners('warning'); // Node's localStorage notice, raised by 
 
 const { writeFile, readFile, mkdir, access } = await import('node:fs/promises');
 const { join, dirname } = await import('node:path');
-const { checkScene, loadScene, sceneNames, SCENES } = await import('./scene/load.js');
+const { checkScene, checkPrefabs, loadScene, ownPrefabs, sceneNames, SCENES } = await import('./scene/load.js');
 const { newSceneFiles } = await import('../src/editor/bundle.js');
 const { setAt } = await import('../src/editor/jsonEdit.js');
 const { SCENE_NAME } = await import('../src/config/loadScene.js');
@@ -26,6 +29,8 @@ const { BUILTIN_REGISTRY } = await import('../src/prefabs/registry.js');
 const { formatFinding } = await import('../src/lint/rules.js');
 const { keysText, SECTIONS } = await import('../src/lint/keys.js');
 const { briefFile } = await import('../src/lint/expect.js');
+const { describePrefab, prefabTemplate, MOUNT_NAMES } = await import('../src/lint/prefabDescribe.js');
+const { BUILTIN, TYPE_NAME } = await import('../src/prefabs/registry.js');
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--')).map(a => a.split('=')[0]));
@@ -39,6 +44,11 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
   plan <scene> [--svg=file.svg]        draw the floor plan as text, or write it as SVG
   prefabs [scene]                      list the object types with their sizes, props and clickable parts
   keys [section]                       list every key of a scene's files with its type, default and meaning
+  prefab new <scene> <type> [--mount=floor|wall|ceiling|free] [--title="Sofa"]
+                                       start an object type of the scene's own: prefabs/<type>.js, declared in scene.json
+  prefab check <scene> [type]          render the scene's own types without a browser: size, mount, clickable parts, motion
+  prefab describe <scene> <type> [--props='{"height":2}'] [--svg=file.svg]
+                                       read one back: its parts, measured size and outline from the front, the side and above
   new <name> [--title="My Room"] [--brief="what was asked for"]
                                        start a scene folder (a room and one stop) and list it in scenes/index.json
 
@@ -92,6 +102,64 @@ const commands = {
     let brief = null;
     try { brief = JSON.parse(files.get('brief.json') ?? 'null')?.text; } catch { /* `check` reports a brief that does not parse */ }
     console.log(describeScene(scene, pois, { brief: typeof brief === 'string' ? brief : null }).join('\n'));
+  },
+  async prefab() {
+    const [sub, scene, type, ...more] = names;
+    const subs = { new: 'prefab new <scene> <type>', check: 'prefab check <scene> [type]', describe: 'prefab describe <scene> <type>' };
+    if (!Object.hasOwn(subs, sub ?? '')) fail(`prefab takes one of: ${Object.values(subs).join(', ')}`);
+    if (!scene || more.length || (!type && sub !== 'check')) fail(`usage: node tools/scene.js ${subs[sub]}`);
+    const { dirs } = await sceneNames();
+    if (!dirs.includes(scene)) fail(`no scene folder "${scene}" in public/scenes (there are: ${dirs.join(', ')})`);
+    const loaded = await loadScene(scene);
+
+    if (sub === 'new') {
+      const mount = option('--mount') ?? 'floor', path = `prefabs/${type}.js`, file = join(SCENES, scene, path);
+      if (!TYPE_NAME.test(type)) fail(`"${type}" is not a type name: letters, digits and "_", starting with a lowercase letter`);
+      if (Object.hasOwn(BUILTIN, type)) fail(`"${type}" is a built-in type; pick another name`);
+      if (!MOUNT_NAMES.includes(mount)) fail(`--mount is one of: ${MOUNT_NAMES.join(', ')}`);
+      let decl;
+      try { decl = JSON.parse(loaded.files.get('scene.json')); } catch { fail(`${scene}/scene.json is not valid JSON; fix it first`); }
+      if (decl.prefabs?.[type] != null) fail(`${scene} already declares "${type}" (${decl.prefabs[type]})`);
+      if (await access(file).then(() => true, () => false)) fail(`public/scenes/${scene}/${path} already exists`);
+      await mkdir(dirname(file), { recursive: true });
+      await writeFile(file, prefabTemplate(type, { mount, title: option('--title'), scene }));
+      await writeFile(join(SCENES, scene, 'scene.json'), setAt(loaded.files.get('scene.json'), ['prefabs', type], path));
+      console.log(`created public/scenes/${scene}/${path} (a ${mount} object, one box) and declared it in scene.json › prefabs`);
+      console.log(`next: give it its parts, then run: node tools/scene.js prefab check ${scene} ${type}`);
+      console.log('a type that is declared must also be placed somewhere in the scene, or the test suite fails');
+      return;
+    }
+
+    const own = ownPrefabs(loaded), known = own.map(o => o.type);
+    if (type && !known.includes(type)) {
+      const broken = loaded.errors.filter(l => l.includes(` › prefabs.${type}:`));
+      fail(broken.length ? broken.join('\n') : `${scene} has no type "${type}" of its own (${known.length ? `it has: ${known.join(', ')}` : 'it declares none in scene.json › prefabs'})`);
+    }
+    if (sub === 'check') {
+      const loadErrors = loaded.errors.filter(l => l.includes(' › prefabs.'));
+      for (const l of loadErrors) console.log(`error CONFIG  ${l}`);
+      const findings = await checkPrefabs(loaded, { exists: p => access(join(loaded.dir, p)).then(() => true, () => false), only: type ?? null });
+      for (const f of findings) console.log(formatFinding(f));
+      const count = level => findings.filter(f => f.level === level).length + (level === 'error' ? loadErrors.length : 0);
+      const what = type ?? `${known.length} type${known.length === 1 ? '' : 's'}`;
+      console.log(`${scene} › ${what}: ${findings.length || loadErrors.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}`);
+      process.exitCode = count('error') || (flags.has('--strict') && count('warn')) ? 1 : 0;
+      return;
+    }
+    const entry = own.find(o => o.type === type).entry;
+    let props = entry.props;
+    if (flags.has('--props')) {
+      let raw;
+      try { raw = JSON.parse(option('--props') ?? ''); } catch (e) { fail(`--props must be JSON, such as --props='{"height":2}' (${e.message})`); }
+      const r = entry.schema.safeParse(raw);
+      if (!r.success) fail(r.error.issues.map(i => `props${i.path.length ? `.${i.path.join('.')}` : ''}: ${i.message}`).join('\n'));
+      props = r.data;
+    }
+    const svgFile = option('--svg');
+    if (flags.has('--svg') && !svgFile) fail('give the file to write: --svg=lamp.svg');
+    const { lines, svg } = await describePrefab(type, entry, { props });
+    console.log(lines.join('\n'));
+    if (svgFile && svg) { await writeFile(svgFile, svg); console.log(`\nwrote ${svgFile}`); }
   },
   keys() {
     if (names.length > 1) fail('keys takes at most one section');

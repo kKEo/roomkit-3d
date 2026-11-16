@@ -4,7 +4,7 @@ This page walks through adding a new built-in object type, a `lamp`, from geomet
 
 ## 1. Write the component
 
-Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` and returns a group in **local space**: origin as documented, front facing +Z, metres. Build it from the helpers in `src/scene/core.jsx`:
+Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` and returns a group in **local space**: origin as documented, front facing +Z, metres. Build it from the helpers in `src/scene/core.js`:
 
 - `<Solid shape args fill line …meshProps>`: a hatched mesh with an outline. `fill` is `"main"`, `"fine"` or `false`; `line` is a line style or `false`.
 - `<Segs points line>`: line segments from a flat `[x,y,z, x,y,z, …]` array.
@@ -13,7 +13,7 @@ Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` an
 ```jsx
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Solid } from '../scene/core.jsx';
+import { Solid } from '../scene/core.js';
 import { reducedMotion } from '../lib/env.js';
 
 /** Floor lamp (origin = floor centre). The shade grows slightly while its POI is open. */

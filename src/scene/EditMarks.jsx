@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore, editGroups, editScreens } from '../state/store.js';
-import { useWorld } from './core.jsx';
+import { useWorld } from './core.js';
 
 /** The placed objects a tree key covers: one object, or every object of a stop (`stop:<file>`). */
 function groupsOf(key) {

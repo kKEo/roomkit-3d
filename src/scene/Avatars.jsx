@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld } from './core.jsx';
+import { useWorld } from './core.js';
 import { runtime } from '../state/store.js';
 import { syncClient, useSync } from '../net/sync.js';
 import { flightCurve, posAt } from '../lib/flight.js';

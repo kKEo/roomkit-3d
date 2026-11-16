@@ -17,6 +17,9 @@ This page lists every command the project defines or relies on. Run them from th
 | `node tools/scene.js plan <scene>` | the floor plan as text; `--svg=file.svg` writes a picture instead |
 | `node tools/scene.js new <name>` | a new scene folder with a room and one stop, added to `public/scenes/index.json`; `--title="My Room"` names it, `--brief="…"` also writes the description into a [`brief.json`](../reference/brief-json.md) |
 | `node tools/scene.js prefabs [scene]` | every object type with its size, origin, props and clickable parts |
+| `node tools/scene.js prefab new <scene> <type>` | a new object type for that scene: `prefabs/<type>.js` from a template, declared in `scene.json › prefabs`; `--mount=floor\|wall\|ceiling\|free`, `--title="…"` |
+| `node tools/scene.js prefab check <scene> [type]` | renders the scene's own types without a browser and lists what is wrong: size against the declared box, mount, clickable parts, motion, materials; see [Scene-shipped prefabs](../extending/scene-prefabs.md#writing-one-and-checking-it-without-a-browser) |
+| `node tools/scene.js prefab describe <scene> <type>` | one type read back: its parts, measured size and outline from three sides; `--props='{…}'` for other props, `--svg=file.svg` for a drawing |
 | `node tools/scene.js keys [section]` | every key of a scene's files with its type, default and meaning, printed from the schemas; without a section, the list of sections |
 | `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |

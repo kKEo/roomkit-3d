@@ -1,5 +1,5 @@
 import { Component, Suspense, lazy, useCallback } from 'react';
-import { ActionsContext, SlotContext, EditKeyContext, Solid } from '../scene/core.jsx';
+import { ActionsContext, SlotContext, EditKeyContext, Solid } from '../scene/core.js';
 import { useStore, editGroups } from '../state/store.js';
 import { BUILTIN_REGISTRY } from './registry.js';
 import { LOADERS, loadComponent } from './loaders.js';

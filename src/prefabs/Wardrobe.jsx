@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Solid, Segs } from '../scene/core.jsx';
+import { Solid, Segs } from '../scene/core.js';
 import { DEG } from '../lib/math.js';
 import { reducedMotion } from '../lib/env.js';
 

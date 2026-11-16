@@ -203,7 +203,7 @@ One shape. Origin: the shape's centre.
 | Prop | Default | Notes |
 | --- | --- | --- |
 | `shape` | `"box"` | `box`, `sphere`, `cylinder`, `cone`, `torus`, `torusKnot`, `icosahedron`, `dodecahedron`, `octahedron`, `tetrahedron`, `plane` |
-| `size` | `1` | approximate bounding size in metres; `args` is derived from it (`shapeArgs()` in `src/scene/core.jsx`) |
+| `size` | `1` | approximate bounding size in metres; `args` is derived from it (`shapeArgs()` in `src/scene/core.js`) |
 | `args` | `null` | raw three.js geometry constructor arguments for `shape`; when given, they replace the size-derived ones |
 | `fill` | `"main"` | `"main"`, `"fine"` or `false` (outline only) |
 | `edge` | `"thick"` | `"thick"`, `"mid"`, `"thin"`, `"faint"`, `"glow"` or `false` |

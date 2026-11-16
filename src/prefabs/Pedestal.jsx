@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, Segs, shapeArgs, useWorld } from '../scene/core.jsx';
+import { Solid, Segs, shapeArgs, useWorld } from '../scene/core.js';
 import { circlePts } from '../lib/math.js';
 import { reducedMotion } from '../lib/env.js';
 

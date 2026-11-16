@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useWorld } from './core.jsx';
+import { useWorld } from './core.js';
 import { reducedMotion } from '../lib/env.js';
 import { randomPoint } from '../lib/footprint.js';
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, Segs, Outline, useWorld } from './core.jsx';
+import { Solid, Segs, Outline, useWorld } from './core.js';
 import { edges, gridSegments } from '../lib/footprint.js';
 
 /** The room shell: the footprint polygon extruded from the floor to the ceiling (inner faces are drawn). */

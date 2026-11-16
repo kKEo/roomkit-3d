@@ -56,7 +56,9 @@ export function component({ h, useRef, useFrame, Solid, reducedMotion }) {
 
 `meta` has the same shape as a built-in `<Name>.meta.js` (see [Adding a prefab](prefab.md#2-describe-its-props)): a strict zod schema where **every key has a default**, optional `media` and `hotspots`, and `placement`. The four presentation keys are for the editor and may be left out. The component receives `{ props, active, hovered }` like a built-in and returns a group in local space, facing +Z, in metres. Write elements with `h` (React's `createElement`): `h(Solid, { ...props }, ...children)`.
 
-Keep `meta` free of anything browser-only: the test suite imports every scene's prefab modules in Node and runs `meta()` to check the scene builds. `component` is never called there, but it must be exported: a module without it is refused on the loading screen (`… has no "component" export`), before anything renders.
+Keep `meta` free of anything browser-only: the scene tools and the test suite import every scene's prefab modules in Node and run `meta()` to check the scene builds. `component` must be exported too: a module without it is refused on the loading screen (`… has no "component" export`), before anything renders. It is also rendered in Node, without a browser, by the checks below, so keep anything that needs a page (`document`, `window`) out of the render and inside an event handler or an effect.
+
+A prop's `.describe('…')` text is printed by `node tools/scene.js prefabs <scene>` next to its type and default, which is where an author (or a coding agent) reads what the prop does.
 
 ### Versions
 
@@ -66,6 +68,51 @@ A module that lives outside the app (on your own host, shared between scenes) ou
 - **major**: a key removed, renamed or changed in meaning.
 
 What the SDK hands out is listed in the two tables below. Of those, treat `useStore` and `runtime` as the app's internals: they are passed through so a prefab can do what a built-in can, but their shape follows the app, not this version number. Everything else in the tables is covered by it.
+
+## Writing one, and checking it without a browser
+
+Three commands make the loop, each well under a second:
+
+```sh
+node tools/scene.js prefab new loft sideTable --mount=floor --title="Side table"   # prefabs/sideTable.js, declared in scene.json
+node tools/scene.js prefab check loft sideTable                                    # what is wrong with it
+node tools/scene.js prefab describe loft sideTable                                 # what it makes
+```
+
+`prefab new` writes a module that is one box following three size props, for an object that stands on the `floor` (the default), hangs on a `wall` or from the `ceiling`, or is `free`. It passes the check as it stands; replace the box with the real parts.
+
+`prefab check` renders the component with the real React and React Three Fiber reconciler on a canvas that draws nothing (`src/lint/stage.js`), for the default props and then with each prop changed in turn (a low and a high number, the other side of a tick box, every other choice), and compares what comes out with what the meta declares. `node tools/scene.js check <scene>` and the test suite run the same checks on every type a scene ships.
+
+| Code | Level | Meaning |
+| --- | --- | --- |
+| `PREFAB_SOURCE` | error | the module has an `import` or a `require`; a page could not resolve it |
+| `PREFAB_THROWS` | error | `component(sdk)` fails, the component throws while rendering for some props (a hook inside an `if` shows up here), a `useFrame` callback throws, or `geometry()`, `hotspots()` or `placement()` does |
+| `PREFAB_ASSET` | error | a file named through `assetUrl` is not next to the module |
+| `PREFAB_GEO_MISSING` | warn | the meta declares no `geometry`; the hint gives the measured box, ready to paste |
+| `PREFAB_GEO_SMALL` | warn | a solid part reaches outside the declared box: at rest, for some value of a prop, or while it moves. The part and the props are named |
+| `PREFAB_MOUNT` | warn | a `floor` object whose parts or box do not start at y 0, a `ceiling` object that does not end there, a `wall` object with parts behind z 0 |
+| `PREFAB_HOTSPOT` | warn | `hotspots` lists a name no part has, or a part has a `hotspot` (a screen: an `id`) the list lacks |
+| `PREFAB_MOTION` | warn | something still moves when `reducedMotion` is true |
+| `PREFAB_MATERIAL` | warn | a part is drawn with a material that is not one of `useWorld().mats` |
+| `PREFAB_PLACEMENT` | warn | a stop's automatic camera, placed by the meta's `placement`, would cut the object off or leave it under 1% of the picture; the hint gives a distance that works |
+| `PREFAB_REACT` | warn | what React says while it renders, such as list items without a `key` |
+| `PREFAB_UNUSED` | warn | (scene check only) the scene declares the type but places it nowhere |
+| `PREFAB_GEO_LARGE` | info | the declared box is over 0.5 m and a quarter larger than the parts on one side |
+| `PREFAB_UNMEASURED` | info | a glTF model or another loaded file is not loaded here, so its size is not measured |
+| `PREFAB_UNTITLED` | info | the meta gives no `title`, `blurb` or `glyph` |
+
+What is measured: every `Solid` (filled or outline only), every screen and any mesh of your own is the body; `Segs` and other lines (cables, beams, rays) are listed but left out, as they are left out of `geometry`. The declared box has to contain the body with 5 cm to spare; it may be more generous. On this stage a screen is a plain plane, a model is empty, and nothing is drawn: how it looks is for [the picture](../../tester/running/scene-checks.md) and the browser.
+
+`prefab describe` reads one type back: what is declared, what is measured, each part with its shape, size and place (a part's `name` is what it is called here and in findings), what is clickable, what moves, and its outline from the front, the side and above. `--props='{"height":3}'` describes it with other props; `--svg=file.svg` writes the three views as a drawing, with the declared box dashed.
+
+```text
+lamp: "Floor lamp", a lamp on a pole whose shade turns
+declared: a floor object, faces +z; 0.8 wide × 2.05 high × 0.8 deep (round): x -0.4…0.4, y 0…2.05, z -0.4…0.4
+measured: its solid parts are 0.8 wide × 2.05 high × 0.8 deep: x -0.4…0.4, y 0…2.05, z -0.4…0.4; lines reach x -0.9…0.9, y 0…2.05, z -0.9…0.9
+parts (3 solids, 1 line set):
+   1  cylinder 0.7 × 0.06 × 0.7 at [0, 0.03, 0]
+   3  cone 0.8 × 0.5 × 0.8 at [0, 1.8, 0]; fill fine, line mid, clickable as "shade", moves
+```
 
 ## The SDK
 
@@ -79,7 +126,9 @@ What the SDK hands out is listed in the two tables below. Of those, treat `useSt
 | `SHAPES` | the names `Solid` accepts as `shape` |
 | `feedSchema` | the schema of a live `feed` (a URL or `{ url, refresh, stream, transform }`), to give a prop live data; a screen config from `screenSchema` already accepts one (see [Live data](live-data.md)) |
 
-`component(sdk)` receives all of the above plus:
+`component(sdk)` receives all of the above plus the keys below. Most come from `sdkCore` in `src/prefabs/sdkCore.js`, which needs no browser; `makeSdk` in `src/prefabs/sdk.js` adds the six a page alone can give (`ScreenSurface`, `reducedMotion`, `useLoader`, `useGLTF`, `useModel`, `useTexture`), and the checks above stand in for exactly those.
+
+In full, `component(sdk)` gets:
 
 | Key | What it is |
 | --- | --- |
@@ -87,7 +136,7 @@ What the SDK hands out is listed in the two tables below. Of those, treat `useSt
 | `useState`, `useRef`, `useEffect`, `useMemo`, `useCallback` | the React hooks |
 | `THREE` | three.js |
 | `useFrame`, `useThree`, `useLoader` | React Three Fiber hooks: per-frame work, the renderer/camera, cached asset loading |
-| `Solid`, `Segs`, `Outline`, `useGeometry`, `shapeArgs` | the building blocks from `src/scene/core.jsx`; `Solid` takes `hotspot="name"` |
+| `Solid`, `Segs`, `Outline`, `useGeometry`, `shapeArgs` | the building blocks from `src/scene/core.js`; `Solid` takes `hotspot="name"` |
 | `ScreenSurface` | a screen plane, every source included (`src/prefabs/media.jsx`) |
 | `useWorld`, `useHotspot`, `useStore`, `runtime` | `{ mats, rain, room, theme }`, pointer handlers for a hotspot, the zustand store and the per-frame runtime |
 | `reducedMotion`, `toRad`, `circlePts` | helpers the built-ins use |
