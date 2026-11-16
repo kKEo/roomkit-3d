@@ -136,6 +136,7 @@ function objects({ scene, all, add }) {
   const boxes = [];
   const unknown = new Set();
   for (const e of all) {
+    if (e.obj.unplaced) continue; // its `at` or `facing` has a config error, reported already: it is not where it will be
     const box = objectBox(e.obj, scene.registry);
     if (!box) {
       if (!unknown.has(e.obj.type)) add('info', 'GEO_UNKNOWN', e.file, e.path, `the size of "${e.obj.type}" is not known, so its position is not checked`, 'its prefab can declare `geometry` in its meta');
@@ -182,12 +183,12 @@ const span = (poly, i) => Math.max(...poly.map(p => p[i])) - Math.min(...poly.ma
 
 function cameras({ scene, pois, all, files, add }) {
   const { footprint, height } = scene.room;
-  const boxes = all.map(e => ({ ...e, box: objectBox(e.obj, scene.registry) })).filter(e => e.box && !e.box.tilted);
+  const boxes = all.filter(e => !e.obj.unplaced).map(e => ({ ...e, box: objectBox(e.obj, scene.registry) })).filter(e => e.box && !e.box.tilted);
   for (const p of pois) {
+    if (p.objects[0].unplaced && !pageCamera(files, p)) continue; // the automatic camera follows an object that is not placed
     const file = `${scene.name}/${p.file}`, [x, y, z] = p.camera.position;
     // a camera the file does not write is the automatic one, in front of the stop's first object
-    let auto = false;
-    try { auto = !JSON.parse(files.get(p.file) ?? '{}').camera; } catch { /* unreadable: treat as written */ }
+    const auto = !pageCamera(files, p);
     const here = `at [${[x, y, z].map(fmt).join(', ')}]`;
     const fix = auto ? `this is the automatic camera, placed in front of the stop's first object; give the stop its own "camera": { "position": [x, y, z], "target": [x, y, z] }` : 'move the camera';
     if (!insideOrNear(footprint, x, z, 0) || y < 0 || y > height) {
@@ -199,6 +200,11 @@ function cameras({ scene, pois, all, files, add }) {
     const blocker = boxes.find(e => e.owner !== p.id && segmentHitsBox(e.box, p.camera.position, p.camera.target));
     if (blocker) add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, or move the object out of the line of sight`);
   }
+}
+
+/** Whether a POI file writes its own camera; an unreadable file counts as written. */
+function pageCamera(files, poi) {
+  try { return !!JSON.parse(files.get(poi.file) ?? '{}').camera; } catch { return true; }
 }
 
 /** One finding as a line: `warn  CODE  file › path: message (hint)`. */

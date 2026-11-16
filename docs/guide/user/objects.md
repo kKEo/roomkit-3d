@@ -35,6 +35,23 @@ The easy way is to name the wall and let the room work out the rest:
 
 You can still give `position` and `rotation` yourself instead: put the object at the wall's position (for example `15` across for the right wall) and turn it to face into the room.
 
+## Saying where, without numbers
+
+`at` has three more forms, and `facing` says which way a thing looks:
+
+```json
+{ "type": "desk", "name": "desk", "at": { "corner": "north-east" }, "facing": "west" }
+{ "type": "pedestal", "at": { "centre": true } }
+{ "type": "bench", "at": { "near": "desk", "side": "front", "gap": 1 }, "facing": "desk" }
+```
+
+- **In a corner**: `corner` is `"north-east"`, `"south-east"`, `"south-west"` or `"north-west"`. The object is pushed into the corner until it touches both walls; `inset` keeps it that many metres away from them.
+- **In the middle**: `"centre": true`. `shift` moves it `[east, south]` metres from there.
+- **Next to something**: `near` is the `name` you gave the other object, `side` is `left`, `right`, `front` or `behind` (as you see that object when you stand in front of it) or a compass side, and `gap` is the space between the two.
+- **Facing**: a compass direction such as `"west"` or `"south-east"`, `"centre"` for the middle of the room, or the `name` of another object to look at. Use it in place of `rotation`.
+
+Give a `name` to any object you want to refer to; each name can be used once.
+
 | Type | What it is | Settings worth knowing |
 | --- | --- | --- |
 | `pictureFrame` | A frame. Give its **centre** height as the position's middle number. | `image`: a picture file such as `"media/photo.jpg"`. `width`, `height`. `exhibit`: a shape that floats in front of the frame, such as `"cone"`. |

@@ -153,6 +153,10 @@ Open `/edit.html?scene=cinema` on the dev server.
 | Select a stop, or zoom into a screen | no handles |
 | `edit.html?scene=loft`: select Scenery › door | the inspector shows **placed at** `wall 2, 50% along` and a **Convert to position** button instead of position and rotation fields |
 | Drag that door along the wall with the handles, then undo | the JSON tab shows `position` and `rotation` and no `at`; one undo brings `at` back and the door returns |
+| `edit.html?scene=loft`: select the desk of stop 02 | the inspector shows a position, then **facing** `west` with a **Convert to rotation** button instead of rotation fields |
+| Turn that desk with the green ring; then move another copy of it without turning | turning writes `rotation` and removes `facing` (one undo step); moving alone keeps `facing` |
+| In the desk's JSON tab add `"name": "desk"`; give the bench `"at": { "near": "desk", "side": "front" }` in place of its position and `facing`; then rename the desk in the tree | the bench jumps in front of the desk; after the rename its `near` reads the new name and it stays put |
+| Delete that desk | the message says one object stood next to it and needs another place; the loading error names `at.near`; Undo brings both back |
 
 ## Editor: screens
 

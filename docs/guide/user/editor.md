@@ -56,7 +56,7 @@ The selected object carries handles in the room, in the colours of the room's di
 | **Move**: a small square between two arrows | drag it to slide the object across that plane, for example over the floor |
 | **Rotate** (or press `R`): a ring | drag it to turn the object around that direction; the green ring turns it to face another way |
 
-Moves go in steps of 10 cm and turns in steps of 15°; hold `Shift` while dragging to go freely. `Esc` during a drag puts the object back. When you let go, the new position or rotation is written into the object's file (the numbers in its settings follow), and `⌘Z` / `Ctrl+Z` takes it back. Dragging a handle never selects anything else or moves the camera to another stop. The handles work in Preview and in Select; they are not shown for a whole stop, or while you are up close to a screen.
+Moves go in steps of 10 cm and turns in steps of 15°; hold `Shift` while dragging to go freely. `Esc` during a drag puts the object back. When you let go, the new position or rotation is written into the object's file (the numbers in its settings follow), and `⌘Z` / `Ctrl+Z` takes it back. An object whose file says where it stands in words (`at` a wall or a corner, `near` another object) or which way it looks (`facing`) gets plain numbers instead once you move or turn it: the settings show **placed at** or **facing** with a **Convert** button that does the same without moving anything. Dragging a handle never selects anything else or moves the camera to another stop. The handles work in Preview and in Select; they are not shown for a whole stop, or while you are up close to a screen.
 
 ## Add an object, then decide what it is
 

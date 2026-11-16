@@ -6,7 +6,7 @@ import { isFeed } from '../data/feedSchema.js';
 import { satisfies, validRange } from '../lib/semver.js';
 import { autoPlacement, clampCamera, overviewCamera } from '../lib/autoCamera.js';
 import { withFootprint } from '../lib/footprint.js';
-import { resolvePlacement } from './placement.js';
+import { placeAll } from './placement.js';
 
 /**
  * Builds the `{ scene, pois }` the app renders from a scene folder's files. Pure: it knows nothing
@@ -70,9 +70,10 @@ async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
     if (!(e instanceof ConfigError)) throw e;
     errors.push(...e.lines.filter(l => !l.includes(' › prefabs.') && !l.includes(' › transforms.')));
     if (!tolerant) throw new ConfigError(errors);
-    // the POI files can still be checked on their own
+    // the POI files can still be checked on their own; without a room their objects stay where the schema put them
     const files = Array.isArray(raw?.poi) ? raw.poi.filter(f => typeof f === 'string') : [];
     const built = await buildPois(files, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra });
+    for (const p of built.pois) autoViews(p, null, registry);
     return { scene: null, pois: built.pois, errors: [...errors, ...built.errors] };
   }
   scene.name = name;
@@ -82,13 +83,23 @@ async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
   scene.resolveUrl = resolveUrl;
   scene.room = withFootprint(scene.room);
   scene.camera.overview ??= overviewCamera(scene.room);
-  scene.decor = scene.decor.map((o, i) => resolvePlacement(o, scene.room, registry, (path, msg) => errors.push(`${label('scene.json')} › decor.${i}.${path}: ${msg}`)));
   scene.decor = scene.decor.map(o => resolveObjectMedia(o, resolveUrl, registry));
-  checkFeeds(scene.decor, 'decor', transforms.extra, label('scene.json'), errors);
+  const decorErrors = [];
+  checkFeeds(scene.decor, 'decor', transforms.extra, label('scene.json'), decorErrors);
 
-  const built = await buildPois(scene.poi, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra, room: scene.room });
-  errors.push(...built.errors);
+  const built = await buildPois(scene.poi, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra });
   const pois = built.pois;
+
+  // where everything stands: one pass over the whole scene, because an object may stand next to, or face, one in
+  // another file; only then can each stop's automatic camera be put in front of its first object
+  const placeErrors = { decor: [], pois: [] };
+  const placed = placeAll([
+    ...scene.decor.map((obj, i) => ({ obj, fail: (path, msg) => placeErrors.decor.push(`${label('scene.json')} › decor.${i}.${path}: ${msg}`) })),
+    ...pois.flatMap(p => p.objects.map((obj, i) => ({ obj, fail: (path, msg) => placeErrors.pois.push(`${label(p.file)} › objects.${i}.${path}: ${msg}`) }))),
+  ], scene.room, registry);
+  scene.decor = placed.splice(0, scene.decor.length);
+  for (const p of pois) { p.objects = placed.splice(0, p.objects.length); autoViews(p, scene.room, registry); }
+  errors.push(...placeErrors.decor, ...decorErrors, ...built.errors, ...placeErrors.pois);
 
   const seen = new Set();
   for (const p of pois) {
@@ -195,31 +206,32 @@ export function checkFeeds(node, path, transforms, file, errors) {
   else for (const [k, v] of Object.entries(node)) checkFeeds(v, path ? `${path}.${k}` : k, transforms, file, errors);
 }
 
-async function buildPoi(file, { read, resolveUrl, label, poiSchema, registry, transforms = {}, room }) {
+/** One POI file, parsed and with its media resolved. Its objects are not placed yet and it has no automatic camera: see `assemble`. */
+async function buildPoi(file, { read, resolveUrl, label, poiSchema, registry, transforms = {} }) {
   const l = label(file);
   const poi = parseOrThrow(poiSchema, parseJson(await readLabelled(read, file, l), l), l);
   poi.file = file;
   const feedErrors = [];
-  // without a room (scene.json has errors of its own) objects placed `at` a wall stay where the schema put them
-  if (room) poi.objects = poi.objects.map((o, i) => resolvePlacement(o, room, registry, (path, msg) => feedErrors.push(`${l} › objects.${i}.${path}: ${msg}`)));
   poi.objects = poi.objects.map(o => resolveObjectMedia(o, resolveUrl, registry));
   checkFeeds(poi.objects, 'objects', transforms, l, feedErrors);
   if ('blocks' in poi.content) checkFeeds(poi.content.blocks, 'content.blocks', transforms, l, feedErrors);
   if (feedErrors.length) throw new ConfigError(feedErrors);
-
-  if (!poi.camera || !poi.marker) {
-    const first = poi.objects[0];
-    const auto = autoPlacement(first, registry.get(first.type).placement(first.props));
-    // an object near a wall would put the camera behind it: keep it in the room
-    poi.camera ??= room ? clampCamera(auto.camera, room.footprint) : auto.camera;
-    poi.marker ??= auto.marker;
-  }
 
   if ('markdown' in poi.content) {
     const text = await readLabelled(read, poi.content.markdown, `${l} › content.markdown`);
     poi.content = { blocks: [{ type: 'markdown', text }] };
   }
   return poi;
+}
+
+/** The camera and marker a POI file leaves out, from its first object as placed. */
+function autoViews(poi, room, registry) {
+  if (poi.camera && poi.marker) return;
+  const first = poi.objects[0];
+  const auto = autoPlacement(first, registry.get(first.type).placement(first.props));
+  // an object near a wall would put the camera behind it: keep it in the room
+  poi.camera ??= room ? clampCamera(auto.camera, room.footprint) : auto.camera;
+  poi.marker ??= auto.marker;
 }
 
 async function readLabelled(read, path, label) {

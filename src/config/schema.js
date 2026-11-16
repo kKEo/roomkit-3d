@@ -5,6 +5,7 @@ import { blockSchema } from '../ui/blocks/schema.js';
 import { actionSchema } from '../actions/registry.js';
 import { SCENE_DEFAULTS } from './defaults.js';
 import { transformsDeclSchema } from '../data/feedSchema.js';
+import { CORNER_NAMES, SIDES } from './placement.js';
 
 const vec3 = z.tuple([z.number(), z.number(), z.number()]);
 const vec2 = z.tuple([z.number(), z.number()]);
@@ -19,17 +20,51 @@ export const prefabsDeclSchema = z.record(
 
 const color = z.string().min(3);
 
+/** The keys that go with each form of `at`, besides the one that names the form. */
+const AT_FORMS = { wall: ['along', 'distance', 'height', 'offset', 'turn'], corner: ['inset', 'height'], centre: ['shift', 'height'], near: ['side', 'gap', 'height'] };
+const quoted = list => list.map(k => `"${k}"`).join(', ');
+
 /**
- * `objects[].at`: placement by wall instead of by coordinates; src/config/placement.js works out the position
- * and rotation. `wall` is a compass side (north is −Z) or the wall's number in `room.footprint`.
+ * `objects[].at`: where an object stands, in words instead of coordinates; src/config/placement.js works out the
+ * position and rotation. One of four forms, named by its first key: `wall` (a compass side, north is −Z, or the
+ * wall's number in `room.footprint`), `corner` (a compass corner or the vertex's number), `centre` (the middle of
+ * the floor) or `near` (the `name` of another object). One strict object rather than a union of four, so a wrong
+ * value is reported at its own key.
  */
 export const atSchema = z.strictObject({
-  wall: z.union([z.enum(['north', 'south', 'east', 'west']), z.number().int().min(0)], { error: 'a wall is "north", "south", "east", "west" or its number in room.footprint' }),
+  wall: z.union([z.enum(['north', 'south', 'east', 'west']), z.number().int().min(0)], { error: 'a wall is "north", "south", "east", "west" or its number in room.footprint' }).optional(),
+  corner: z.union([z.enum(CORNER_NAMES), z.number().int().min(0)], { error: `a corner is ${quoted(CORNER_NAMES)} or its number in room.footprint` }).optional(),
+  centre: z.literal(true, { error: 'write "centre": true for the middle of the room' }).optional(),
+  near: z.string({ error: 'the "name" of the object to stand next to' }).min(1, 'the "name" of the object to stand next to').optional(),
   along: z.number().min(0, 'a fraction 0–1; use "distance" for metres').max(1, 'a fraction 0–1; use "distance" for metres').optional(),
   distance: z.number().min(0).optional(),
-  height: z.number().default(0),
-  offset: z.number().default(0),
-  turn: z.number().default(0),
+  height: z.number().optional(),
+  offset: z.number().optional(),
+  turn: z.number().optional(),
+  inset: z.number().min(0).optional(),
+  shift: vec2.optional(),
+  side: z.enum(SIDES, { error: `a side is ${quoted(SIDES)}` }).optional(),
+  gap: z.number().min(0).optional(),
+}).transform((at, ctx) => {
+  const forms = Object.keys(AT_FORMS).filter(k => at[k] !== undefined);
+  if (forms.length !== 1) {
+    ctx.addIssue({ code: 'custom', message: forms.length ? `give one of ${quoted(Object.keys(AT_FORMS))}, not ${forms.map(f => `"${f}"`).join(' and ')} together` : `say where: one of ${quoted(Object.keys(AT_FORMS))}` });
+    return z.NEVER;
+  }
+  const [form] = forms;
+  let ok = true;
+  for (const k of Object.keys(at)) {
+    if (k === form || at[k] === undefined || AT_FORMS[form].includes(k)) continue;
+    ok = false;
+    ctx.addIssue({ code: 'custom', path: [k], message: `"${k}" goes with ${quoted(Object.keys(AT_FORMS).filter(f => AT_FORMS[f].includes(k)))}, not with "${form}"` });
+  }
+  if (at.along != null && at.distance != null) { ok = false; ctx.addIssue({ code: 'custom', message: 'give "along" (a fraction) or "distance" (metres), not both' }); }
+  if (!ok) return z.NEVER;
+  if (form === 'wall') return { ...at, height: at.height ?? 0, offset: at.offset ?? 0, turn: at.turn ?? 0 };
+  if (form === 'corner') return { ...at, inset: at.inset ?? 0, height: at.height ?? 0 };
+  if (form === 'centre') return { ...at, shift: at.shift ?? [0, 0], height: at.height ?? 0 };
+  // next to another object: `height` stays open, the floor or that object's height (see placement.js)
+  return { ...at, side: at.side ?? 'right', gap: at.gap ?? 0.3 };
 });
 
 /** Every interface string, typed from the defaults so a misspelt key is an error rather than silently ignored. */
@@ -56,16 +91,19 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
     type: objectType,
     /** what the editor's tree calls the object; the viewer does not show it */
     name: z.string().optional(),
-    /** where it stands: `position` and `rotation` (degrees), or `at` a wall, which gives both */
+    /** where it stands: `position` and `rotation` (degrees), or `at` (a wall, a corner, the centre, another object), which gives both */
     position: vec3.optional(),
     rotation: vec3.optional(),
     at: atSchema.optional(),
+    /** which way it looks, in place of `rotation`: a compass direction, "centre" or another object's `name` */
+    facing: z.string({ error: 'a compass direction, "centre" or the "name" of another object' }).min(1, 'a compass direction, "centre" or the "name" of another object').optional(),
     scale: z.union([positive, scale3]).default(1),
     props: z.record(z.string(), z.any()).default({}),
     actions: z.record(z.string(), actionSchema).default({}),
   }).transform((raw, ctx) => {
     if (raw.at && (raw.position || raw.rotation)) ctx.addIssue({ code: 'custom', path: ['at'], message: 'give "at" or "position"/"rotation", not both' });
-    if (raw.at?.along != null && raw.at.distance != null) ctx.addIssue({ code: 'custom', path: ['at'], message: 'give "along" (a fraction) or "distance" (metres), not both' });
+    if (raw.facing != null && raw.rotation) ctx.addIssue({ code: 'custom', path: ['facing'], message: 'give "facing" or "rotation", not both' });
+    if (raw.facing != null && raw.at?.turn) ctx.addIssue({ code: 'custom', path: ['at', 'turn'], message: 'give "turn" or "facing", not both' });
     const o = { ...raw, position: raw.position ?? [0, 0, 0], rotation: raw.rotation ?? [0, 0, 0] };
     const prefab = registry.get(o.type);
     const r = prefab.schema.safeParse(o.props);

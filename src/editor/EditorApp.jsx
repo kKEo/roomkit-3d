@@ -16,7 +16,7 @@ import {
   DECOR, sceneTree, errorsByKey, parseKey, objectKey, stopKey, addToScenery, moveObject, makeStop, dissolveStop, deleteStop,
   deleteObject, duplicateObject, moveStop, renameObject, renameNewStop, setField, setObjectField, stopRefs, viewSpot,
   prefabDecls, addPrefabDecls, removePrefabDecl,
-  detachPlacement, objectAt,
+  detachPlacement, detachFacing, objectAt, objectRefs,
 } from './tree.js';
 import { Tree } from './Tree.jsx';
 import { Inspector } from './Inspector.jsx';
@@ -345,9 +345,10 @@ export function EditorApp() {
     if (row.kind !== 'object') return;
     const stop = tree.stops.find(s => s.file === row.owner);
     if (stop && stop.objects.length === 1) { askDeleteStop(stop.file); return; }
+    const refs = objectRefs(latest.current, objectAt(latest.current, row.key)?.name);
     if (!change(f => deleteObject(f, row.key))) return;
     remark(afterRemove(row.owner, row.index));
-    say(`Deleted ${row.label}.`, 'ok', [{ label: 'Undo', onClick: undo }]);
+    say(`Deleted ${row.label}.${refs.length ? ` ${cap(plural(refs.length, 'object'))} stood next to it or faced it (${refs.map(r => r.label).join(', ')}) and now need another place.` : ''}`, refs.length ? 'bad' : 'ok', [{ label: 'Undo', onClick: undo }]);
   };
 
   const onDuplicate = row => {
@@ -566,10 +567,12 @@ export function EditorApp() {
   const setTool = tool => useStore.getState().setEdit({ tool });
   /** The handles in the room dropped an object: its new position and / or rotation, one undo step; false if the file refused. */
   const transform = (key, { position, rotation, pose }) => !!change(f => {
-    if (pose && objectAt(f, key)?.at) return { files: detachPlacement(f, key, pose), key };
+    const obj = objectAt(f, key);
+    if (pose && obj?.at) return { files: detachPlacement(f, key, pose), key };
     let next = f;
     if (position) next = setObjectField(next, key, ['position'], position);
-    if (rotation) next = setObjectField(next, key, ['rotation'], rotation);
+    // turned by hand: the rotation takes the place of `facing`; moved only, it goes on facing what it faced
+    if (rotation) next = obj?.facing != null ? detachFacing(next, key, rotation) : setObjectField(next, key, ['rotation'], rotation);
     return { files: next, key };
   });
 

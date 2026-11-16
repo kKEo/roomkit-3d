@@ -170,3 +170,23 @@ export function insideOrNear(poly, x, z, tol = 0.05) {
 
 /** How far along a wall a point is, in metres from the wall's left end (seen from inside). */
 export const alongWall = (wall, x, z) => (x - wall.left[0]) * wall.right[0] + (z - wall.left[1]) * wall.right[1];
+
+/**
+ * The corners a thing can stand in: the room's convex vertices, as `{ index, point, walls: [a, b], compass, name }`.
+ * `index` is the vertex's number in the footprint and `walls` the two that meet there. `compass` is "north-east"
+ * for the corner between a north and an east wall, null when one of its walls runs at an angle; `name` is what to
+ * call the corner in a message, with its number when two corners share a compass name.
+ */
+export function corners(poly) {
+  const list = walls(poly), n = poly.length, sign = Math.sign(signedArea(poly)) || 1;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = list[(i - 1 + n) % n], b = list[i];
+    // an inner corner (the L's elbow) or a straight run turns the other way, or not at all
+    if ((a.dir[0] * b.dir[1] - a.dir[1] * b.dir[0]) * sign <= 1e-9) continue;
+    const ns = [a, b].find(w => w.compass === 'north' || w.compass === 'south'), ew = [a, b].find(w => w.compass === 'east' || w.compass === 'west');
+    out.push({ index: i, point: poly[i], walls: [a, b], compass: ns && ew ? `${ns.compass}-${ew.compass}` : null });
+  }
+  const count = c => out.filter(k => k.compass === c).length;
+  return out.map(k => ({ ...k, name: !k.compass ? `corner ${k.index}` : count(k.compass) === 1 ? `${k.compass} corner` : `${k.compass} corner (${k.index})` }));
+}

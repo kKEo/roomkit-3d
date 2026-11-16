@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { DECOR, parseKey, objectAt, objectRaw, detachPlacement, setObjectField, setObjectRaw, setField, renameObject, prefabDecls, typeUses } from './tree.js';
+import { DECOR, parseKey, objectAt, objectRaw, detachPlacement, detachFacing, setObjectField, setObjectRaw, setField, renameObject, prefabDecls, typeUses } from './tree.js';
 import { propFields, changed } from './form.js';
 import { glyphOf, isHosted } from './types.js';
 import { NumberField, TextField, JsonField, parseJson } from './fields.jsx';
 import { ScreenEditor, PartActions, screenProps } from './ScreenEditor.jsx';
 import { useStore } from '../state/store.js';
-import { placementText } from '../config/placement.js';
+import { placementText, facingText } from '../config/placement.js';
 
 /**
  * The selected node's settings under the tree. An object gets a form generated from its prefab's schema
@@ -51,7 +51,7 @@ function PropField({ f, written, def, onSet }) {
   );
 }
 
-/** Where the loader put an object (its built `position` and `rotation`), for one placed `at` a wall. */
+/** Where the loader put an object (its built `position` and `rotation`), for one placed in words (`at`, `facing`). */
 function builtPose(key) {
   const { owner, index } = parseKey(key);
   const { scene, pois } = useStore.getState();
@@ -91,14 +91,21 @@ function ObjectInspector({ files, node, tree, registry, edit, onBelongs }) {
           {obj.at ? (
             <div className="prop">
               <span className="name">placed at</span>
-              <span className="sub">{placementText(obj.at)}</span>
+              <span className="sub">{placementText(obj.at)}{obj.facing != null ? `, facing ${facingText(obj.facing)}` : ''}</span>
               <button type="button" title="Write the position and rotation this gives into the file, to move the object freely"
                 onClick={() => { const pose = builtPose(node.key); if (pose) edit(f => detachPlacement(f, node.key, pose)); }}>Convert to position</button>
             </div>
           ) : (
             <>
               <Vec label="position" value={obj.position ?? [0, 0, 0]} onCommit={v => set(['position'], v)} />
-              <Vec label="rotation" value={obj.rotation ?? [0, 0, 0]} onCommit={v => set(['rotation'], v)} />
+              {obj.facing != null ? (
+                <div className="prop">
+                  <span className="name">facing</span>
+                  <span className="sub">{facingText(obj.facing)}</span>
+                  <button type="button" title="Write the rotation this gives into the file, to turn the object freely"
+                    onClick={() => { const pose = builtPose(node.key); if (pose) edit(f => detachFacing(f, node.key, pose.rotation)); }}>Convert to rotation</button>
+                </div>
+              ) : <Vec label="rotation" value={obj.rotation ?? [0, 0, 0]} onCommit={v => set(['rotation'], v)} />}
             </>
           )}
           {Array.isArray(obj.scale)
