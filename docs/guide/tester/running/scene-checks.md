@@ -49,6 +49,7 @@ Unlike the loading screen, which stops at the first broken file, the check reads
 | `EXPECT_FAILED` | error | the scene is not what its `brief.json` says; the message says what is true instead |
 | `EXPECT_INVALID` | error | an entry of `brief.json` cannot be read: an unknown key, a name no object has, a wall the room does not have |
 | `EXPECT_SKIPPED` | info | the scene has config errors, so its brief was not checked |
+| `CATALOG` | error, warn | `prefabs/catalog.json` cannot be read by the editor or names a module that is not in the folder (error); a type the scene ships is not listed in it (warn) |
 | `PREFAB_…` | error, warn, info | a type the scene ships itself (`scene.json › prefabs`) is rendered without a browser and measured: see [The scene's own object types](#the-scenes-own-object-types) |
 | `GEO_UNKNOWN`, `GEO_TILTED`, `GEO_SKIPPED` | info | positions were not checked: the prefab declares no size, the object is tilted, or `scene.json` has errors |
 

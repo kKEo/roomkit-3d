@@ -194,6 +194,34 @@ The editor adds a hosted prefab from its URL (**+ Add a type from the web…**),
 
 The repository ships one for the samples: `public/scenes/loft/prefabs/catalog.json` lists the loft's lamp and the cinema's projector.
 
+You need not write it by hand. `node tools/scene.js prefab catalog <scene>` writes `prefabs/catalog.json` from the scene's own types, taking each entry's `title`, `blurb` and `glyph` from the module's meta; run it again after changing them. It keeps the catalog's title and any entry that points outside the folder (another scene's module, a host's). The scene check reads the catalog too: one that the editor could not parse, or that names a module missing from the folder, is an error (`CATALOG`), and a type the scene ships that is not in it is a warning.
+
+## A showroom for a set of types
+
+A set of new types is easier to judge, and to hand to someone, as a room. `node tools/scene.js showroom <scene>` turns a scene into a gallery of its own types:
+
+```sh
+node tools/scene.js new furniture --title="Furniture"
+node tools/scene.js prefab new furniture sofa
+node tools/scene.js prefab new furniture wallLamp --mount=wall
+# … write the modules, `prefab check` each …
+node tools/scene.js showroom furniture
+node tools/scene.js check furniture --strict
+```
+
+```text
+furniture: a 12 × 12 m room, 7 m high, with 2 stops: sofa, wallLamp
+wrote scene.json (room, lights, stop list), 2 stop files in poi/, 2 pages in content/ and prefabs/catalog.json
+removed the untouched first stop of a new scene: poi/start.json, content/start.md
+```
+
+- Each type gets a bay along the north wall, sized from its `geometry`; past 48 m of bays a second row faces the first from the south wall. A floor type stands 0.6 m off the wall, a wall type hangs with its middle at eye height (or stands at floor level when its box starts there, like a door), a ceiling type hangs 2 m out, a free type floats at eye height.
+- Each stop gets a camera in front of the type, far enough back to show all of it, and a marker above it. They are written out, not left to the type's `placement` hints, so a type whose hints are off is still shown properly (`prefab check` is what reports the hints).
+- Each type gets a page, `content/<type>.md`, made from its meta: what it is, how big, a table of its props with their descriptions, its clickable parts. A page that already exists is kept, so you can rewrite them.
+- In `scene.json` it sets the room's size and lights, the stop list and the intro camera, and leaves everything else (theme, title, scenery) as written. It also writes the catalog.
+
+The command is safe to run again whenever a type is added or resized: the layout is worked out afresh, and what it writes passes `check --strict` as long as the scene has no scenery of its own in the way. The logic is `showroomFiles` in `src/lint/showroom.js`, pure, so it is tested without a file system (`test/showroom.test.js`).
+
 ## Where modules may come from
 
 A scene prefab is JavaScript running with the page's privileges, so trust is scoped to where scenes already come from: by default only modules on the **page's origin or the scenes' origin** (`VITE_SCENES_BASE`) load; any other URL is a config error `prefabs.<type>: could not load …: blocked: <origin> is not an allowed prefab origin`. To allow more, the operator lists origins in one of two places; the lists add up:

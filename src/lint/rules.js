@@ -5,6 +5,7 @@ import { wallYaw } from '../config/placement.js';
 import * as THREE from 'three';
 import { PILLAR_HALF, framing, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
 import { checkBrief } from './expect.js';
+import { parseCatalog } from '../editor/catalog.js';
 
 /**
  * The scene checks behind `node tools/scene.js check`: everything a scene can get wrong that the loader does
@@ -58,6 +59,7 @@ export async function inspectFindings(built, { files = new Map(), exists = async
     if (!(await exists(path))) add('error', 'REF_MEDIA', sceneFile, '', `the scene refers to "${path}", which is not in the folder`, 'add the file or correct the path (paths are relative to the scene folder)');
   }
   room({ scene, files, add, sceneFile });
+  await catalog({ scene, files, exists, add });
   theme({ scene, add, sceneFile });
   objects({ scene, all, add });
   cameras({ scene, pois, all, files, add });
@@ -66,6 +68,24 @@ export async function inspectFindings(built, { files = new Map(), exists = async
   if (brief) out.push(...brief.findings);
   else if (files.has('brief.json')) add('info', 'EXPECT_SKIPPED', `${scene.name}/brief.json`, '', 'the scene has config errors, so the brief was not checked');
   return result(brief);
+}
+
+/**
+ * `prefabs/catalog.json`, when a scene has one: the list the editor offers the scene's own types from. It has to
+ * parse, the modules it names in this folder have to be there, and it should name every type the scene ships.
+ */
+async function catalog({ scene, files, exists, add }) {
+  const path = 'prefabs/catalog.json', text = files.get(path);
+  if (text == null) return;
+  const file = `${scene.name}/${path}`, base = scene.resolveUrl('');
+  let doc;
+  try { doc = parseCatalog(text, scene.resolveUrl(path)); } catch (e) { add('error', 'CATALOG', file, '', `the editor cannot read this catalog: ${e.message}`, `write it again with: node tools/scene.js prefab catalog ${scene.name}`); return; }
+  for (const [i, p] of doc.prefabs.entries()) {
+    if (p.url.startsWith(base) && !(await exists(decodeURIComponent(p.url.slice(base.length))))) add('error', 'CATALOG', file, `prefabs.${i}.url`, `"${p.type}" names a module that is not in the folder`, 'correct the path (it is relative to the catalog), or take the entry out');
+  }
+  const listed = new Set(doc.prefabs.map(p => p.url));
+  const missing = Object.entries(scene.prefabs).filter(([, url]) => url.startsWith(base) && !listed.has(url)).map(([type]) => type);
+  if (missing.length) add('warn', 'CATALOG', file, 'prefabs', `the scene's own ${missing.length === 1 ? 'type' : 'types'} ${missing.map(t => `"${t}"`).join(', ')} ${missing.length === 1 ? 'is' : 'are'} not in its catalog`, `add ${missing.length === 1 ? 'it' : 'them'} with: node tools/scene.js prefab catalog ${scene.name}`);
 }
 
 /** A CSS colour as [r, g, b, alpha] with channels 0–1, or null when it is not one this can read (a gradient, a variable). */

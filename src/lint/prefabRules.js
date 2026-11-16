@@ -64,7 +64,7 @@ function outermost(parts, { axis, side }) {
 }
 
 /** A camera distance from which the whole thing shows, filling about half the picture's height. */
-const viewFrom = b => Math.ceil((Math.max(b.max[1] - b.min[1], (b.max[0] - b.min[0]) / 1.78) / 0.52 + (b.max[2] - b.min[2]) / 2) * 2) / 2;
+export const viewFrom = b => Math.ceil((Math.max(b.max[1] - b.min[1], (b.max[0] - b.min[0]) / 1.78) / 0.52 + (b.max[2] - b.min[2]) / 2) * 2) / 2;
 
 /**
  * Every finding for one scene prefab. `entry` is its registry entry (with `module` and `url`), `file` what to call

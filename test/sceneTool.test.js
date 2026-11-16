@@ -64,6 +64,32 @@ describe('tools/scene.js', () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+  it('showroom: a pack of new types becomes a room that passes the strict check, with a catalog', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'roomkit-scenes-'));
+    try {
+      await writeFile(join(root, 'index.json'), '{ "default": "pack", "scenes": [] }\n');
+      const sandbox = runIn({ ROOMKIT_SCENES: root });
+      await sandbox('new', 'pack', '--title=Sample pack');
+      expect((await sandbox('showroom', 'pack')).stderr).toMatch(/^pack has no object types of its own: declare one in scene\.json › prefabs/);
+      expect((await sandbox('prefab', 'catalog', 'pack')).stderr).toMatch(/^pack has no object types of its own to list/);
+      for (const [type, mount] of [['plinth', 'floor'], ['plaque', 'wall'], ['pendant', 'ceiling'], ['orb', 'free']]) await sandbox('prefab', 'new', 'pack', type, `--mount=${mount}`);
+      const made = await sandbox('showroom', 'pack');
+      expect(made.stdout.split('\n').slice(0, 4)).toEqual([
+        'pack: a 22 × 12 m room, 7 m high, with 4 stops: plinth, plaque, pendant, orb',
+        'wrote scene.json (room, lights, stop list), 4 stop files in poi/, 4 pages in content/ and prefabs/catalog.json',
+        'removed the untouched first stop of a new scene: poi/start.json, content/start.md',
+        'next: node tools/scene.js check pack --strict',
+      ]);
+      expect(await sandbox('check', 'pack', '--strict')).toEqual({ code: 0, stdout: 'pack: ok\n', stderr: '' });
+      expect(JSON.parse(await readFile(join(root, 'pack', 'prefabs', 'catalog.json'), 'utf8')).prefabs.map(p => p.type)).toEqual(['plinth', 'plaque', 'pendant', 'orb']);
+      // run again after a page was edited: nothing else changes, the page stays
+      await writeFile(join(root, 'pack', 'content', 'orb.md'), '# The orb\n');
+      expect((await sandbox('showroom', 'pack')).stdout).toContain('kept as written: content/plinth.md, content/plaque.md, content/pendant.md, content/orb.md');
+      expect(await readFile(join(root, 'pack', 'content', 'orb.md'), 'utf8')).toBe('# The orb\n');
+      expect((await sandbox('prefab', 'catalog', 'pack')).stdout).toBe('wrote public/scenes/pack/prefabs/catalog.json: plinth, plaque, pendant, orb\n');
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('new --brief starts a scene with its brief; a broken expectation fails the check and is named', async () => {
     const root = await mkdtemp(join(tmpdir(), 'roomkit-scenes-'));
     try {

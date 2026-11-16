@@ -42,6 +42,10 @@ This page describes the four example scenes that ship with Scene Rooms and some 
 
 *Cyan Loft, seen whole.*
 
+## A room made from a description
+
+All four examples were laid out by hand. A room can also be written by a coding agent (Claude Code, Codex and the like) from a paragraph such as "a gallery, 20 by 30 metres, three pictures on the far wall and a desk in the corner facing the door". The repository is set up for that: the agent writes the files, checks them with `node tools/scene.js check`, and keeps your paragraph in the scene's `brief.json` together with what must therefore be true, so the check also tells you later whether the room still matches. The same goes for new object types: described in words, written as a small module, checked without a browser, and shown in a showroom scene with one stop per type. See [Making a new scene](new-scene.md#keeping-the-description) and, for the commands, the operator guide's [Commands](../operator/operations/commands.md).
+
 ## Ideas
 
 | Idea | Objects to use |

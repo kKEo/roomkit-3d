@@ -10,6 +10,8 @@
  *   node tools/scene.js prefab new <scene> <type> [--mount=floor|wall|ceiling|free] [--title="…"]   a new object type for a scene
  *   node tools/scene.js prefab check <scene> [type]          render a scene's own types without a browser and list what is wrong
  *   node tools/scene.js prefab describe <scene> <type> [--props='{…}'] [--svg=file.svg]   its parts, sizes and outline
+ *   node tools/scene.js prefab catalog <scene>               write prefabs/catalog.json from the scene's own types
+ *   node tools/scene.js showroom <scene>                     turn the scene into a room that shows each of its own types on a stop
  *   node tools/scene.js new <name> [--title="My Room"] [--brief="…"]   a new scene folder with one stop, listed in scenes/index.json
  *
  * With no scene name, every folder in public/scenes is checked. Exit code: 0 clean, 1 problems
@@ -17,7 +19,7 @@
  */
 process.removeAllListeners('warning'); // Node's localStorage notice, raised by a browser-side import
 
-const { writeFile, readFile, mkdir, access } = await import('node:fs/promises');
+const { writeFile, readFile, mkdir, access, rm } = await import('node:fs/promises');
 const { join, dirname } = await import('node:path');
 const { checkScene, checkPrefabs, loadScene, ownPrefabs, sceneNames, SCENES } = await import('./scene/load.js');
 const { newSceneFiles } = await import('../src/editor/bundle.js');
@@ -31,6 +33,7 @@ const { keysText, SECTIONS } = await import('../src/lint/keys.js');
 const { briefFile } = await import('../src/lint/expect.js');
 const { describePrefab, prefabTemplate, MOUNT_NAMES } = await import('../src/lint/prefabDescribe.js');
 const { BUILTIN, TYPE_NAME } = await import('../src/prefabs/registry.js');
+const { showroomFiles, catalogFile } = await import('../src/lint/showroom.js');
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--')).map(a => a.split('=')[0]));
@@ -49,6 +52,8 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
   prefab check <scene> [type]          render the scene's own types without a browser: size, mount, clickable parts, motion
   prefab describe <scene> <type> [--props='{"height":2}'] [--svg=file.svg]
                                        read one back: its parts, measured size and outline from the front, the side and above
+  prefab catalog <scene>               write prefabs/catalog.json, the list the editor offers the scene's own types from
+  showroom <scene>                     lay the scene out as a gallery of its own types: a stop, a page and a camera for each
   new <name> [--title="My Room"] [--brief="what was asked for"]
                                        start a scene folder (a room and one stop) and list it in scenes/index.json
 
@@ -105,9 +110,9 @@ const commands = {
   },
   async prefab() {
     const [sub, scene, type, ...more] = names;
-    const subs = { new: 'prefab new <scene> <type>', check: 'prefab check <scene> [type]', describe: 'prefab describe <scene> <type>' };
+    const subs = { new: 'prefab new <scene> <type>', check: 'prefab check <scene> [type]', describe: 'prefab describe <scene> <type>', catalog: 'prefab catalog <scene>' };
     if (!Object.hasOwn(subs, sub ?? '')) fail(`prefab takes one of: ${Object.values(subs).join(', ')}`);
-    if (!scene || more.length || (!type && sub !== 'check')) fail(`usage: node tools/scene.js ${subs[sub]}`);
+    if (!scene || more.length || (!type && sub !== 'check' && sub !== 'catalog') || (type && sub === 'catalog')) fail(`usage: node tools/scene.js ${subs[sub]}`);
     const { dirs } = await sceneNames();
     if (!dirs.includes(scene)) fail(`no scene folder "${scene}" in public/scenes (there are: ${dirs.join(', ')})`);
     const loaded = await loadScene(scene);
@@ -131,6 +136,15 @@ const commands = {
     }
 
     const own = ownPrefabs(loaded), known = own.map(o => o.type);
+    if (sub === 'catalog') {
+      if (!own.length) fail(`${scene} has no object types of its own to list (it declares none in scene.json › prefabs)`);
+      let title = scene;
+      try { title = JSON.parse(loaded.files.get('scene.json')).title ?? scene; } catch { /* the folder's name will do */ }
+      await mkdir(join(loaded.dir, 'prefabs'), { recursive: true });
+      await writeFile(join(loaded.dir, 'prefabs', 'catalog.json'), catalogFile({ own, previous: loaded.files.get('prefabs/catalog.json'), title: `${title} objects` }));
+      console.log(`wrote public/scenes/${scene}/prefabs/catalog.json: ${known.join(', ')}`);
+      return;
+    }
     if (type && !known.includes(type)) {
       const broken = loaded.errors.filter(l => l.includes(` › prefabs.${type}:`));
       fail(broken.length ? broken.join('\n') : `${scene} has no type "${type}" of its own (${known.length ? `it has: ${known.join(', ')}` : 'it declares none in scene.json › prefabs'})`);
@@ -160,6 +174,22 @@ const commands = {
     const { lines, svg } = await describePrefab(type, entry, { props });
     console.log(lines.join('\n'));
     if (svgFile && svg) { await writeFile(svgFile, svg); console.log(`\nwrote ${svgFile}`); }
+  },
+  async showroom() {
+    if (names.length !== 1) fail('showroom takes one scene name');
+    await targets();
+    const [scene] = names, loaded = await loadScene(scene);
+    const broken = loaded.errors.filter(l => l.includes(' › prefabs.'));
+    if (broken.length) fail(`${broken.join('\n')}\nfix the types first: node tools/scene.js prefab check ${scene}`);
+    let made;
+    try { made = showroomFiles({ name: scene, files: loaded.files, own: ownPrefabs(loaded) }); } catch (e) { fail(e.message); }
+    for (const [path, text] of made.files) {
+      await mkdir(dirname(join(loaded.dir, path)), { recursive: true });
+      await writeFile(join(loaded.dir, path), text);
+    }
+    for (const path of made.removed) await rm(join(loaded.dir, path), { force: true });
+    console.log(made.summary.join('\n'));
+    console.log(`next: node tools/scene.js check ${scene} --strict`);
   },
   keys() {
     if (names.length > 1) fail('keys takes at most one section');
