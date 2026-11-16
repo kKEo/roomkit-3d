@@ -205,6 +205,8 @@ nav button[aria-current="true"] b { opacity: 1 }
 /* ——— Loader ——— */
 #loader { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; place-items: center; font-family: var(--display); font-size: 30px; color: var(--accent); text-shadow: var(--glow); transition: opacity .8s }
 #loader.done { opacity: 0; pointer-events: none }
+/* still mode (?still): the room alone, for scripted pictures; an error stays on the loading screen */
+[data-still] .fx, [data-still] #loader.done { display: none }
 #loader .cur { display: inline-block; width: .55em; height: 1em; background: var(--accent); vertical-align: -.12em; margin-left: 4px; animation: blink 1s steps(1) infinite }
 @keyframes blink { 50% { opacity: 0 } }
 .err { font-family: var(--body); font-size: 14px; max-width: min(720px, 92vw); color: var(--text); text-shadow: none; padding: 0 16px }

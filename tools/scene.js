@@ -12,6 +12,7 @@
  *   node tools/scene.js prefab describe <scene> <type> [--props='{…}'] [--svg=file.svg]   its parts, sizes and outline
  *   node tools/scene.js prefab catalog <scene>               write prefabs/catalog.json from the scene's own types
  *   node tools/scene.js showroom <scene>                     turn the scene into a room that shows each of its own types on a stop
+ *   node tools/scene.js shots <scene> [--views=a,b] [--out=file.png] [--size=640x360] [--measure]   pictures from the real viewer, on one sheet
  *   node tools/scene.js new <name> [--title="My Room"] [--brief="…"]   a new scene folder with one stop, listed in scenes/index.json
  *
  * With no scene name, every folder in public/scenes is checked. Exit code: 0 clean, 1 problems
@@ -34,6 +35,7 @@ const { briefFile } = await import('../src/lint/expect.js');
 const { describePrefab, prefabTemplate, MOUNT_NAMES } = await import('../src/lint/prefabDescribe.js');
 const { BUILTIN, TYPE_NAME } = await import('../src/prefabs/registry.js');
 const { showroomFiles, catalogFile } = await import('../src/lint/showroom.js');
+const { splitViews } = await import('../src/lib/still.js');
 
 const args = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--')).map(a => a.split('=')[0]));
@@ -54,6 +56,9 @@ const USAGE = `usage: node tools/scene.js <command> [scene…]
                                        read one back: its parts, measured size and outline from the front, the side and above
   prefab catalog <scene>               write prefabs/catalog.json, the list the editor offers the scene's own types from
   showroom <scene>                     lay the scene out as a gallery of its own types: a stop, a page and a camera for each
+  shots <scene> [--views=overview,<stop>,top,x,y,z,tx,ty,tz] [--out=file.png] [--size=640x360] [--measure]
+                                       take pictures with the real viewer in a headless browser: the whole room and
+                                       each stop on one labelled sheet (needs Playwright's Chromium; takes seconds)
   new <name> [--title="My Room"] [--brief="what was asked for"]
                                        start a scene folder (a room and one stop) and list it in scenes/index.json
 
@@ -174,6 +179,25 @@ const commands = {
     const { lines, svg } = await describePrefab(type, entry, { props });
     console.log(lines.join('\n'));
     if (svgFile && svg) { await writeFile(svgFile, svg); console.log(`\nwrote ${svgFile}`); }
+  },
+  async shots() {
+    if (names.length !== 1) fail('shots takes one scene name');
+    await targets();
+    const [scene] = names;
+    const size = (option('--size') ?? '640x360').split('x').map(Number);
+    if (size.length !== 2 || !size.every(v => Number.isInteger(v) && v >= 160 && v <= 2560)) fail('--size is WIDTHxHEIGHT in pixels, such as --size=640x360');
+    const views = flags.has('--views') ? splitViews(option('--views')) : null;
+    if (flags.has('--views') && !views.length) fail('name the views: --views=overview,studio (overview, top, a stop\'s id, or a pose x,y,z,tx,ty,tz)');
+    if (flags.has('--out') && !option('--out')) fail('give the file to write: --out=loft.png');
+    const { takeShots } = await import('./scene/shots.js');
+    let r;
+    try { r = await takeShots(scene, { views, size, measure: flags.has('--measure'), ...(option('--out') ? { out: option('--out') } : {}) }); } catch (e) { console.error(e.message); process.exit(1); }
+    console.log(`${scene}: ${r.frames.length} picture${r.frames.length === 1 ? '' : 's'} (${r.frames.map(f => f.view).join(', ')}) on one sheet, ${r.width} × ${r.height} px, in ${(r.ms / 1000).toFixed(1)} s`);
+    console.log(r.file);
+    for (const line of r.notes) console.log(line);
+    for (const line of r.errors) console.log(`error in the page: ${line}`);
+    console.log('look at the picture: each frame is labelled; the panel, markers\' labels and dust are left out, and a stop\'s objects are shown as when nobody is at it');
+    process.exitCode = r.errors.length ? 1 : 0;
   },
   async showroom() {
     if (names.length !== 1) fail('showroom takes one scene name');

@@ -24,6 +24,8 @@ make build           # npm install when needed, then npm run build
 
 ## 2. Load every scene
 
+A quick first look, before opening anything: `make shots SCENE=<name>` writes one picture with the whole room and every stop on it, and fails if the page logs an error ([Scene checks › Looking at a scene](scene-checks.md#looking-at-a-scene-one-picture)). It does not replace the steps below: it shows no panel and plays no video.
+
 ```bash
 make dev
 cat public/scenes/index.json   # the scene names to open

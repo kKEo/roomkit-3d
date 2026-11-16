@@ -18,6 +18,7 @@ import { applyTheme } from './ui/theme.js';
 import { reducedMotion, hasWebGL2 } from './lib/env.js';
 import { fmt } from './lib/text.js';
 import { dprOf } from './lib/gfx.js';
+import { installStill, stillFailed } from './ui/stillRig.js';
 
 /** Turns a failed WebGL context (e.g. a blocklisted GPU) into the "unsupported" screen; other errors pass on. */
 class WebGLBoundary extends Component {
@@ -35,8 +36,11 @@ class WebGLBoundary extends Component {
  * The room and its overlays, rendering whatever scene is in the store. Used by the viewer (`App`)
  * and by the editor, which installs scenes itself; the first time the store turns `ready` it
  * flies the camera in from the intro pose.
+ *
+ * With `still` (`{ view }`, from `?still` in the address; src/lib/still.js) it shows the room alone, from that
+ * view, at once: no fly-in, no overlays, no keys. The editor never passes it.
  */
-export function Viewer() {
+export function Viewer({ still = null }) {
   const status = useStore(s => s.status);
   const scene = useStore(s => s.scene);
   const total = useStore(s => s.pois.length);
@@ -55,6 +59,7 @@ export function Viewer() {
   useEffect(() => {
     if (!live || introDone.current) return;
     introDone.current = true;
+    if (still) { installStill(still); return; }
     const t = setTimeout(() => {
       setIntro(true);
       const st = useStore.getState();
@@ -64,9 +69,11 @@ export function Viewer() {
       else st.goTo(hash ?? start ?? null, dur);
     }, reducedMotion ? 100 : 650);
     return () => clearTimeout(t);
-  }, [live]);
+  }, [live, still]);
+  // a browser that cannot draw the room has nothing to take a picture of
+  useEffect(() => { if (still && !webgl) stillFailed(['this browser cannot show the room: WebGL 2 is missing or turned off']); }, [still, webgl]);
 
-  useInput(stage, live);
+  useInput(stage, live && !still);
 
   const far = scene ? Math.max(140, 3 * Math.max(scene.room.width, scene.room.depth)) : 140;
   return (
@@ -90,7 +97,7 @@ export function Viewer() {
         )}
       </div>
       <div className="fx" aria-hidden="true" />
-      {live && (
+      {live && !still && (
         <>
           <Progress />
           <Labels />
@@ -105,17 +112,23 @@ export function Viewer() {
           <Confirm />
         </>
       )}
-      <Loader done={intro && webgl} unsupported={!webgl} />
+      <Loader done={(intro || (!!still && live)) && webgl} unsupported={!webgl} />
     </>
   );
 }
 
-/** The published viewer: loads the scene named in the URL and shows it. */
-export function App() {
+/** The published viewer: loads the scene named in the URL and shows it; `still` is still mode (see `Viewer`). */
+export function App({ still = null }) {
   useEffect(() => {
     loadScene()
-      .then(({ scene, pois }) => { applyTheme(scene); useStore.getState().setLoaded(scene, pois); startSync(scene); })
-      .catch(err => { console.error(err); useStore.getState().setError(err); });
-  }, []);
-  return <Viewer />;
+      .then(({ scene, pois }) => {
+        applyTheme(scene);
+        // a still picture: no dust, every frame drawn, nothing swaying, and nobody else in the room
+        if (still) useStore.setState(s => ({ gfx: { ...s.gfx, particles: 0, fps: 0 }, panelCollapsed: true }));
+        useStore.getState().setLoaded(scene, pois);
+        if (still) useStore.setState(s => ({ settings: { ...s.settings, parallax: 0, warp: 0 } })); else startSync(scene);
+      })
+      .catch(err => { console.error(err); useStore.getState().setError(err); if (still) stillFailed(err.lines ?? [String(err.message ?? err)]); });
+  }, [still]);
+  return <Viewer still={still} />;
 }

@@ -108,6 +108,23 @@ North is −Z and east is +X, as on the minimap. A wall is called by its side (`
 
 `plan` draws walls as `#`, floor as `.`, pillars as `o`, each object's outline as a letter and each stop's camera as its number, with a legend underneath. `prefabs` lists every type with its size at default props, where its origin sits, which way it faces, its props with defaults and limits, and its clickable parts; with a scene name it includes that scene's own types.
 
+## Looking at a scene: one picture
+
+The last thing a command can answer is "does it look right". `make shots SCENE=loft` (`node tools/scene.js shots loft`) opens the real viewer in a headless browser, takes one frame of the whole room and one from each stop's camera, and puts them on a single labelled sheet:
+
+```text
+loft: 4 pictures (overview, wall, studio, wing) on one sheet, 1280 × 721 px, in 3.7 s
+/…/tools/scene/out/loft.png
+```
+
+It takes a few seconds, most of them the browser starting. The sheet is what to look at before opening the scene by hand, and what a coding agent reads to see its own work.
+
+- `--views=overview,studio,top` picks the views: `overview`, `top` (straight down, north up), a stop's id, or a pose as `x,y,z,tx,ty,tz`. `--size=1280x720` sets the size of one frame, `--out=file.png` where the sheet goes (default `tools/scene/out/<scene>.png`, which is not under version control).
+- `--measure` also reads back where every object's solid parts were really drawn and holds that against the box its type declares, a line for each object that reaches more than 0.1 m outside. The first run of it found a server rack whose box left out its cable tray, and a wardrobe whose clothes hung outside the cabinet.
+- The command fails when the page logs an error or throws (a prefab that could not render, for one), and when the scene has config errors.
+
+What the pictures are, and are not: the viewer runs in **still mode** (`?still`), with reduced motion, no dust and no overlays, so the panel, the top bar and the markers' labels are left out, and a stop's objects are shown as when nobody is at it (a wardrobe's doors stay shut). The rain on screens, the hatching's scan band and blinking cursors differ from one run to the next, so the sheet is for looking at, not for comparing pixel by pixel. Video screens show the rain: the bundled Chromium has no H.264. It needs Playwright's Chromium (`npx playwright install chromium`) and is not part of `make check` or CI.
+
 ## What it misses
 
-How the scene looks: colours, whether a screen plays its video, text that is too long for a panel, motion. Those still need the browser pass in [Running the tests](running-the-tests.md).
+What only a person at the page can judge: taste in colour, whether a screen plays its video, text that is too long for a panel, motion. Those still need the browser pass in [Running the tests](running-the-tests.md).

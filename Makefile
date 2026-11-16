@@ -13,7 +13,7 @@ VITE_PORT   = $(if $(PORT),-- --port $(PORT))
 MDBOOK_PORT = $(if $(PORT),--port $(PORT))
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev build serve test lint scene-check check server server-docker bots docs docs-check docs-serve docs-site-serve intro-video all clean
+.PHONY: help install dev build serve test lint scene-check shots check server server-docker bots docs docs-check docs-serve docs-site-serve intro-video all clean
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -46,6 +46,10 @@ lint: node_modules ## Lint the source (eslint)
 
 scene-check: node_modules ## Check scenes without a browser: config, references, positions, cameras (SCENE=name for one)
 	node tools/scene.js check $(SCENE)
+
+shots: node_modules ## Take pictures of a scene with the real viewer, on one sheet (SCENE=name; needs `npx playwright install chromium`)
+	@test -n "$(SCENE)" || (echo "name the scene: make shots SCENE=loft" && exit 2)
+	node tools/scene.js shots $(SCENE)
 
 check: lint test scene-check build ## Lint, test, check the scenes and build — what CI runs
 

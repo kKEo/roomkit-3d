@@ -14,9 +14,10 @@ export const serverRack = {
     openAngle: z.number().min(0).max(90).default(85),
   }),
   hotspots: ['rack', 'doors'],
+  // with cables, a tray (1.2 m per cabinet, 0.47 m above the row) is part of the body; the cables themselves are lines
   geometry: p => {
-    const hx = (p.count * 1.1 + 0.1) / 2 + 0.06;
-    return { min: [-hx, 0, -0.8], max: [hx, p.height + 0.1, 1.0], mount: 'floor' };
+    const hx = Math.max((p.count * 1.1 + 0.1) / 2 + 0.06, p.cables ? p.count * 0.6 : 0);
+    return { min: [-hx, 0, -0.8], max: [hx, p.height + (p.cables ? 0.47 : 0.1), 1.0], mount: 'floor' };
   },
   placement: p => ({ focus: [0, 2.8, 0], cameraDistance: 9.2, cameraHeight: 3.1, markerOffset: [0, p.height + 0.7, 1.4] }),
 };

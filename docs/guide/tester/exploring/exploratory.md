@@ -158,6 +158,16 @@ Open `/edit.html?scene=cinema` on the dev server.
 | In the desk's JSON tab add `"name": "desk"`; give the bench `"at": { "near": "desk", "side": "front" }` in place of its position and `facing`; then rename the desk in the tree | the bench jumps in front of the desk; after the rename its `near` reads the new name and it stays put |
 | Delete that desk | the message says one object stood next to it and needs another place; the loading error names `at.near`; Undo brings both back |
 
+## Still mode
+
+| Do | Expect |
+| --- | --- |
+| Open `/?scene=loft&still` | the whole-room view at once: no fly-in, no top bar, panel, minimap, hint or dust, no scanlines; the mouse does not sway the picture; arrow keys and the wheel do nothing |
+| `/?scene=loft&still&view=studio`, then `top`, then `0,3,-3,0,3,-12` | the desk as its stop sees it, with no panel and the picture not shifted aside; the L-shaped plan from above with the north wall at the top and nothing cut off; the three frames head-on |
+| In the console: `await __roomkit.view('wing')`, `__roomkit.views()` | the camera is at the south wing when the promise resolves (`{ ok: true, loaded: true, pose }`); the list is `overview, top` and the stop ids |
+| `/?scene=nope&still`; `/?scene=loft&still&view=attic` | the loading screen's error stays visible, `<html data-scene="error">`, and `__roomkit.error` holds the lines |
+| `make shots SCENE=cinema` | one sheet with seven labelled frames in about six seconds; the welcome screen shows rain (no video codec), nothing is red in the output |
+
 ## Editor: screens
 
 Open `/edit.html?scene=neo-room#control` on the dev server and select the control desk of stop 07.

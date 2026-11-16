@@ -196,6 +196,8 @@ export const runtime = {
   time: 0,
   progress: 0,
   transiting: false,
+  arrived: 0,                   // the `nonce` of the last navigation the camera has finished flying to, set by CameraRig
+  still: false,                 // still mode (`?still`): the camera stands where it is put, no sway; see src/lib/still.js
   zoomReady: false,             // camera has arrived in front of the zoomed screen
   gl: null,                     // the WebGLRenderer, set by Telemetry, read by Options → System
   glAttrs: null,                // { antialias, power } the WebGL context was created with, set by the Viewer
