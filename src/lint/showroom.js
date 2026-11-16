@@ -32,7 +32,7 @@ function measure({ type, entry }) {
   try { g = entry.geometry?.(entry.props) ?? null; } catch { /* `prefab check` reports it */ }
   g ??= UNKNOWN;
   const size = [0, 1, 2].map(i => g.max[i] - g.min[i]);
-  return { type, entry, g, size, bay: Math.max(size[0] + 2, 5), reach: OUT[g.mount] + size[2], view: Math.max(4, viewFrom(g)) };
+  return { type, entry, g, size, bay: Math.max(size[0] + 2, 5), reach: OUT[g.mount] + size[2], view: Math.max(2, viewFrom(g)) };
 }
 
 /** The `at` that sets a type in its bay: against the wall, at the height its mount asks for. */

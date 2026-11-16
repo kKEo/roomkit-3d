@@ -64,7 +64,7 @@ describe('brief.json: expectations that do not hold say what is true instead', (
     [{ object: 'door', click: 'door', opens: 'https://example.com' }, 'FAILED: a click on "door" of "door" goes to the whole-room view'],
     [{ object: 'bench', click: 'bench', action: 'togglePanel' }, 'FAILED: "bench" does nothing when "bench" is clicked (it has no actions)'],
     [{ stop: 'hall', sees: ['door'] }, 'FAILED: from stop "hall": "door" is not in the picture'],
-    [{ stop: 'hall', sees: ['plinth', 'left'], share: 0.5 }, 'FAILED: from stop "hall": "plinth" fills 10% of the picture, less than 50%; "left" fills 0% of the picture, less than 50%'],
+    [{ stop: 'hall', sees: ['plinth', 'left'], share: 0.5 }, 'FAILED: from stop "hall": "plinth" fills 10% of the picture, less than 50%; "left" fills 0.4% of the picture, less than 50%'],
     [{ stop: 'hall', order: ['middle', 'left'] }, 'FAILED: from stop "hall", left to right they are: left, middle'],
     [{ stop: 'hall', order: ['left', 'door'] }, 'FAILED: from stop "hall": "door" is not in the picture'],
     // the middle frame hangs straight behind the plinth

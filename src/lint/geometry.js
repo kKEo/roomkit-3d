@@ -116,5 +116,7 @@ export function framing(camera, fov, box, aspect = 16 / 9) {
   const w = Math.max(0, Math.min(1, maxX) - Math.max(-1, minX)), h = Math.max(0, Math.min(1, maxY) - Math.max(-1, minY));
   // cut off: a corner is behind the camera, or a quarter or more of the outline falls outside the frame
   const cut = front < box.poly.length * 2 || w * h < 0.75 * (maxX - minX) * (maxY - minY);
-  return { visible: w > 0 && h > 0, cover: (w * h) / 4, centre: [(minX + maxX) / 2, (minY + maxY) / 2], cut };
+  // `inside`: the share of its outline that is in the frame, 1 when all of it is
+  const inside = front < box.poly.length * 2 ? 0 : (w * h) / Math.max(1e-9, (maxX - minX) * (maxY - minY));
+  return { visible: w > 0 && h > 0, cover: (w * h) / 4, centre: [(minX + maxX) / 2, (minY + maxY) / 2], cut, inside };
 }

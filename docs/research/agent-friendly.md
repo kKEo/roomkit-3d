@@ -84,21 +84,76 @@ Design choices worth remembering:
 - JSON Schema export was measured at 8–9 thousand tokens for scene + POI + props. `check` gives exact lines for
   less, so the export is deferred.
 
+## Second round (2026-11-16): a whole scene, and new object types, from a description
+
+Decisions taken with the owner: a "prefab gallery" is a pack of new types plus a showroom scene; prefabs stay JS
+modules, checked in Node; the picture rung is built; the tools are also an MCP server. What follows the practice
+of LLM scene synthesis and agent tooling: relations resolved by a solver instead of coordinates, the brief as an
+executable spec, generated facts, code as the asset with execution feedback, render and critique, one command
+library behind every front.
+
+6. **Placement in words.** `facing` (a compass direction, `"centre"`, another object) and three more forms of `at`:
+   `corner`, `centre`, `near`. Objects refer to each other by `name` only, because indexes and types change under
+   the editor. Position and rotation are resolved separately in a scene-wide pass (`placeAll`), in rounds, so two
+   objects may face each other; a circle of `near` is an error. The wall form now sets a turned floor object by
+   its rotated outline.
+7. **Facts and the brief.** `keys [section]` prints every key from the zod schemas (each key's `.describe()`);
+   a test fails when a reference page misses one. Unknown keys name the key that was meant. `brief.json` holds the
+   description and expectations (twelve forms: wall, corner, centre, near, side, facing, click, sees, order, count,
+   room, stops) that `check` evaluates: `EXPECT_FAILED` says what is true instead. Also `THEME_CONTRAST` and
+   `CAM_FRAMING`.
+8. **The prefab loop.** A scene prefab is rendered in Node by the real React and React Three Fiber reconciler on
+   a canvas that draws nothing (`src/lint/stage.js`): 30 ms, real hooks and refs. For that, `src/scene/core.js`
+   lost its JSX and the SDK was split into `sdkCore.js` plus six browser keys. `prefab check` samples every prop
+   and holds the measured parts to the declared box, mount, hotspots and motion; `prefab describe` lists the parts
+   and draws three outline views; `prefab new` starts from a template that passes.
+9. **The gallery.** `showroom` lays a scene out as bays, stops, cameras and pages for its own types and writes
+   the catalog; it is clean under `check --strict` by construction.
+10. **Looking.** `?still` (no fly-in, overlays or sway; `window.__roomkit.view()`), and `shots`: its own Vite
+    server, headless Chromium, the overview and each stop on one labelled sheet in three to six seconds.
+    `--measure` compares drawn parts with declared boxes for every object, built-ins included.
+11. **Reach.** `tools/scene/commands.js` is what every command does; `tools/scene.js` and `tools/mcp.js`
+    (`@modelcontextprotocol/server`, sixteen tools) are fronts. `scene_write` answers with the check.
+
+What the new checks found in shipped code, all fixed: the cinema seats' box ignored `recline` (backrests 0.5 m
+past it at 60°); the server rack's box left out its cable tray; the wardrobe's clothes hung outside the cabinet
+(a factor of two in their spacing, visible in the picture once one knew to look).
+
+Design choices worth remembering:
+
+- An imitation SDK (stub hooks, a hand-written walker) was the first design; a review showed it would be a second
+  implementation of `Solid` and would hide state-driven behaviour. The real reconciler was a probe away.
+- The declared box must *contain* the measured body with 5 cm slack; a two-sided comparison fails prefabs whose
+  boxes are generous on purpose.
+- A long-lived process must re-import a changed module: the file's time and size ride on the URL (`freshImport`).
+- The showroom writes cameras and markers out instead of trusting each type's `placement` hints.
+- Pictures are for looking, not diffing: rain, the hatch scan band and cursors vary from run to run.
+
+Trial (2026-11-20): two fresh agents, each given one paragraph and nothing else. One built `reading-room`
+(four stops, a theme, relative placement, a door action) to `check --strict` clean with 21 expectations and a
+picture; the other wrote three object types (armchair, coffee table, wall clock) that passed `prefab check` first
+time, made the showroom and took the picture. That pack ships as `public/scenes/lounge-pack`. What they tripped
+on, and what was changed:
+
+- the showroom's cameras stood at least 4 m back, so small objects filled 1–3% of their frame: now 2 m at least;
+- a brief with text and no expectations reported plain `ok`: the summary now says it expects nothing yet;
+- "fills 2% of the picture, less than 2%": shares under a tenth are printed with a decimal;
+- `sees` passed an object the picture showed cut at the edge (the read-back's "(cut off)" allows a quarter to be
+  missing): `sees` now wants 93% of the outline in the frame, which also caught the loft's own pedestal;
+- the desk's front is its chair side, which `prefabs` did not say: its blurb does now.
+
+Not changed, and worth doing next: expectations have no form for where along a wall an object is, for a prop's
+value or for the theme; the automatic camera gives up where a diagonal would do; `shots --views` writes over the
+full sheet; "left end" of a wall is ambiguous to a reader who thinks in plan view.
+
 ## Planned next
 
-- **Phase 6: still mode.** `?still` and `?view=top|<poi>|x,y,z,tx,ty,tz`: no intro flight, instant camera, seeded
-  `Math.random`, a pinned clock through R3F `advance()`, particles off, overlays hidden, and
-  `document.documentElement.dataset.scene = 'ready' | 'error'` once prefab chunks and textures have settled. A
-  `window.__roomkit` hook (store, runtime, object groups) for the harness. Known traps: a camera looking straight
-  down makes `CameraRig`'s right vector zero, so the top view needs a slight offset; video screens show the rain
-  fallback in Playwright's Chromium, which has no H.264.
-- **Phase 7: shots.** `node tools/scene.js shots <scene>`: its own Vite server on a free port, one frame from above
-  and one per stop at 640 × 360, composed into a single labelled contact sheet; fails on a console error or a
-  loading-screen error line. Also a test that reads each object's mesh bounds through the hook and compares them
-  with the declared geometry within 0.1 m. Expected 5–8 s per scene locally; in CI as a separate, non-blocking job.
-- **Phase 8, optional.** `at: { near: "<object name>", side, gap, facing }` for placement relative to another
-  object; an acceptance file of spatial assertions per scene (`onWall`, `near`, `visibleFrom`); JSON Schema
-  export for editors; a framing rule (`CAM_FRAMING`) once calibrated on the shipped scenes.
+- The picture run in CI as a separate, non-blocking job (needs a browser on the runner).
+- `camera: { frame: [...] }`: an automatic camera that takes in several named objects.
+- JSON Schema files for editors, exported from the same schemas `keys` prints.
+- The stage for built-in prefabs: they import React directly, so they would need the test transform or the same
+  SDK injection scene prefabs have.
+- An assistant inside the browser editor (needs a model API key and a proxy): a different project.
 
 ## Verification
 

@@ -65,7 +65,7 @@ describe('the MCP server', () => {
     const desk = { id: 'desk', label: 'Desk', objects: [{ type: 'desk', name: 'desk', at: { wall: 'nrth' } }], content: { blocks: [{ type: 'heading', text: 'Desk' }] } };
     const wrong = await call('scene_write', { scene: 'demo', path: 'poi/desk.json', text: JSON.stringify(desk) });
     expect(wrong.error).toBe(false);
-    expect(wrong.text).toBe('created public/scenes/demo/poi/desk.json\ndemo: ok'); // not in the tour yet, so nothing reads it
+    expect(wrong.text).toBe('created public/scenes/demo/poi/desk.json\ndemo: ok, but its brief.json expects nothing yet (node tools/scene.js keys brief)'); // not in the tour yet, so nothing reads it
     const scene = JSON.parse(await readFile(join(root, 'demo', 'scene.json'), 'utf8'));
     const listed = await call('scene_write', { scene: 'demo', path: 'scene.json', text: JSON.stringify({ ...scene, poi: ['poi/desk.json'] }, null, 2) });
     expect(listed.text.split('\n')).toEqual([

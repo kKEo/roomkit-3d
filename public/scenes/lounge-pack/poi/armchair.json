@@ -1,0 +1,15 @@
+{
+  "id": "armchair",
+  "label": "Armchair",
+  "kicker": "stands on the floor",
+  "objects": [
+    {
+      "type": "armchair",
+      "name": "armchair",
+      "at": { "wall": "north", "distance": 3.5, "offset": 0.6 }
+    }
+  ],
+  "camera": { "position": [-5, 1.4, -2.5], "target": [-5, 0.5, -5] },
+  "marker": { "position": [-5, 1.5, -5] },
+  "content": { "markdown": "content/armchair.md" }
+}

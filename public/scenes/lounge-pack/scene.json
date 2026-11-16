@@ -1,0 +1,23 @@
+{
+  "title": "Lounge pack",
+  "brand": "Lounge/pack",
+  "room": {
+    "width": 17,
+    "height": 7,
+    "depth": 12,
+    "lights": [
+      [-4.25, 6.6, 0],
+      [4.25, 6.6, 0]
+    ],
+    "skirting": [0.35]
+  },
+  "poi": ["poi/armchair.json", "poi/coffeeTable.json", "poi/wallClock.json"],
+  "prefabs": { "armchair": "prefabs/armchair.js", "coffeeTable": "prefabs/coffeeTable.js", "wallClock": "prefabs/wallClock.js" },
+  "camera": {
+    "intro": {
+      "position": [0, 6.3, 16.2],
+      "target": [0, 2.3, 0],
+      "duration": 3200
+    }
+  }
+}

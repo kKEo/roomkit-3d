@@ -23,7 +23,8 @@ import { compass, gap } from './describe.js';
 class Invalid extends Error {}
 
 const n = v => String(Math.round(v * 10) / 10);
-const pct = v => `${Math.round(v * 100)}%`;
+/** A share of the picture; under a tenth with one decimal, so that 1.6% is not said to be "2%, less than 2%". */
+const pct = v => `${v < 0.1 ? Math.round(v * 1000) / 10 : Math.round(v * 100)}%`;
 const q = name => `"${name}"`;
 const num = v => typeof v === 'number' && Number.isFinite(v);
 const amount = v => num(v) && v >= 0;
@@ -54,7 +55,8 @@ function sight(ctx, poi, x, name, share, others) {
   if (!x.box) throw new Invalid(`the size of ${q(name)} is not known, so what the camera sees of it is not either`);
   const f = framing(poi.camera, ctx.scene.camera.fov, x.box);
   if (!f.visible) return `${q(name)} is not in the picture`;
-  if (f.cut) return `${q(name)} is cut off at the edge of the picture`;
+  // "sees" means all of it: the read-back's looser "(cut off)" lets a quarter go missing, which a picture shows at once
+  if (f.cut || f.inside < 0.93) return `${q(name)} is cut off at the edge of the picture`;
   if (f.cover < share) return `${q(name)} fills ${pct(f.cover)} of the picture, less than ${pct(share)}`;
   const mid = [x.box.centre[0], (x.box.y0 + x.box.y1) / 2, x.box.centre[1]];
   const hider = ctx.all.find(o => o !== x && o.box && !others.includes(o) && segmentHitsBox(o.box, poi.camera.position, mid));

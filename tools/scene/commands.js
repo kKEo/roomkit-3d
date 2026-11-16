@@ -48,13 +48,14 @@ export async function check({ scenes = [], strict = false } = {}) {
   const lines = [], all = [];
   let bad = false;
   for (const name of scenes.length ? scenes : dirs) {
-    const { findings, expectations: { total, held } } = await checkScene(name);
+    const { findings, expectations: { total, held }, brief: text } = await checkScene(name);
     all.push(...findings.map(f => ({ scene: name, ...f })));
     const count = level => findings.filter(f => f.level === level).length;
     if (count('error') || (strict && count('warn'))) bad = true;
     lines.push(...findings.map(formatFinding));
     // what the brief expects, when the scene has one: all of it holding is part of "ok"
-    const brief = total ? (held === total ? `, ${plural(total, 'expectation')} hold` : `, ${held} of ${total} expectations hold`) : '';
+    // a brief with nothing expected of it checks nothing: say so, or "ok" reads as more than it is
+    const brief = total ? (held === total ? `, ${plural(total, 'expectation')} hold` : `, ${held} of ${total} expectations hold`) : text ? ', but its brief.json expects nothing yet (node tools/scene.js keys brief)' : '';
     lines.push(`${name}: ${findings.length ? `${count('error')} errors, ${count('warn')} warnings, ${count('info')} notes` : 'ok'}${brief}`);
   }
   return { lines, code: bad ? 1 : 0, findings: all };

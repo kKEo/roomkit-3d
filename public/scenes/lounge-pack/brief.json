@@ -1,0 +1,13 @@
+{
+  "text": "A small pack of three new object types, shown as a gallery. An armchair: a seat, a backrest, two armrests and four short legs; its width can be set. A round coffee table: a round top on a central column with a round foot; the diameter and the height can be set, and the top can be clicked. A wall clock: a round face that hangs on the wall with an hour hand and a minute hand; the minute hand turns slowly; the diameter can be set. The scene is a showroom of the three.",
+  "expect": [
+    { "stops": ["armchair", "coffeeTable", "wallClock"] },
+    { "count": "armchair", "is": 1 },
+    { "count": "coffeeTable", "is": 1 },
+    { "count": "wallClock", "is": 1, "wall": "north" },
+    { "object": "wallClock", "wall": "north" },
+    { "stop": "armchair", "sees": ["armchair"] },
+    { "stop": "coffeeTable", "sees": ["coffeeTable"] },
+    { "stop": "wallClock", "sees": ["wallClock"] }
+  ]
+}

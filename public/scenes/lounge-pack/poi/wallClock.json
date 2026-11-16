@@ -1,0 +1,15 @@
+{
+  "id": "wallClock",
+  "label": "Wall clock",
+  "kicker": "hangs on a wall",
+  "objects": [
+    {
+      "type": "wallClock",
+      "name": "wallClock",
+      "at": { "wall": "north", "distance": 13.5, "height": 2.4 }
+    }
+  ],
+  "camera": { "position": [5, 2.9, -4], "target": [5, 2.4, -6] },
+  "marker": { "position": [5, 3.3, -6] },
+  "content": { "markdown": "content/wallClock.md" }
+}

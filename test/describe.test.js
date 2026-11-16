@@ -21,7 +21,7 @@ describe('describeScene', () => {
     expect(line('desk (studio:0)')).toMatch(/on the floor at \[8, 0, -7\]; 1\.9 m east–west by 2\.6 m north–south, y 0 to 2\.2; facing west; 3\.4 m from the east wall \(edge 1\).*; turned to face: west$/);
     // an object with a name is called by it
     expect(line('left frame (wall:0)')).toMatch(/on the north wall, 7 m from its left end of 24 m/);
-    expect(text.at(-2)).toBe('  camera at [-6, 3.4, 11.4] looking north at [-6, 2.5, 5], 6.5 m away, 55° tall view');
+    expect(text.at(-2)).toBe('  camera at [-6, 4.8, 11.4] looking north at [-6, 2, 5], 7 m away, 55° tall view');
     expect(text.at(-1)).toMatch(/^ {2}in the picture: pedestal \(wing:0\) \d+% centre/);
   });
 
