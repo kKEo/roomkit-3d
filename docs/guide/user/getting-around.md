@@ -12,8 +12,8 @@ The room opens with a view of all of it from above. From there, `→` goes to st
 
 | To… | Do this |
 | --- | --- |
-| Go to the next or previous stop | Press `→` / `←` (or `↓` / `↑`), scroll the mouse wheel, or swipe left or right on a phone |
-| Jump to a stop | Press its number key `1`–`9`, click it in the top bar, or click its label or floating diamond in the room |
+| Go to the next or previous stop | Press `→` / `←` (or `↓` / `↑`), scroll the mouse wheel, or drag left or right with the mouse. On a phone or tablet, tap the stop's number in the top bar |
+| Jump to a stop | Press its number key `1`–`9`, click (or tap) it in the top bar, or click its label or floating diamond in the room |
 | See the whole room | Press `0` or click the logo in the top-left corner. The camera rises above the room and looks into it from the front, like a model with the roof off |
 | Hide or show the text panel | Press `H` or click the panel button in the top bar |
 | Hide or show the floating diamonds | Press `M` or click the diamond button in the top bar |
@@ -58,7 +58,7 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 | To… | Do this |
 | --- | --- |
 | Step up to a screen | Click it, or press `Space` once you have arrived at a stop to step up to its first screen (the top-left one). A screen of another stop works the same: one click flies you straight to it, and that stop is shown in the top bar while you are up close |
-| Switch to the screen next to it | Press the arrow key pointing at it: `→` `←` along a row, `↑` `↓` between rows. At the end of a row or column nothing happens. When the screen uses the arrows itself (a video seeks with `←` `→`, a text box moves its cursor, the console browses its history), hold `Ctrl` (`⌘` on a Mac) with the arrow to move to the neighbouring screen anyway. You can also click the neighbouring screen at the edge of the view |
+| Switch to the screen next to it | Press the arrow key pointing at it: `→` `←` along a row, `↑` `↓` between rows. At the end of a row or column nothing happens. When the screen uses the arrows itself (a video seeks with `←` `→`, a text box moves its cursor, the console browses its history), hold `Ctrl` (`⌘` on a Mac) with the arrow to move to the neighbouring screen anyway. You can also click the neighbouring screen at the edge of the view. On a touchscreen, arrow buttons next to **← Back** do the same: one for each side that has a screen |
 | Use it | Type commands, filter a table or fill in a form, depending on the screen (see [Objects you can place](objects.md#screens-you-can-use)) |
 | Step back | Press `Esc`, click **← Back** in the screen's corner, or click anywhere outside the screen. The camera returns to exactly where it was when you stepped up, wherever that was: a stop, part-way through a flight, or flying freely, in which case you are flying again |
 
@@ -67,6 +67,8 @@ Screens, monitors and pictures that belong to a stop can be clicked. The pointer
 *Up close to a terminal screen. The hint at the bottom changes to "Esc back to the room", and the Back button sits in the screen's corner.*
 
 While you are up close, the text panel and the diamonds are switched off, and the arrow keys only move between the screens of the same stop, the way they are arranged on the wall (not while you are typing in one), so typing never moves the camera. Clicking a stop in the top bar still takes you there.
+
+On a touchscreen, stepping up to a screen with a text box does not open the keyboard by itself; tap the box when you want to type.
 
 ## Flying freely
 
@@ -81,11 +83,27 @@ Visitors with a keyboard and mouse can also leave the stops and fly the camera t
 | Slide forward or back | Scroll the mouse wheel |
 | Stop flying | Go to any stop the usual way: an arrow key, a number key, `0`, a click on a diamond, a label or the top bar. The camera flies there from wherever you are |
 
-The keys sit where `W`, `A`, `S`, `D`, `Q` and `E` are on an English keyboard, whatever the layout (on a French keyboard that is `Z`, `Q`, `S`, `D`, `A`, `E`). Free flying is off while you are up close to a screen, and there is no free flying on phones. A room's author can also switch it off altogether (see [Export a scene or a site](editor.md#export-a-scene-or-a-site)); the bottom hint then does not mention the fly keys.
+The keys sit where `W`, `A`, `S`, `D`, `Q` and `E` are on an English keyboard, whatever the layout (on a French keyboard that is `Z`, `Q`, `S`, `D`, `A`, `E`). Free flying is off while you are up close to a screen. A room's author can also switch it off altogether (see [Export a scene or a site](editor.md#export-a-scene-or-a-site)); the bottom hint then does not mention the fly keys.
+
+### On a phone or tablet
+
+Fingers fly the camera. The first drag starts it, the text panel closes, and the hint at the bottom says what fingers do (on a phone the hint shows whenever the panel is not in its place).
+
+| To… | Do this |
+| --- | --- |
+| Look around | Drag with one finger. The room follows your finger, as when you drag a map: drag right to see what is on the left |
+| Move forward or back | Spread two fingers apart to go forward, pinch them together to go back |
+| Slide sideways, up or down | Drag with two fingers; again the room follows them |
+| Go to a stop, or use a screen | Tap it, as you would click it. A short tap never starts flying |
+| Stop flying | Tap a number in the top bar, a diamond or a label, or the logo for the whole room |
+
+Where a room's author has switched free flying off, a swipe left or right goes to the next or previous stop instead.
+
+On a laptop with a touchscreen both work: the hints follow whichever you used last, the finger or the mouse.
 
 ## The view and the map
 
-Moving the mouse tilts the view a little, so the room feels deep (not while flying freely). On phones the view drifts slowly on its own instead.
+Moving the mouse tilts the view a little, so the room feels deep (not while flying freely). On phones and tablets the view drifts slowly on its own instead.
 
 The small map in the bottom-left corner shows the room from above: the dots are the stops, the bright one is where you are, and the cone shows where the camera is looking.
 

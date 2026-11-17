@@ -49,6 +49,11 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `hintNoFly` | `[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room` | the bottom hint when the scene sets `camera.freeFly: false` |
 | `zoomBack` | `Back` | Back button on a zoomed-in screen |
 | `videoHint` | `[Space] play or pause, [←][→] 5 s back or forward, [-][+] slower or faster, [Ctrl/⌘]+[←][→][↑][↓] other screens, [Esc] back to the room` | bottom hint while zoomed into a video screen |
+| `hintTouch` | `tap a marker or a number to go there, tap a screen to look closer, drag to look around, pinch to move` | the bottom hint on a touchscreen |
+| `hintNoFlyTouch` | `tap a marker or a number to go there, swipe for the next area, tap a screen to look closer` | the same when the scene sets `camera.freeFly: false` |
+| `flyHintTouch` | `drag — look around, pinch — forward / back, two fingers — slide, tap a marker or a number to go there` | bottom hint while flying freely on a touchscreen |
+| `zoomHintTouch`, `videoHintTouch` | `the arrows open the other screens, tap outside the screen to go back to the room` | bottom hint while zoomed into a screen, or a video screen, on a touchscreen |
+| `zoomLeft`, `zoomRight`, `zoomUp`, `zoomDown` | `Screen to the left`, `Screen to the right`, `Screen above`, `Screen below` | accessible names of the arrow buttons a zoomed-in screen shows on a touchscreen |
 | `videoPlay`, `videoPause` | `Play`, `Pause` | the play/pause button of a zoomed-in video (label and tooltip) |
 | `videoRestart`, `videoBack`, `videoForward` | `From the start`, `10 s back`, `10 s forward` | tooltips of the transport buttons |
 | `videoSpeed` | `Speed` | label before the speed buttons (¼×, ½×, 1×, 2×) |

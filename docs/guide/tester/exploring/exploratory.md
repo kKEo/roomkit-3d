@@ -32,6 +32,12 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Hold `W`, switch to another window, come back | the camera is not still flying |
 | Zoomed into a screen: `W`, middle-drag | nothing happens; typing `w` in the console just types |
 | Type in the contact form, including W, A, S, D | text is entered; the camera does not move |
+| Touch (a phone, a tablet, or device emulation with touch; reload after switching it on): tap a diamond, a label, a screen | each acts as a click; free fly does not start, the panel stays |
+| Touch: drag one finger across the room | the panel closes and the view turns so the room follows the finger (drag right, see what is on the left); the hint, where there is room for it, says what fingers do |
+| Touch: spread two fingers, pinch them, drag both | forward, back, and a slide with the room following the fingers; lifting one finger carries on as a look without a jump |
+| Touch: tap a number in the top bar while flying | flies there and ends free fly |
+| Touch, in a scene with `camera.freeFly: false` | dragging does not fly; a swipe left or right changes the stop |
+| A laptop with a touchscreen: touch, then click with the mouse | the hint changes to the touch wording and back |
 
 ## Panel and content
 
@@ -110,7 +116,10 @@ Run `make dev` and open stop 07 of the default room. Its node table, FLEET numbe
 | Try | Expect |
 | --- | --- |
 | Window narrower than 760 px | panel becomes a bottom sheet; nav shows numbers only; minimap and hint hidden; subject shifted above the sheet |
-| Portrait phone (device emulation) | wider FOV; swipe left and right navigates |
+| Portrait phone (device emulation with touch) | wider FOV; larger buttons in the top bar and on labels; the touch hint shows at the bottom on the overview and while flying, never over the sheet |
+| Phone on its side, tablet upright (touch) | nav shows numbers only, in one row; the panel does not run under the top bar; the hint lies over neither the map nor the panel |
+| Touch: zoom into a screen that has neighbours (`cinema`, stop 3) | arrow buttons next to Back for the sides that have a screen, each moving there; no `Esc` cap on Back; the keyboard does not open until a field is tapped |
+| The editor (`/edit.html`) with touch | exactly as with a mouse: no arrow buttons, the key hints, a swipe changes the stop |
 | Reduced motion (DevTools → Rendering → `prefers-reduced-motion`), then reload | short transitions, no parallax, no idle bob, no scramble, no warp |
 | Keyboard only: `Tab` through the header | visible focus ring on each control; `Enter` activates |
 

@@ -287,3 +287,23 @@ describe('gfx', () => {
     expect(st().gfx.fps).toBe(0);
   });
 });
+
+describe('setTouch', () => {
+  it('follows the device last pressed with, for the hints and for the camera drift', async () => {
+    const { runtime } = await import('../src/state/store.js');
+    expect(st().touch).toBe(false);
+    st().setTouch(true);
+    expect(st().touch).toBe(true);
+    expect(runtime.touch).toBe(true);
+    st().setTouch(false);
+    expect(st().touch).toBe(false);
+    expect(runtime.touch).toBe(false);
+  });
+
+  it('survives a scene being loaded again', () => {
+    st().setTouch(true);
+    st().setLoaded(scene('other'), pois(['x']));
+    expect(st().touch).toBe(true);
+    st().setTouch(false);
+  });
+});

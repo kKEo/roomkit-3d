@@ -32,15 +32,16 @@ When the zoom flight ends, `runtime.zoomReady` turns true. While zoomed, paralla
 - **Look.** The pending middle-drag (`runtime.fly.look`, in pixels) turns the gaze by 0.004 rad per pixel: yaw around world up, pitch clamped to ±1.45 rad. The look target stays at its previous distance from the camera (at least 1 m).
 - **Move.** The held keys (`runtime.fly.keys`, as `KeyboardEvent.code`) add up to a direction: `W`/`S` along the gaze, `A`/`D` along its right vector, `Q`/`E` along world up. Speed is `max(6, max(width, depth) ÷ 2)` m/s, a third of that with `Shift`; the velocity eases towards it at `8 × dt`, so starting and stopping are smooth.
 - **Wheel.** The pending wheel delta (`runtime.fly.dolly`) slides the camera along the gaze by 5 mm per unit, consumed at `10 × dt`.
+- **Fingers.** What the touch pointers did since the last frame (`runtime.fly.touch`, in pixels, from the gesture tracker in `src/lib/touch.js`) takes hold of the picture rather than of the camera. One pixel covers `fov ÷ view height` radians, so a one-finger drag (`look`) turns the gaze by exactly as much as the finger moved, the other way from the mouse: drag right and the view turns left. A two-finger drag (`pan`) slides the camera against the fingers along its right vector and world up, and a pinch (`pinch`, positive when the fingers part) moves it along the gaze, both at the scale of a point 5 m away (twice that for the pinch). They are applied at once, with no easing: the room stays under the fingers.
 - **Floor.** The camera stays at least 20 cm above the floor; nothing else stops it.
 
-Parallax and the idle bob ease to zero exactly as when zoomed, so the camera only moves when the visitor moves it. `freeFly()` is ignored while zoomed, and always when the scene sets `camera.freeFly: false` (the store is the single gate; `useInput` then also leaves the fly keys and the middle button alone, and `Hint` shows `ui.hintNoFly`).
+Parallax and the idle bob ease to zero exactly as when zoomed, so the camera only moves when the visitor moves it. `freeFly()` is ignored while zoomed, and always when the scene sets `camera.freeFly: false` (the store is the single gate; `useInput` then also leaves the fly keys and the middle button alone and gives a finger its swipe back, and `Hint` shows `ui.hintNoFly`).
 
 Every frame the rig also copies the base pose into `runtime.pose` (`position` and `target` arrays, without parallax or bob). The editor's **Use current view** reads it.
 
 ## Every frame
 
-- **Parallax.** The smoothed mouse (`runtime.ms`, eased at `3 × dt`) offsets the camera along its right and up vectors by `1.1 × P` and `0.6 × P`, and the look target by `0.12 × P`, where `P = settings.parallax`. On touch devices a slow sine drift replaces the mouse. The panel moves the opposite way by up to 7 × 5 px.
+- **Parallax.** The smoothed mouse (`runtime.ms`, eased at `3 × dt`) offsets the camera along its right and up vectors by `1.1 × P` and `0.6 × P`, and the look target by `0.12 × P`, where `P = settings.parallax`. While the visitor's last press was a finger (`runtime.touch`) a slow sine drift replaces the mouse. The panel moves the opposite way by up to 7 × 5 px.
 - **Idle bob.** ±5 cm vertical sine, unless reduced motion is on.
 - **FOV.** `camera.fov`, or `camera.fovPortrait` when the viewport is taller than wide.
 - **Fog.** Outside the room (intro, overview) the fog's near and far distances grow by the camera's distance beyond the room's half size, measured from the room's centre, so the far wall doesn't fade out. Inside the room the fog is exactly `theme.fog`.
@@ -64,7 +65,10 @@ The `top` view stands above the middle of the room's bounds, as far above the ce
 | `W` `A` `S` `D` `Q` `E` (by `code`), `Shift` | `freeFly()`, then fly | held keys are tracked until `keyup`; a window `blur` releases them all; ignored with `camera.freeFly: false` |
 | middle-button drag on the canvas | `freeFly()`, then look | the press is `preventDefault`ed (no autoscroll or paste) and the pointer is captured, so the drag continues off the canvas; ignored with `camera.freeFly: false` |
 | wheel | next / previous; while flying, forward / back | after 60 px of accumulated delta, then locked for 900 ms; ignored over the panel and Options |
-| horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical; primary button or touch only |
+| horizontal swipe on the canvas | next / previous | more than 50 px and more horizontal than vertical; the primary mouse button, and a finger only where fingers do not fly (`camera.freeFly: false`, and in the editor) |
+| one-finger drag on the canvas | `freeFly()`, then look | touch pointers only; a tap until the finger has moved 10 px (`TAP_SLOP`, above the 8 px a click allows), so a tap never starts free fly; ignored while zoomed and with `camera.freeFly: false` |
+| two fingers on the canvas | `freeFly()`, then slide (drag) and move along the gaze (pinch) | deltas are taken between successive moves, so lifting or adding a finger does not jump; a third finger is ignored; a window `blur` forgets the fingers |
+| any `pointerdown` | `setTouch(pointerType === 'touch')` | the viewer only: sets `touch` in the store and the `touch` class on `<html>`, which pick the `…Touch` hints and show the touch controls. Starts as `(pointer: coarse)` |
 | click on a diamond | `goTo(i)` | R3F click with drag under 8 px |
 | click on a label, nav button or pager | `goTo(i)` | DOM buttons |
 | `hashchange` | `goTo(id)` | `goTo` itself uses `history.replaceState`, so it does not loop |
@@ -73,4 +77,6 @@ The `top` view stands above the middle of the room's bounds, as far above the ce
 | `←` `→` `↑` `↓` while zoomed | `zoomMove(dir)` | the nearest zoomable screen of the same POI in that direction on the wall (`moveScreen`: `←` `→` stay in the row, `↑` `↓` in the column, rows and columns being screens whose centres differ by less than half a screen; the edge of the wall stops the move, no wrapping). Where the screen takes the arrows itself (a video seeks with `←` `→`; an input or textarea keeps every arrow for its caret, the terminal `↑` `↓` for its history), `Ctrl`/`⌘` + arrow moves to the neighbouring screen regardless; `PageUp` / `PageDown` also stand in for `←` / `→` outside a textarea. `Alt` + arrow is left to the browser |
 | click on a screen | `zoomTo(rec)` | from anywhere: the screen's POI becomes current while zoomed, and `zoomReturn` remembers where the visitor was. R3F click with drag under 8 px; hover shows a pointer and brightens the screen |
 
-While zoomed, every other key is ignored, and so are the wheel and swipes. The nav buttons, labels and the hash still work and leave the zoom. The screens a POI offers come from the registry in `src/scene/screenState.js` (`screensOf(poi)`): every mounted `ScreenSurface` registers its zoom-record builder, and screens with `zoom: false` are skipped.
+On a touchscreen the overlay shows an arrow button for each direction `moveScreen` finds a screen in, next to Back; they call `zoomMove(dir)` too, and on arrival Back takes the focus instead of the first field, so the keyboard does not slide over the screen.
+
+While zoomed, every other key is ignored, and so are the wheel, swipes and finger gestures. The nav buttons, labels and the hash still work and leave the zoom. The screens a POI offers come from the registry in `src/scene/screenState.js` (`screensOf(poi)`): every mounted `ScreenSurface` registers its zoom-record builder, and screens with `zoom: false` are skipped.

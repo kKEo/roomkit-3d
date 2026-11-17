@@ -8,3 +8,6 @@ export function hasWebGL2() {
     return false;
   }
 }
+
+/** The main pointer is a finger (a phone, a tablet): the viewer starts with its touch hints and controls. */
+export const coarsePointer = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;

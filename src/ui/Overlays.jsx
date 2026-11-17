@@ -3,17 +3,26 @@ import { useStore, runtime } from '../state/store.js';
 import { SCENE_DEFAULTS } from '../config/defaults.js';
 import { fmt } from '../lib/text.js';
 
-/** Hint text where [x] renders as a key cap, {total} is the POI count and {keys} the highest number key (≤ 9). */
+/**
+ * Hint text where [x] renders as a key cap, {total} is the POI count and {keys} the highest number key (≤ 9);
+ * on a touchscreen the `…Touch` strings stand in.
+ */
 export function Hint() {
   const ui = useStore(s => s.scene.ui);
   const total = useStore(s => s.pois.length);
   const zoomed = useStore(s => (s.zoom ? (s.zoom.screen?.source === 'video' ? 'video' : 'screen') : null));
   const free = useStore(s => s.free);
   const canFly = useStore(s => s.scene.camera.freeFly !== false);
-  const idle = canFly ? ui.hint : ui.hintNoFly;
-  const parts = fmt(zoomed === 'video' ? ui.videoHint : zoomed ? ui.zoomHint : free ? ui.flyHint : idle, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
+  // a finger was the last thing pressed with: say what fingers do (the store only learns this in the viewer)
+  const touch = useStore(s => s.touch);
+  // nothing covers the bottom of the view: on a phone, where the panel is a sheet there, the hint only shows then
+  const clear = useStore(s => !s.zoom && (s.shown == null || s.panelCollapsed));
+  const text = touch
+    ? (zoomed === 'video' ? ui.videoHintTouch : zoomed ? ui.zoomHintTouch : free ? ui.flyHintTouch : canFly ? ui.hintTouch : ui.hintNoFlyTouch)
+    : (zoomed === 'video' ? ui.videoHint : zoomed ? ui.zoomHint : free ? ui.flyHint : canFly ? ui.hint : ui.hintNoFly);
+  const parts = fmt(text, { total, keys: Math.min(total, 9) }).split(/(\[[^\]]+\])/);
   return (
-    <div className="hint">
+    <div className={`hint${clear ? ' clear' : ''}`}>
       {parts.map((p, i) => (/^\[.+\]$/.test(p) ? <kbd key={i}>{p.slice(1, -1)}</kbd> : p))}
     </div>
   );

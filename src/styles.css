@@ -123,7 +123,9 @@ nav button[aria-current="true"] b { opacity: 1 }
 .screen-ui.on { opacity: 1 }
 .screen-ui.on .zback, .screen-ui.on.live { pointer-events: auto }
 .screen-ui.live { background: var(--bg); border: 1px solid var(--accent); box-shadow: var(--glow) }
-.screen-ui > .zback { position: absolute; top: .5em; right: .5em }
+.screen-ui > .zbar { position: absolute; top: .5em; right: .5em }
+.zbar { display: flex; gap: .35em; align-items: center }
+.zdir { display: none }
 .zback { background: rgba(0,0,0,.75); border: 1px solid var(--accent); color: var(--accent); padding: .15em .6em; font-size: .85em; cursor: pointer; white-space: nowrap }
 .zback kbd { font-family: inherit; opacity: .7; margin-left: .3em }
 .vctl { position: absolute; left: .5em; right: .5em; bottom: .5em; display: flex; align-items: center; gap: .4em; padding: .3em .5em; background: rgba(0,0,0,.78); border: 1px solid var(--accent); color: var(--accent); font-size: .8em; opacity: 0; transition: opacity .25s }
@@ -173,7 +175,7 @@ nav button[aria-current="true"] b { opacity: 1 }
 #progress.on { opacity: 1 }
 
 /* ——— Options (General, Camera, System) and the performance overlay ——— */
-.options { position: fixed; z-index: 12; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); width: 340px; max-height: calc(100vh - 90px - env(safe-area-inset-top, 0px)); overflow: auto; background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 14px 16px; font-size: 13px; scrollbar-width: thin; scrollbar-color: var(--line) transparent }
+.options { position: fixed; z-index: 12; right: 20px; top: calc(66px + env(safe-area-inset-top, 0px)); width: 340px; max-height: calc(100vh - 90px - env(safe-area-inset-top, 0px)); max-height: calc(100dvh - 90px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto; background: rgba(0,0,0,.94); border: 1px solid var(--accent); padding: 14px 16px; font-size: 13px; scrollbar-width: thin; scrollbar-color: var(--line) transparent }
 .options h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--accent) }
 .options .tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--line) }
 .options .tabs button { background: none; border: 1px solid transparent; border-bottom: none; padding: 5px 10px; cursor: pointer; color: var(--text-dim); margin-bottom: -1px }
@@ -222,7 +224,7 @@ nav button[aria-current="true"] b { opacity: 1 }
   .brand { font-size: 24px }
   nav button { padding: 6px 7px }
   nav button .t { display: none }
-  .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); height: 46vh; transform: translateY(30px) }
+  .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); height: 46vh; height: 46dvh; transform: translateY(30px) }
   .panel.collapsed { transform: translateY(60px) !important }
   .panel-inner { padding: 20px 18px 16px }
   .panel h1 { font-size: 40px }
@@ -231,6 +233,48 @@ nav button[aria-current="true"] b { opacity: 1 }
   .perfhud { top: calc(96px + env(safe-area-inset-top, 0px)); left: 10px }
   .cards { grid-template-columns: 1fr }
 }
+/* ——— Touchscreens: the viewer only (the editor's page, html.editing, keeps its own ways) ——— */
+html:not(.editing), html:not(.editing) body { overscroll-behavior: none }
+html:not(.editing) body { -webkit-tap-highlight-color: transparent; touch-action: manipulation }
+html:not(.editing) :is(.top, .mlabel, .hint, #minimap, .zbar, .vctl) { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none }
+html:not(.editing) #stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none }
+/* `touch` is on <html> while the visitor's last press was a finger (store.setTouch) */
+html.touch:not(.editing) .zdir { display: block }
+html.touch:not(.editing) :is(.zback, .confirm-box) kbd { display: none }
+html.touch:not(.editing) .hint { white-space: normal; text-align: center; width: max-content; max-width: calc(100vw - 24px) }
+html.touch:not(.editing) .iconbtn { width: 40px; height: 40px }
+html.touch:not(.editing) .top .online { height: 40px }
+html.touch:not(.editing) nav button { min-height: 40px; align-items: center }
+html.touch:not(.editing) .mlabel { font-size: 13px; padding: 9px 12px 9px 10px }
+html.touch:not(.editing) .zback { min-height: 40px; min-width: 40px; padding: .15em .8em }
+html.touch:not(.editing) .screen-title .zback { min-height: 34px }
+html.touch:not(.editing) .vctl { font-size: max(.8em, 12px); flex-wrap: wrap }
+html.touch:not(.editing) .vctl button { min-height: 32px; min-width: 32px }
+@media (max-width: 760px) {
+  html.touch:not(.editing) nav button { flex: 1; justify-content: center; min-width: 0 }
+  /* the panel is a sheet over the bottom of the view here: the hint shows while nothing lies there */
+  html.touch:not(.editing) .hint.clear { display: block; bottom: calc(14px + env(safe-area-inset-bottom, 0px)) }
+}
+/* a tablet held upright: the stop names do not fit in one row, and the hint would lie over the map and the panel */
+@media (min-width: 761px) and (max-width: 1100px) {
+  html.touch:not(.editing) nav { flex-wrap: nowrap }
+  html.touch:not(.editing) nav button .t { display: none }
+  html.touch:not(.editing) .hint { display: none }
+  html.touch:not(.editing) .hint.clear { display: block; left: 190px; right: 20px; transform: none; width: auto; max-width: none }
+}
+/* a phone on its side: wide enough for the side panel, but short */
+@media (max-height: 500px) and (min-width: 761px) {
+  html.touch:not(.editing) .top { padding-top: calc(8px + env(safe-area-inset-top, 0px)); padding-bottom: 8px; padding-left: calc(14px + env(safe-area-inset-left, 0px)); padding-right: calc(14px + env(safe-area-inset-right, 0px)) }
+  html.touch:not(.editing) .panel { top: calc(60px + env(safe-area-inset-top, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)) }
+  html.touch:not(.editing) .panel-inner { padding: 16px 18px 14px }
+  html.touch:not(.editing) .panel h1 { font-size: 32px }
+  html.touch:not(.editing) nav { flex-wrap: nowrap }
+  html.touch:not(.editing) nav button .t { display: none }
+  html.touch:not(.editing) #minimap, html.touch:not(.editing) .hint { display: none }
+  html.touch:not(.editing) .hint.clear { display: block; bottom: calc(10px + env(safe-area-inset-bottom, 0px)) }
+  html.touch:not(.editing) .options { top: calc(56px + env(safe-area-inset-top, 0px)); max-height: calc(100dvh - 66px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel { transition: opacity .2s }
   #loader .cur { animation: none }

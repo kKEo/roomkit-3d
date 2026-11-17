@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useStore, runtime, viewRect } from '../state/store.js';
-import { getSession } from '../scene/screenState.js';
+import { getSession, screensOf } from '../scene/screenState.js';
+import { DIRECTIONS, moveScreen } from '../lib/screenOrder.js';
 import { Terminal } from './screens/Terminal.jsx';
 import { Dashboard } from './screens/Dashboard.jsx';
 import { Form } from './blocks/index.jsx';
@@ -11,16 +12,23 @@ import { useLiveScreen } from '../data/live.js';
 const FormScreen = ({ config }) => <Form data={config.form ?? {}} />;
 const KINDS = { terminal: Terminal, dashboard: Dashboard, form: FormScreen };
 const NO_SCREEN = {};
+const ARROW = { left: '←', right: '→', up: '↑', down: '↓' };
+const MOVE_LABEL = { left: 'zoomLeft', right: 'zoomRight', up: 'zoomUp', down: 'zoomDown' };
 
 /**
  * DOM layer pinned over the screen the camera is zoomed into. The camera faces the screen
  * head-on, so its projected corners give an axis-aligned rectangle; interactive sources
  * (terminal, dashboard, form) render real inputs there once the camera has arrived.
+ *
+ * Next to Back stand arrows for the neighbouring screens, what the arrow keys do; the stylesheet shows them on a
+ * touchscreen only.
  */
 export function ScreenOverlay() {
   const zoom = useStore(s => s.zoom);
   const ui = useStore(s => s.scene.ui);
   const exitZoom = useStore(s => s.exitZoom);
+  const zoomMove = useStore(s => s.zoomMove);
+  const pois = useStore(s => s.pois);
   const ref = useRef(null);
   // the screen's live config: same feed (and hub entry) as the screen itself, so no extra request
   const { config: screen, status } = useLiveScreen(zoom?.screen ?? NO_SCREEN);
@@ -49,7 +57,9 @@ export function ScreenOverlay() {
       if (runtime.zoomReady !== ready) {
         ready = runtime.zoomReady;
         el.classList.toggle('on', ready);
-        if (ready) el.querySelector('.screen-body input, .screen-body textarea, .screen-body button')?.focus({ preventScroll: true });
+        // with a finger, focusing a field would slide the keyboard over the screen before anything was read: Back gets the focus
+        const first = document.documentElement.classList.contains('touch') ? '.zback:not(.zdir)' : '.screen-body input, .screen-body textarea, .screen-body button';
+        if (ready) el.querySelector(first)?.focus({ preventScroll: true });
       }
     };
     raf = requestAnimationFrame(tick);
@@ -58,7 +68,14 @@ export function ScreenOverlay() {
 
   if (!zoom) return null;
   const Body = KINDS[screen.source];
-  const back = <button type="button" className="zback" onClick={exitZoom} aria-label={ui.zoomBack}>← {ui.zoomBack} <kbd>Esc</kbd></button>;
+  const camera = pois.find(p => p.id === zoom.poi)?.camera, records = screensOf(zoom.poi);
+  const dirs = DIRECTIONS.filter(d => moveScreen(records, camera, zoom.key, d));
+  const back = (
+    <span className="zbar">
+      {dirs.map(d => <button key={d} type="button" className="zback zdir" onClick={() => zoomMove(d)} aria-label={ui[MOVE_LABEL[d]]}>{ARROW[d]}</button>)}
+      <button type="button" className="zback" onClick={exitZoom} aria-label={ui.zoomBack}>← {ui.zoomBack} <kbd>Esc</kbd></button>
+    </span>
+  );
   return (
     <div
       key={zoom.key} ref={ref} role="dialog" aria-label={screen.title || ui.zoomScreen}

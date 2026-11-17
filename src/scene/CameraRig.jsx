@@ -13,19 +13,25 @@ const UP = new V3(0, 1, 0);
 const LOOK = 0.004;     // free fly: radians per pixel of middle-drag
 const PITCH = 1.45;     // free fly: how far up / down the gaze may tilt (short of straight up, where yaw breaks down)
 const DOLLY = 0.005;    // free fly: metres per unit of wheel delta
+const GRAB = 5;         // free fly, touch: how far away (m) the point is that a two-finger drag keeps under the fingers
 
 /**
  * Free fly: yaw / pitch the gaze by the pending middle-drag, accelerate towards the held WASD / QE
  * direction and slide along the gaze by the pending wheel delta. Moves the base pose `b` in place.
+ *
+ * Fingers take hold of the picture instead: a one-finger drag turns the view so the room follows the finger
+ * (drag right, look left), a two-finger drag slides the camera the other way and a pinch moves it along the
+ * gaze. `px` is the angle one pixel covers (radians), which is what makes the room keep up with the finger.
  */
-function steer(b, vel, speed, dt, tmp) {
+function steer(b, vel, speed, dt, tmp, px) {
   const { fly } = runtime;
   const f = tmp.fwd.subVectors(b.tgt, b.pos);
   const reach = Math.max(1, f.length());
   f.normalize();
-  const yaw = Math.atan2(f.x, f.z) - fly.look.x * LOOK;
-  const pitch = Math.min(PITCH, Math.max(-PITCH, Math.asin(f.y) - fly.look.y * LOOK));
-  fly.look.x = fly.look.y = 0;
+  const t = fly.touch;
+  const yaw = Math.atan2(f.x, f.z) - fly.look.x * LOOK + t.look.x * px;
+  const pitch = Math.min(PITCH, Math.max(-PITCH, Math.asin(f.y) - fly.look.y * LOOK + t.look.y * px));
+  fly.look.x = fly.look.y = t.look.x = t.look.y = 0;
   f.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
   const r = tmp.right.crossVectors(f, UP).normalize();
   const k = fly.keys, wish = tmp.look.set(0, 0, 0);
@@ -41,6 +47,9 @@ function steer(b, vel, speed, dt, tmp) {
   const step = fly.dolly * Math.min(1, dt * 10);
   fly.dolly -= step;
   b.pos.addScaledVector(f, -step * DOLLY);
+  const m = px * GRAB; // metres per pixel at the grabbed distance
+  b.pos.addScaledVector(r, -t.pan.x * m).addScaledVector(UP, t.pan.y * m).addScaledVector(f, t.pinch * m * 2);
+  t.pan.x = t.pan.y = t.pinch = 0;
   b.pos.y = Math.max(0.2, b.pos.y); // stay above the floor
   b.tgt.copy(b.pos).addScaledVector(f, reach);
 }
@@ -169,7 +178,8 @@ export function CameraRig() {
       if (transit.current) { transit.current = null; runtime.transiting = false; warpFov = roll = 0; }
       if (!tmp.wasFree) presence.flight({ kind: 'free', from: { position: b.pos.toArray(), target: b.tgt.toArray() } });
       const { width, depth } = scene.room;
-      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp);
+      const fov = (size.width < size.height ? scene.camera.fovPortrait : scene.camera.fov) * DEG;
+      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp, fov / size.height);
       presence.pose(b.pos, b.tgt);
     } else vel.set(0, 0, 0);
     tmp.wasFree = st.free;

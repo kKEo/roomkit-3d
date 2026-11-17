@@ -74,7 +74,7 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `overview.position` | `[x, y, z]` | computed | the whole-room view: where the app opens (with no `#poi` in the address), and where `0` and the logo go. Default `[0, height + 0.22·size, depth/2 + 0.28·size]`, with `size = max(width, depth)`: outside the front wall and above the ceiling, so the room shows like a model with the roof off |
 | `overview.target` | `[x, y, z]` | computed | default `[0, 0, −0.06·depth]`; give both keys or neither |
 | `start` | POI id, `{ position, target }` or `null` | `null` | where the page opens when the address has no `#poi`, instead of the overview: a POI id (must exist; the `cinema` example lands on its screen) or a fixed camera pose. A pose is flown to like the overview (no panel, no hash); `0` and the logo still go to `overview`. The editor's **Export…** writes the pose of the current view here |
-| `freeFly` | boolean | `true` | `false` switches free flight off: the fly keys, the middle-button look and the fly hint do nothing; the mouse wheel only moves between stops |
+| `freeFly` | boolean | `true` | `false` switches free flight off: the fly keys, the middle-button look, the finger gestures and the fly hint do nothing; the mouse wheel only moves between stops, and on a touchscreen a swipe does |
 
 ## effects
 
