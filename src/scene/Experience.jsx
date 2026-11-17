@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useStore } from '../state/store.js';
-import { WorldContext, PoiContext } from './core.jsx';
+import { WorldContext, PoiContext } from './core.js';
 import { createMaterials } from './materials/hatch.js';
 import { createRain } from './rain.js';
 import { Room } from './Room.jsx';

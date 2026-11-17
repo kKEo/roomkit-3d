@@ -29,7 +29,7 @@ describe('objectSchema', () => {
     expect(r.success).toBe(false);
     const paths = r.error.issues.map(i => i.path.join('.'));
     expect(paths).toContain('props.height');
-    expect(r.error.issues.some(i => /Unrecognized key/.test(i.message) && /widht/.test(i.message))).toBe(true);
+    expect(r.error.issues.map(i => i.message)).toContain('unknown key "widht": did you mean "width"? (known: width, height, depth, openOnFocus, openAngle)');
   });
 
   it('normalises a desk screen given as a bare source name', () => {
@@ -85,7 +85,7 @@ describe('sceneSchema', () => {
     for (const bad of [{ poi: ['a'], room: { hieght: 1 } }, { poi: ['a'], theme: { acent: '#fff' } }, { poi: ['a'], camera: { fov2: 1 } }, { poi: ['a'], effects: { warpp: 1 } }, { poi: ['a'], decor2: [] }]) {
       const r = sceneSchema.safeParse(minimalScene(bad));
       expect(r.success, JSON.stringify(bad)).toBe(false);
-      expect(r.error.issues.some(i => /Unrecognized key/.test(i.message))).toBe(true);
+      expect(r.error.issues.some(i => /^unknown key ".*": did you mean /.test(i.message)), JSON.stringify(bad)).toBe(true);
     }
     expect(poiSchema.safeParse({ ...good, lable: 'x' }).success).toBe(false);
   });

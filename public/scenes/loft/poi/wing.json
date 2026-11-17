@@ -3,8 +3,9 @@
   "label": "South wing",
   "kicker": "around the corner",
   "objects": [
-    { "type": "pedestal", "position": [-6, 0, 5], "props": { "shape": "dodecahedron", "height": 2.6, "size": 1 } }
+    { "type": "pedestal", "name": "pedestal", "position": [-6, 0, 5], "props": { "shape": "dodecahedron", "height": 2.6, "size": 1 } }
   ],
+  "camera": { "position": [-6, 4.8, 11.4], "target": [-6, 2, 5] },
   "content": {
     "blocks": [
       { "type": "heading", "text": "South wing" },

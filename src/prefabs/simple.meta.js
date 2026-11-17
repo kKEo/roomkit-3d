@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SHAPES } from '../scene/shapes.js';
+import { SHAPES, shapeArgs, shapeExtent } from '../scene/shapes.js';
 
 const LINES = ['thick', 'mid', 'thin', 'faint', 'glow'];
 
@@ -10,6 +10,7 @@ export const door = {
     height: z.number().positive().default(4.2),
   }),
   hotspots: ['door'],
+  geometry: p => ({ min: [-p.width / 2 - 0.125, 0, 0], max: [p.width / 2 + 0.125, p.height + 0.245, 0.4], mount: 'wall' }),
   placement: p => ({ focus: [0, p.height / 2, 0], cameraDistance: 7, cameraHeight: 3, markerOffset: [0, p.height + 0.6, 0.3] }),
 };
 
@@ -21,6 +22,7 @@ export const bench = {
     depth: z.number().positive().default(0.9),
   }),
   hotspots: ['bench'],
+  geometry: p => ({ min: [-p.width / 2, 0, -p.depth / 2], max: [p.width / 2, p.height, p.depth / 2], mount: 'floor' }),
   placement: p => ({ focus: [0, p.height, 0], cameraDistance: 5, cameraHeight: 2.5, markerOffset: [0, p.height + 1.2, 0] }),
 };
 
@@ -38,5 +40,9 @@ export const primitive = {
     float: z.number().min(0).default(0),
   }),
   hotspots: ['shape'],
+  geometry: p => {
+    const h = shapeExtent(p.shape, p.args ?? shapeArgs(p.shape, p.size));
+    return h && { min: [-h[0], -h[1] - p.float, -h[2]], max: [h[0], h[1] + p.float, h[2]], mount: 'free' };
+  },
   placement: () => ({ focus: [0, 0, 0], cameraDistance: 6, cameraHeight: null, markerOffset: [0, 1.4, 0] }),
 };

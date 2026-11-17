@@ -11,8 +11,21 @@ This page lists every command the project defines or relies on. Run them from th
 | `make build` | install if needed, then the production build into `dist/` |
 | `make serve` | `make build`, then serve `dist/` at `http://localhost:4173` |
 | `make test` | the unit tests (`vitest run`), including building every scene in `public/scenes/` |
-| `make lint` | `eslint .` over `src/` and `test/` |
-| `make check` | `make lint`, `make test`, `make build`: what a CI run does |
+| `make lint` | `eslint .` over everything except `dist/`, `site/` and `docs/` |
+| `make scene-check` | `node tools/scene.js check`: every scene's config, references, object positions and cameras, without a browser; `SCENE=<name>` for one scene |
+| `node tools/scene.js describe <scene>` | the scene read back in words: where each object stands, what each stop's camera sees |
+| `node tools/scene.js plan <scene>` | the floor plan as text; `--svg=file.svg` writes a picture instead |
+| `node tools/scene.js new <name>` | a new scene folder with a room and one stop, added to `public/scenes/index.json`; `--title="My Room"` names it, `--brief="…"` also writes the description into a [`brief.json`](../reference/brief-json.md) |
+| `node tools/scene.js prefabs [scene]` | every object type with its size, origin, props and clickable parts |
+| `node tools/scene.js prefab new <scene> <type>` | a new object type for that scene: `prefabs/<type>.js` from a template, declared in `scene.json › prefabs`; `--mount=floor\|wall\|ceiling\|free`, `--title="…"` |
+| `node tools/scene.js prefab check <scene> [type]` | renders the scene's own types without a browser and lists what is wrong: size against the declared box, mount, clickable parts, motion, materials; see [Scene-shipped prefabs](../extending/scene-prefabs.md#writing-one-and-checking-it-without-a-browser) |
+| `node tools/scene.js prefab describe <scene> <type>` | one type read back: its parts, measured size and outline from three sides; `--props='{…}'` for other props, `--svg=file.svg` for a drawing |
+| `node tools/scene.js prefab catalog <scene>` | writes `prefabs/catalog.json`, the list the editor offers the scene's own types from, out of their metas |
+| `node tools/scene.js showroom <scene>` | lays the scene out as a gallery of its own types: a bay, a stop, a camera and a page for each, plus the catalog; see [A showroom for a set of types](../extending/scene-prefabs.md#a-showroom-for-a-set-of-types) |
+| `make shots SCENE=<name>`, `node tools/scene.js shots <scene>` | pictures taken by the real viewer in a headless browser: the whole room and every stop on one labelled sheet, `tools/scene/out/<scene>.png`; `--views=…`, `--size=640x360`, `--out=file.png`, `--measure`. Needs `npx playwright install chromium`; see [Scene checks](../../tester/running/scene-checks.md#looking-at-a-scene-one-picture) |
+| `node tools/mcp.js` | the scene tools as an MCP server over stdio, for clients without a shell; registered for this repository in `.mcp.json`. See [Working with coding agents](agents.md#the-mcp-server) |
+| `node tools/scene.js keys [section]` | every key of a scene's files with its type, default and meaning, printed from the schemas; without a section, the list of sections |
+| `make check` | `make lint`, `make test`, `make scene-check`, `make build`: what a CI run does |
 | `make docs` | build all three books into `site/<book>/` and copy the landing page to `site/index.html` |
 | `make docs-check` | build every book into a temporary folder; fails if a book does not build, for example when `SUMMARY.md` lists a missing file |
 | `make docs-serve BOOK=<book>` | live-preview one book (`user`, `operator` or `tester`) at `http://localhost:3000`, opening the browser |
@@ -37,6 +50,12 @@ Variables: `PORT=<n>` changes the port of `dev`, `serve` and `docs-serve`; `SITE
 
 There is no format command; see the [Tester guide](../../tester/README.md) for what the tests cover.
 
+## Variables for the tools
+
+| Variable | Effect |
+| --- | --- |
+| `ROOMKIT_SCENES` | the folder of scene folders `tools/scene.js` works on, instead of `public/scenes/`: for a sandbox or a test that must not touch the shipped scenes. It needs its own `index.json` |
+
 ## Build-time variables
 
 | Variable | Effect |
@@ -50,6 +69,8 @@ There is no format command; see the [Tester guide](../../tester/README.md) for w
 | `?scene=<name>` | load `scenes/<name>/` instead of the default from `scenes/index.json` |
 | `#<poi-id>` | start at, or jump to, that POI; kept up to date as the visitor moves |
 | `edit.html?scene=<name>` | the [editor](../deploy/editor.md) with that scene's files loaded; without `?scene=`, a new one-POI scene |
+| `?still` | still mode, for pictures taken by a script: the room alone (no fly-in, panel, top bar, minimap, hints, dust or sway), keys and the wheel off, no shared event. `window.__roomkit.view(name)` moves the camera and resolves when the picture has settled; `<html data-scene>` turns `ready`, or `error` with the lines in `__roomkit.error` |
+| `?still&view=<view>` | the view still mode opens on: `overview` (default), `top`, a POI id, or a pose `x,y,z,tx,ty,tz` |
 
 ## In-app keys
 

@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "roomkit": { "command": "node", "args": ["tools/mcp.js"] }
+  }
+}

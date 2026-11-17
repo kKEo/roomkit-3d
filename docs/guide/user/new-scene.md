@@ -1,6 +1,8 @@
 # Making a new scene
 
-This page shows how to start a whole new room, with its own size, colours and points of interest, next to the existing ones. A scene is one folder; nothing outside it changes, except one optional line to make it the default.
+This page shows how to start a whole new room, with its own size, colours and points of interest, next to the existing ones. A scene is one folder; outside it only `public/scenes/index.json` changes, which lists every scene (and names the default).
+
+The quick way is `node tools/scene.js new my-office`: it makes the folder with a room and one point of interest and adds it to `index.json`. Then run `node tools/scene.js check my-office` after each edit; it lists every mistake, from a misspelt key to an object standing outside the room. The steps below do the same by hand.
 
 ## 1. Create the folder
 
@@ -89,5 +91,21 @@ Open the site with `?scene=my-office` at the end of the address. To make it the 
 ```json
 { "default": "my-office", "scenes": ["neo-room", "gallery", "my-office"] }
 ```
+
+## Keeping the description
+
+If the room was built from a description ("a desk in the corner, three pictures on the far wall"), keep it next to the scene in a `brief.json`, with a list of what must therefore be true:
+
+```json
+{
+  "text": "A desk in the north-east corner, three pictures on the far wall.",
+  "expect": [
+    { "object": "desk", "corner": "north-east" },
+    { "count": "pictureFrame", "is": 3, "wall": "north" }
+  ]
+}
+```
+
+`node tools/scene.js check my-office` then tells you whether the room still matches, also after later changes. `node tools/scene.js new my-office --brief="…"` starts the file for you. The forms are listed in the [brief.json reference](../operator/reference/brief-json.md).
 
 Every other setting, such as the camera fly-in, where the room opens (`camera.start`: a stop or a fixed view), whether visitors may fly freely (`camera.freeFly`), fog and particles, is listed in the [scene.json reference](../operator/reference/scene-json.md).

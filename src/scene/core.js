@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, createElement as h, useContext, useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
@@ -6,6 +6,12 @@ import { GEOMETRIES, SHAPES, shapeArgs } from './shapes.js';
 import { useStore } from '../state/store.js';
 
 export { SHAPES, shapeArgs };
+
+/*
+ * The building blocks of every prefab. Written with `createElement` rather than JSX on purpose: this file has no
+ * `.jsx` in it, so plain Node can import it and the scene tools can render a prefab with these very components
+ * (src/lint/stage.js) instead of an imitation of them.
+ */
 
 /** { name, mats, rain, room, theme } for everything inside the Canvas. */
 export const WorldContext = createContext(null);
@@ -68,7 +74,7 @@ export function Outline({ geometry, line = 'thick', threshold = 20 }) {
     return new LineSegments2(g, material);
   }, [geometry, material, threshold]);
   useEffect(() => () => obj.geometry.dispose(), [obj]);
-  return <primitive object={obj} />;
+  return h('primitive', { object: obj });
 }
 
 /**
@@ -80,14 +86,9 @@ export function Solid({ shape = 'box', args = [1, 1, 1], fill = 'main', line = '
   const { mats } = useWorld();
   const geometry = useGeometry(shape, args);
   const { hot, handlers } = useHotspot(hotspot);
-  const outline = line && <Outline geometry={geometry} line={hot ? 'glow' : line} threshold={threshold} />;
-  if (!fill) return <group {...rest} {...handlers}>{outline}{children}</group>;
-  return (
-    <mesh geometry={geometry} material={mats.fills[fill]} {...rest} {...handlers}>
-      {outline}
-      {children}
-    </mesh>
-  );
+  const outline = line && h(Outline, { geometry, line: hot ? 'glow' : line, threshold });
+  if (!fill) return h('group', { ...rest, ...handlers }, outline, children);
+  return h('mesh', { geometry, material: mats.fills[fill], ...rest, ...handlers }, outline, children);
 }
 
 /** Line segments from a flat [x,y,z, x,y,z, ...] array. */
@@ -103,7 +104,7 @@ export function Segs({ points, line = 'thin', ...rest }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, material]);
   useEffect(() => () => obj.geometry.dispose(), [obj]);
-  return <primitive object={obj} {...rest} />;
+  return h('primitive', { object: obj, ...rest });
 }
 
 /** Turns a polyline [V3...] into segment pairs for <Segs>. */

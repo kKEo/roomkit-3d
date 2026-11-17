@@ -24,6 +24,16 @@ export function meta({ z }) {
       legRest: z.boolean().default(true),
     }),
     hotspots: ['row'],
+    title: 'Seat row',
+    blurb: 'a row of reclining cinema seats, on a step if you like',
+    glyph: '▟',
+    // the solid body, for scene checks and `at` placement; these seats face -Z. The backrest (1.33 m long with its
+    // headrest, hinged 0.5 m up and 0.5 m back) reaches higher the more upright it is, and further back the more it leans
+    geometry: p => {
+      const w = p.count * p.pitch + (p.riser ? 0.6 : 0), lean = (p.recline * Math.PI) / 180;
+      const top = 0.5 + 1.33 * Math.cos(lean) + 0.14 * Math.sin(lean), back = 0.5 + 1.33 * Math.sin(lean) + 0.1 * Math.cos(lean);
+      return { min: [-w / 2, 0, -1.4], max: [w / 2, p.riser + Math.max(1.75, top), Math.max(1.2, back)], mount: 'floor', front: '-z' };
+    },
     placement: p => ({ focus: [0, p.riser + 0.9, 0], cameraDistance: 6, cameraHeight: p.riser + 2.8, markerOffset: [0, p.riser + 2.3, 0] }),
   };
 }

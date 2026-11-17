@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Solid, Segs } from '../scene/core.jsx';
+import { Solid, Segs } from '../scene/core.js';
 import { DEG } from '../lib/math.js';
 import { reducedMotion } from '../lib/env.js';
 
@@ -18,7 +18,8 @@ export function Wardrobe({ props, active }) {
   });
 
   const rodY = H - 0.55;
-  const garments = [-0.75, -0.45, -0.2, 0.15, 0.4].map(x => x * inner);
+  // along the rod, as fractions of the half width: within the carcass (the picture check found them hanging outside it)
+  const garments = [-0.75, -0.45, -0.2, 0.15, 0.4].map(x => (x * inner) / 2);
   const hangers = garments.flatMap(x => [x, rodY, 0, x - 0.3, rodY - 0.25, 0, x, rodY, 0, x + 0.3, rodY - 0.25, 0]);
   const doorH = H - 0.25, doorW = W / 2 - 0.01;
 

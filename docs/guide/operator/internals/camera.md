@@ -47,6 +47,12 @@ Every frame the rig also copies the base pose into `runtime.pose` (`position` an
 - **Ceiling.** While the camera is above the ceiling, `Room` hides the ceiling grid and the light fixtures so they don't cover the view.
 - **View offset.** While the panel is open, `setViewOffset` shifts the frame left by `effects.panelOffset × width` on wide screens. Under 760 px it shifts the frame up by 20 % of the height instead (bottom-sheet panel). The offset eases in and out.
 
+## Still mode
+
+`?still` turns the rig into a camera on a tripod, for `node tools/scene.js shots` and any other script that wants a picture (`src/lib/still.js` reads the address and works out the poses, `src/ui/stillRig.js` installs `window.__roomkit`). `App` drops the dust, the frame-rate cap, parallax and warp, keeps the page out of a shared event, and `Viewer` skips the fly-in, the overlays and the input handlers. `__roomkit.view(name)` calls `openAt(pose, 1)`: a one-millisecond flight, so the ordinary path through `startTransit` is used and nothing in the rig is special-cased. The rig hands the navigation's `nonce` back in `runtime.arrived` when a flight lands, which is how the script knows the camera is there; it then waits for three.js's loading manager to go quiet and for three more frames. The idle bob is off while `runtime.still` is set, whatever the motion preference.
+
+The `top` view stands above the middle of the room's bounds, as far above the ceiling as it takes for the tops of the walls to fit, a hundredth of a metre south of straight down so that north stays at the top.
+
 ## Input
 
 | Input | Action | Notes |

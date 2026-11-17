@@ -74,7 +74,8 @@ export function CameraRig() {
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
   // `reverse`: play the flight profile backwards in time (the way back from a screen mirrors the way in)
-  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false, resumeFree = false, reverse = false }) {
+  // `nonce`: the navigation this flight answers, handed back through `runtime.arrived` when it lands
+  function startTransit(p1, t1, { dur, arc = true, poi = null, zoomed = false, resumeFree = false, reverse = false, nonce = null }) {
     const b = base.current;
     const p0 = b.pos.clone();
     const dist = p0.distanceTo(p1);
@@ -86,7 +87,7 @@ export function CameraRig() {
       start: performance.now(),
       dur: duration,
       roll: arc ? Math.sign(new V3().crossVectors(f0, f1).y) || 1 : 0,
-      warp: arc, poi, zoomed, resumeFree, reverse, shown: false,
+      warp: arc, poi, zoomed, resumeFree, reverse, nonce, shown: false,
     };
     // tell the other visitors, who replay the same flight for this visitor's avatar
     presence.flight({
@@ -118,7 +119,7 @@ export function CameraRig() {
       startTransit(c.clone().addScaledVector(new V3(...zoom.normal), d), c, { dur: reducedMotion ? 300 : 900, arc: false, zoomed: true });
     } else if (nav && nav !== prev.nav) {
       const view = nav.view ?? viewOf(nav.id);
-      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id });
+      startTransit(new V3(...view.position), new V3(...view.target), { dur: nav.duration, poi: nav.id, nonce: nav.nonce });
     } else if (!zoom && prev.zoom) {
       // back to where the visitor was before the screen (the store has already restored which POI that was)
       const back = returnPose.current;
@@ -158,6 +159,7 @@ export function CameraRig() {
       if (t > 0.8 && !tr.shown && tr.poi != null) { tr.shown = true; st.showPanel(tr.poi); }
       if (t >= 1) {
         transit.current = null; runtime.transiting = false; runtime.zoomReady = tr.zoomed;
+        if (tr.nonce != null) runtime.arrived = tr.nonce;
         if (tr.resumeFree) st.freeFly(); // back from a screen to where the visitor was flying: hand the camera back
       }
     }
@@ -185,7 +187,7 @@ export function CameraRig() {
     tmp.up.crossVectors(tmp.right, tmp.fwd);
     const P = settings.parallax * calm;
     camera.position.copy(b.pos).addScaledVector(tmp.right, ms.x * P * 1.1).addScaledVector(tmp.up, -ms.y * P * 0.6);
-    if (!reducedMotion) camera.position.y += Math.sin(time * 0.6) * 0.05 * calm;
+    if (!reducedMotion && !runtime.still) camera.position.y += Math.sin(time * 0.6) * 0.05 * calm;
     tmp.look.copy(b.tgt).addScaledVector(tmp.right, ms.x * P * 0.12);
     camera.lookAt(tmp.look);
     if (roll) camera.rotateZ(roll);

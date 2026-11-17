@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, Segs, shapeArgs, useWorld, ActionsContext } from '../scene/core.jsx';
+import { Solid, Segs, shapeArgs, useWorld, ActionsContext } from '../scene/core.js';
 import { useStore } from '../state/store.js';
 import { reducedMotion } from '../lib/env.js';
 import { DEG } from '../lib/math.js';

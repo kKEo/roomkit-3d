@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node tools/scene.js:*)",
+      "Bash(make scene-check:*)"
+    ]
+  }
+}

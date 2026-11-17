@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildScene, loadPrefab, readerFromMap, resolveObjectMedia, isRelative } from '../src/config/buildScene.js';
+import { buildScene, inspectScene, loadPrefab, readerFromMap, resolveObjectMedia, isRelative } from '../src/config/buildScene.js';
 import { ConfigError } from '../src/config/schema.js';
 
 const resolveUrl = p => `scene://x/${p}`;
@@ -59,7 +59,7 @@ describe('buildScene', () => {
     expect(e).toBeInstanceOf(ConfigError);
     expect(e.lines).toEqual(expect.arrayContaining([
       expect.stringMatching(/^x\/poi\/a\.json: invalid JSON — /),
-      expect.stringMatching(/^x\/poi\/b\.json › objects\.0\.props: Unrecognized key.*chairs/),
+      'x/poi/b.json › objects.0.props: unknown key "chairs": did you mean "chair"? (known: screen, src, chair, zoom)',
     ]));
     expect(e.lines.length).toBe(2); // a missing markdown is not reported for a POI that already failed validation
   });
@@ -93,13 +93,52 @@ describe('buildScene', () => {
     e = await fails(build({ 'scene.json': json({ poi: [], ui: { hnt: 'typo' } }) }));
     expect(e.lines).toEqual(expect.arrayContaining([
       'x/scene.json › poi: list at least one POI file',
-      expect.stringMatching(/^x\/scene\.json › ui: Unrecognized key.*hnt/),
+      'x/scene.json › ui: unknown key "hnt": did you mean "hint"?', // the list of 70 interface strings is left out
     ]));
   });
 
   it('wraps a non-config failure from read with the file label', async () => {
     const e = await fails(buildScene({ name: 'x', read: async () => { throw new TypeError('Failed to fetch'); }, resolveUrl }));
     expect(e.lines).toEqual(['x/scene.json: Failed to fetch']);
+  });
+});
+
+describe('inspectScene', () => {
+  const inspect = m => inspectScene({ name: 'x', read: readerFromMap(m), resolveUrl });
+
+  it('returns the build and no errors for a valid bundle', async () => {
+    const r = await inspect(files);
+    expect(r.errors).toEqual([]);
+    expect(r.scene.name).toBe('x');
+    expect(r.pois.map(p => p.id)).toEqual(['a', 'b']);
+  });
+
+  it('lists scene.json and POI mistakes together, where buildScene stops at scene.json', async () => {
+    const m = new Map(files);
+    m.set('scene.json', json({ room: { width: 'wide' }, poi: ['poi/a.json', 'poi/b.json'] }));
+    m.set('poi/b.json', json({ id: 'b', label: 'B', objects: [], content: { blocks: [] } }));
+    const r = await inspect(m);
+    expect(r.scene).toBe(null);
+    expect(r.pois.map(p => p.id)).toEqual(['a']);
+    expect(r.errors.map(l => l.split(':')[0])).toEqual(['x/scene.json › room.width', 'x/poi/b.json › objects']);
+    expect((await fails(buildScene({ name: 'x', read: readerFromMap(m), resolveUrl }))).lines).toHaveLength(1);
+  });
+
+  it('gives the lines of a scene.json that is not JSON instead of throwing', async () => {
+    const r = await inspect(new Map([['scene.json', '{']]));
+    expect(r.scene).toBe(null);
+    expect(r.errors[0]).toMatch(/^x\/scene\.json: invalid JSON/);
+  });
+});
+
+describe('auto camera stays in the room', () => {
+  it('pulls the camera of an object near the front wall back inside', async () => {
+    const m = new Map(files);
+    m.set('poi/a.json', json({ id: 'a', label: 'A', objects: [{ type: 'pedestal', position: [0, 0, 3] }], content: { markdown: 'content/a.md' } }));
+    const { pois } = await buildScene({ name: 'x', read: readerFromMap(m), resolveUrl });
+    // pedestal: camera 12.5 m in front would be at z 15.5; the wall is at 6
+    expect(pois[0].camera.position[2]).toBeCloseTo(5.4);
+    expect(pois[0].camera.target).toEqual([0, 2.9, 3]);
   });
 });
 

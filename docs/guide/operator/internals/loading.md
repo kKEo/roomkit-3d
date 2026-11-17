@@ -20,7 +20,7 @@ Before anything is validated, `scene.json › prefabs` (type → module path or 
 
 ## Scene file
 
-`scene.json` is fetched, merged **over** `SCENE_DEFAULTS` with `deepMerge` (plain objects merge key by key; arrays and scalars replace), then validated with `sceneSchema`. Every section of the schema is strict: because the defaults supply every known key, a key the schema does not know can only be a typo, and it is reported (`scene.json › room: Unrecognized key: "hieght"`). The same holds for POI files, objects, props, screens and blocks. So a scene may give only `theme.accent` and keep every other theme key. It also means arrays such as `room.lights` or `room.pillars` replace the default list entirely.
+`scene.json` is fetched, merged **over** `SCENE_DEFAULTS` with `deepMerge` (plain objects merge key by key; arrays and scalars replace), then validated with `sceneSchema`. Every section of the schema is strict: because the defaults supply every known key, a key the schema does not know can only be a typo, and it is reported with the key that was probably meant and the keys there are (`scene.json › room: unknown key "hieght": did you mean "height"? (known: width, height, depth, …)`; `unknownKeys` in `src/config/keyHelp.js`). The same holds for POI files, objects, `at` and props; screens and blocks report zod's own `Unrecognized key`. So a scene may give only `theme.accent` and keep every other theme key. It also means arrays such as `room.lights` or `room.pillars` replace the default list entirely.
 
 `decor` objects are then normalised the same way as POI objects (below).
 
@@ -30,10 +30,13 @@ All files in `scene.poi` are fetched in parallel with `Promise.allSettled`, so o
 
 1. **Validate** with `poiSchema`. `objects[].position`, `rotation` and `scale` get defaults: `[0,0,0]`, `[0,0,0]`, `1`. Each object's `props` are validated with its prefab's schema from `src/prefabs/<Name>.meta.js`: defaults are filled in, a wrong type or an unknown key is an error under `objects.N.props.<key>`. Screens (`controlDesk.screens[]`, `desk.screen`) are validated with `screenSchema`, and `content.blocks` with the block schemas.
 2. **Resolve media.** Props named in the prefab's `media` list (`image`, `src`, `screen.src`, `screens[].src`) are resolved against the scene folder unless they are absolute (`https:`, `data:`, a leading `/`).
-3. **Place automatically** if `camera` or `marker` is missing: `autoPlacement()` in `src/lib/autoCamera.js` takes the first object's transform and its prefab's `placement(props)` hints. `focus` and `markerOffset` are in prefab-local space; the camera stands `cameraDistance` in front of `focus` along the object's local +Z (flattened to the floor plane), at height `cameraHeight` (or `focus.y + 0.3`).
-4. **Load content.** `{ markdown: path }` is fetched and replaced by `{ blocks: [{ type: 'markdown', text }] }`, so the panel only ever deals with blocks.
+3. **Load content.** `{ markdown: path }` is fetched and replaced by `{ blocks: [{ type: 'markdown', text }] }`, so the panel only ever deals with blocks.
 
-After all POIs, duplicate `id`s are reported. If any step failed anywhere, a single `ConfigError` with every line is thrown.
+After all POIs, two steps run over the whole scene, because an object may refer to one in another file:
+
+1. **Place in words.** `placeAll()` in `src/config/placement.js` turns every `at` and `facing` (scenery and stops alike) into `position` and `rotation`: first the objects that stand on their own, then those `near` another, in dependency order; `facing` an object or the centre is aimed in a second round from where the first one put things. A reference that cannot be resolved is an error under `objects.N.at.<key>` or `objects.N.facing`.
+2. **Place automatically** if `camera` or `marker` is missing: `autoPlacement()` in `src/lib/autoCamera.js` takes the first object's transform and its prefab's `placement(props)` hints. `focus` and `markerOffset` are in prefab-local space; the camera stands `cameraDistance` in front of `focus` along the object's local +Z (flattened to the floor plane), at height `cameraHeight` (or `focus.y + 0.3`).
+Then duplicate `id`s are reported. If any step failed anywhere, a single `ConfigError` with every line is thrown.
 
 ## Prefab code
 

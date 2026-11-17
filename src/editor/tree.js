@@ -1,6 +1,7 @@
 import { getAt, rawAt, setAt, removeAt, insertAt, replaceRaw, pretty } from './jsonEdit.js';
 import { slug } from './bundle.js';
 import { BUILTIN, TYPE_NAME } from '../prefabs/registry.js';
+import { isDirection } from '../config/placement.js';
 
 /**
  * The scene as a tree of what an author places: the room, the scenery (`scene.json › decor`) and the stops
@@ -244,14 +245,27 @@ export function deleteObject(files, key) {
   return { files: with1(files, file, removeAt(files.get(file), [...list, index])), key: n > 1 ? objectKey(owner, Math.min(index, n - 2)) : (owner === DECOR ? 'scenery' : stopKey(owner)) };
 }
 
-/** A copy of an object right after it, a metre to the side, in the same layout. */
+/**
+ * A copy of an object right after it, a metre to the side, in the same layout. One placed `at` somewhere moves the
+ * way its form allows: further along its wall, further out of its corner, away from the centre or from its neighbour.
+ */
 export function duplicateObject(files, key) {
   const { owner, index } = parseKey(key);
   const { file, list } = locate(owner);
   const obj = objectAt(files, key);
   let text = insertAt(files.get(file), list, index + 1, { raw: objectRaw(files, key) });
-  const p = Array.isArray(obj.position) ? obj.position : [0, 0, 0];
-  text = setAt(text, [...list, index + 1, 'position'], [Math.round((p[0] + 1) * 100) / 100, p[1], p[2]]);
+  if (obj.at && typeof obj.at === 'object') {
+    const at = [...list, index + 1, 'at'], r2 = v => Math.round(v * 100) / 100, num = (v, d) => (typeof v === 'number' ? v : d);
+    if (obj.at.corner != null) text = setAt(text, [...at, 'inset'], r2(num(obj.at.inset, 0) + 1));
+    else if (obj.at.centre) text = setAt(text, [...at, 'shift'], [r2(num(obj.at.shift?.[0], 0) + 1), num(obj.at.shift?.[1], 0)]);
+    else if (obj.at.near != null) text = setAt(text, [...at, 'gap'], r2(num(obj.at.gap, 0.3) + 1));
+    // placed at a wall: the copy goes a metre (or a tenth of the wall) further along it
+    else if (typeof obj.at.distance === 'number') text = setAt(text, [...at, 'distance'], r2(obj.at.distance + 1));
+    else text = setAt(text, [...at, 'along'], r2(Math.min(1, num(obj.at.along, 0.5) + 0.1)));
+  } else {
+    const p = Array.isArray(obj.position) ? obj.position : [0, 0, 0];
+    text = setAt(text, [...list, index + 1, 'position'], [Math.round((p[0] + 1) * 100) / 100, p[1], p[2]]);
+  }
   if (obj.name) text = setAt(text, [...list, index + 1, 'name'], `${obj.name} copy`);
   return { files: with1(files, file, text), key: objectKey(owner, index + 1) };
 }
@@ -274,8 +288,56 @@ export function setObjectField(files, key, path, value) {
   return with1(files, file, setAt(files.get(file), [...list, index, ...path], value));
 }
 
-/** Names an object (shown in the tree); an empty name removes it, and the automatic label comes back. */
-export const renameObject = (files, key, name) => setObjectField(files, key, ['name'], name.trim() || undefined);
+/**
+ * Turns an object placed in words (`at`, `facing`) into one with coordinates: writes `position` and `rotation` (what
+ * the loader worked out, or where the handles left it) and drops `at` and `facing`. The object stays where it is on screen.
+ */
+export function detachPlacement(files, key, { position, rotation }) {
+  let next = setObjectField(files, key, ['position'], position);
+  next = setObjectField(next, key, ['rotation'], rotation);
+  next = setObjectField(next, key, ['at'], undefined);
+  return setObjectField(next, key, ['facing'], undefined);
+}
+
+/** Gives an object with `facing` a `rotation` in its place (the one the loader worked out, or where the handles left it). */
+export function detachFacing(files, key, rotation) {
+  return setObjectField(setObjectField(files, key, ['rotation'], rotation), key, ['facing'], undefined);
+}
+
+/** Every placed object as written, with its key: the scenery's, then each stop's. */
+function allObjects(files) {
+  const scene = tryParse(files.get(SCENE)) ?? {};
+  return [
+    ...listOf(scene.decor).map((obj, index) => ({ key: objectKey(DECOR, index), owner: DECOR, index, obj })),
+    ...listOf(scene.poi).flatMap(f => listOf(tryParse(files.get(f))?.objects).map((obj, index) => ({ key: objectKey(f, index), owner: f, index, obj }))),
+  ];
+}
+
+/**
+ * What is placed by an object's name and would lose its place without it: objects that stand `near` it or are
+ * `facing` it. Each entry is `{ key, path, label }`, `path` being `['at', 'near']` or `['facing']`.
+ */
+export function objectRefs(files, name) {
+  if (typeof name !== 'string' || !name) return [];
+  const out = [];
+  for (const { key, obj } of allObjects(files)) {
+    const label = obj?.name ?? obj?.type ?? '?';
+    if (obj?.at?.near === name) out.push({ key, path: ['at', 'near'], label });
+    if (obj?.facing === name && !isDirection(name)) out.push({ key, path: ['facing'], label });
+  }
+  return out;
+}
+
+/**
+ * Names an object (shown in the tree); an empty name removes it, and the automatic label comes back. Objects placed
+ * by the old name (`at.near`, `facing`) follow it to the new one.
+ */
+export function renameObject(files, key, name) {
+  const old = objectAt(files, key)?.name, next = name.trim() || undefined;
+  let out = setObjectField(files, key, ['name'], next);
+  if (next && old !== next) for (const ref of objectRefs(files, old)) out = setObjectField(out, ref.key, ref.path, next);
+  return out;
+}
 
 /** Replaces an object with the JSON text from the inspector, kept as written. */
 export function setObjectRaw(files, key, raw) {

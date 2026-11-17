@@ -2,4 +2,6 @@ node_modules
 dist
 site
 tools/intro/out/
+tools/scene/out/
 .DS_Store
+.claude/worktrees/

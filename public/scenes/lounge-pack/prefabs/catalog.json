@@ -1,0 +1,9 @@
+{
+  "roomkit": 1,
+  "title": "Lounge pack objects",
+  "prefabs": [
+    { "type": "armchair", "url": "armchair.js", "title": "Armchair", "blurb": "a low armchair on four short legs", "glyph": "A" },
+    { "type": "coffeeTable", "url": "coffeeTable.js", "title": "Coffee table", "blurb": "a round top on a central column with a round foot", "glyph": "O" },
+    { "type": "wallClock", "url": "wallClock.js", "title": "Wall clock", "blurb": "a round clock face on the wall whose minute hand turns slowly", "glyph": "◷" }
+  ]
+}

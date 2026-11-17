@@ -24,7 +24,7 @@ This page maps the source tree to the runtime data flow, so you know which file 
 | `src/prefabs/screenSchema.js` | `screenSchema`: the config of one screen, and the `SCREEN_SOURCES` list. |
 | `src/prefabs/index.jsx` | Maps `type` to component; `PlacedObject` applies position, rotation (degrees) and scale. |
 | `src/prefabs/*.jsx` | One component per prefab, built from `Solid` and `Segs`. |
-| `src/scene/core.jsx` | `WorldContext` (`mats`, `rain`, `room`, `theme`), `Solid`, `Outline`, `Segs`; shapes come from `shapes.js`. |
+| `src/scene/core.js` | `WorldContext` (`mats`, `rain`, `room`, `theme`), `Solid`, `Outline`, `Segs`; shapes come from `shapes.js`. Written with `createElement`, not JSX, so that plain Node can import it: the scene tools render scene prefabs with these same components (`src/lint/stage.js`). |
 | `src/ui/blocks/schema.js` | Schemas of panel blocks, used at load time and when a fenced block renders. |
 | `src/scene/Experience.jsx` | Everything inside the canvas; builds materials and the rain texture per scene. |
 | `src/scene/CameraRig.jsx` | Camera transitions, parallax, FOV warp, roll and the panel view offset. |

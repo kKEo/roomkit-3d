@@ -17,5 +17,9 @@ export const cinemaScreen = {
   }),
   media: ['src', 'screen.src'],
   hotspots: ['screen'],
+  geometry: p => {
+    const hx = p.width / 2 + (p.speakers ? 1.875 : p.stage ? 1.25 : 0.25);
+    return { min: [-hx, 0, 0], max: [hx, p.elevation + p.height / 2 + 0.25, p.stage ? 2.7 : p.speakers ? 1.3 : 0.22], mount: 'wall' };
+  },
   placement: p => ({ focus: [0, p.elevation - 0.2, 0], cameraDistance: 12, cameraHeight: 3.4, markerOffset: [0, p.elevation + p.height / 2 + 0.65, 0.8] }),
 };

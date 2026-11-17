@@ -87,6 +87,8 @@ export function Gizmo() {
       const ok = useStore.getState().edit?.transform?.(start.key, {
         position: moved ? g.position.toArray().map(r2) : undefined,
         rotation: turned ? configRotation(g.rotation) : undefined,
+        // both, whatever changed: an object placed `at` a wall becomes one with coordinates when it is moved
+        pose: { position: g.position.toArray().map(r2), rotation: configRotation(g.rotation) },
       });
       // the file could not take it (it does not parse): the object goes back to what the file says
       if (ok === false) { g.position.copy(start.position); g.rotation.copy(start.rotation); }

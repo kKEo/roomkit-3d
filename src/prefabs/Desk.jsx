@@ -1,4 +1,4 @@
-import { Solid, Segs } from '../scene/core.jsx';
+import { Solid, Segs } from '../scene/core.js';
 import { ScreenSurface } from './media.jsx';
 
 /** Swivel chair (origin = floor under the seat); the sitter faces -Z. */

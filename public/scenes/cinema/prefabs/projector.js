@@ -22,6 +22,10 @@ export function meta({ z }) {
       spin: z.number().min(0).default(0.8),
     }),
     hotspots: ['lens'],
+    title: 'Projector',
+    blurb: 'a ceiling projector with a light cone to the screen',
+    glyph: '◬',
+    geometry: p => ({ min: [-0.65, -p.drop - 0.35, -1.3], max: [0.8, 0, 0.85], mount: 'free', front: '-z' }),
     placement: p => ({ focus: [0, -p.drop, 0], cameraDistance: 7, cameraHeight: -p.drop + 0.5, markerOffset: [0, -p.drop - 1.4, 0] }),
   };
 }

@@ -4,8 +4,9 @@ import { BUILTIN, BUILTIN_REGISTRY, TYPE_NAME, createRegistry, normalisePrefab }
 import { META_SDK } from '../prefabs/metaSdk.js';
 import { isFeed } from '../data/feedSchema.js';
 import { satisfies, validRange } from '../lib/semver.js';
-import { autoPlacement, overviewCamera } from '../lib/autoCamera.js';
+import { autoPlacement, clampCamera, overviewCamera } from '../lib/autoCamera.js';
 import { withFootprint } from '../lib/footprint.js';
+import { placeAll } from './placement.js';
 
 /**
  * Builds the `{ scene, pois }` the app renders from a scene folder's files. Pure: it knows nothing
@@ -27,7 +28,34 @@ import { withFootprint } from '../lib/footprint.js';
  *
  * Every config mistake becomes a line of one ConfigError; nothing is thrown half-way.
  */
-export async function buildScene({ name, read, resolveUrl, loadModule }) {
+export async function buildScene(opts) {
+  const { scene, pois, errors } = await assemble(opts, false);
+  if (errors.length) throw new ConfigError(errors);
+  return { scene, pois };
+}
+
+/** All POIs in parallel, so one broken file does not hide problems in the others. */
+async function buildPois(files, ctx) {
+  const results = await Promise.allSettled(files.map(f => buildPoi(f, ctx)));
+  const errors = results.flatMap((r, i) =>
+    r.status === 'rejected' ? (r.reason instanceof ConfigError ? r.reason.lines : [`${ctx.label(files[i])}: ${r.reason?.message ?? r.reason}`]) : []);
+  return { pois: results.filter(r => r.status === 'fulfilled').map(r => r.value), errors };
+}
+
+/**
+ * The same build for tools that report on a scene (`node tools/scene.js check`): it never throws for a config
+ * mistake. Resolves to `{ scene, pois, errors, registry }`, where `errors` are the ConfigError lines; when
+ * `scene.json` itself is wrong `scene` is null, yet the POI files are still read so their mistakes are listed in the
+ * same run, and `registry` still holds the scene's own prefabs that loaded (null when `scene.json` cannot be read).
+ */
+export async function inspectScene(opts) {
+  try { return await assemble(opts, true); } catch (e) {
+    if (e instanceof ConfigError) return { scene: null, pois: [], errors: e.lines, registry: null };
+    throw e;
+  }
+}
+
+async function assemble({ name, read, resolveUrl, loadModule }, tolerant) {
   const label = f => `${name}/${f}`;
   const raw = parseJson(await readLabelled(read, 'scene.json', label('scene.json')), label('scene.json'));
 
@@ -40,8 +68,14 @@ export async function buildScene({ name, read, resolveUrl, loadModule }) {
 
   let scene;
   try { scene = parseOrThrow(sceneSchema, deepMerge(SCENE_DEFAULTS, raw), label('scene.json')); } catch (e) {
-    if (e instanceof ConfigError) throw new ConfigError([...errors, ...e.lines.filter(l => !l.includes(' › prefabs.') && !l.includes(' › transforms.'))]);
-    throw e;
+    if (!(e instanceof ConfigError)) throw e;
+    errors.push(...e.lines.filter(l => !l.includes(' › prefabs.') && !l.includes(' › transforms.')));
+    if (!tolerant) throw new ConfigError(errors);
+    // the POI files can still be checked on their own; without a room their objects stay where the schema put them
+    const files = Array.isArray(raw?.poi) ? raw.poi.filter(f => typeof f === 'string') : [];
+    const built = await buildPois(files, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra });
+    for (const p of built.pois) autoViews(p, null, registry);
+    return { scene: null, pois: built.pois, errors: [...errors, ...built.errors], registry };
   }
   scene.name = name;
   scene.registry = registry;
@@ -51,13 +85,22 @@ export async function buildScene({ name, read, resolveUrl, loadModule }) {
   scene.room = withFootprint(scene.room);
   scene.camera.overview ??= overviewCamera(scene.room);
   scene.decor = scene.decor.map(o => resolveObjectMedia(o, resolveUrl, registry));
-  checkFeeds(scene.decor, 'decor', transforms.extra, label('scene.json'), errors);
+  const decorErrors = [];
+  checkFeeds(scene.decor, 'decor', transforms.extra, label('scene.json'), decorErrors);
 
-  // all POIs in parallel, so one broken file does not hide problems in the others
-  const results = await Promise.allSettled(scene.poi.map(f => buildPoi(f, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra })));
-  errors.push(...results.flatMap((r, i) =>
-    r.status === 'rejected' ? (r.reason instanceof ConfigError ? r.reason.lines : [`${label(scene.poi[i])}: ${r.reason?.message ?? r.reason}`]) : []));
-  const pois = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+  const built = await buildPois(scene.poi, { read, resolveUrl, label, poiSchema, registry, transforms: transforms.extra });
+  const pois = built.pois;
+
+  // where everything stands: one pass over the whole scene, because an object may stand next to, or face, one in
+  // another file; only then can each stop's automatic camera be put in front of its first object
+  const placeErrors = { decor: [], pois: [] };
+  const placed = placeAll([
+    ...scene.decor.map((obj, i) => ({ obj, fail: (path, msg) => placeErrors.decor.push(`${label('scene.json')} › decor.${i}.${path}: ${msg}`) })),
+    ...pois.flatMap(p => p.objects.map((obj, i) => ({ obj, fail: (path, msg) => placeErrors.pois.push(`${label(p.file)} › objects.${i}.${path}: ${msg}`) }))),
+  ], scene.room, registry);
+  scene.decor = placed.splice(0, scene.decor.length);
+  for (const p of pois) { p.objects = placed.splice(0, p.objects.length); autoViews(p, scene.room, registry); }
+  errors.push(...placeErrors.decor, ...decorErrors, ...built.errors, ...placeErrors.pois);
 
   const seen = new Set();
   for (const p of pois) {
@@ -65,8 +108,7 @@ export async function buildScene({ name, read, resolveUrl, loadModule }) {
     seen.add(p.id);
   }
   if (typeof scene.camera.start === 'string' && !seen.has(scene.camera.start)) errors.push(`${label('scene.json')} › camera.start: no POI has the id "${scene.camera.start}"`);
-  if (errors.length) throw new ConfigError(errors);
-  return { scene, pois };
+  return { scene, pois, errors, registry };
 }
 
 /**
@@ -165,28 +207,32 @@ export function checkFeeds(node, path, transforms, file, errors) {
   else for (const [k, v] of Object.entries(node)) checkFeeds(v, path ? `${path}.${k}` : k, transforms, file, errors);
 }
 
+/** One POI file, parsed and with its media resolved. Its objects are not placed yet and it has no automatic camera: see `assemble`. */
 async function buildPoi(file, { read, resolveUrl, label, poiSchema, registry, transforms = {} }) {
   const l = label(file);
   const poi = parseOrThrow(poiSchema, parseJson(await readLabelled(read, file, l), l), l);
   poi.file = file;
-  poi.objects = poi.objects.map(o => resolveObjectMedia(o, resolveUrl, registry));
   const feedErrors = [];
+  poi.objects = poi.objects.map(o => resolveObjectMedia(o, resolveUrl, registry));
   checkFeeds(poi.objects, 'objects', transforms, l, feedErrors);
   if ('blocks' in poi.content) checkFeeds(poi.content.blocks, 'content.blocks', transforms, l, feedErrors);
   if (feedErrors.length) throw new ConfigError(feedErrors);
-
-  if (!poi.camera || !poi.marker) {
-    const first = poi.objects[0];
-    const auto = autoPlacement(first, registry.get(first.type).placement(first.props));
-    poi.camera ??= auto.camera;
-    poi.marker ??= auto.marker;
-  }
 
   if ('markdown' in poi.content) {
     const text = await readLabelled(read, poi.content.markdown, `${l} › content.markdown`);
     poi.content = { blocks: [{ type: 'markdown', text }] };
   }
   return poi;
+}
+
+/** The camera and marker a POI file leaves out, from its first object as placed. */
+function autoViews(poi, room, registry) {
+  if (poi.camera && poi.marker) return;
+  const first = poi.objects[0];
+  const auto = autoPlacement(first, registry.get(first.type).placement(first.props));
+  // an object near a wall would put the camera behind it: keep it in the room
+  poi.camera ??= room ? clampCamera(auto.camera, room.footprint) : auto.camera;
+  poi.marker ??= auto.marker;
 }
 
 async function readLabelled(read, path, label) {

@@ -11,12 +11,12 @@ import { setShared, toggleShared } from '../net/shared.js';
 export const ACTIONS = {
   /** Fly to a POI by id, or to the whole-room overview with `poi: null`. */
   goTo: {
-    schema: z.strictObject({ type: z.literal('goTo'), poi: z.string().nullable() }),
+    schema: z.strictObject({ type: z.literal('goTo'), poi: z.string().nullable() }).describe('fly to the stop with that id and open its panel; poi null is the whole-room view'),
     run: (a, st) => st.goTo(a.poi),
   },
   /** Zoom into a screen: the one the action is bound to, or `screen` (its id) of `poi` (default: the current POI). */
   zoom: {
-    schema: z.strictObject({ type: z.literal('zoom'), poi: z.string().optional(), screen: z.string().optional() }),
+    schema: z.strictObject({ type: z.literal('zoom'), poi: z.string().optional(), screen: z.string().optional() }).describe('zoom into a screen: the one it is bound to, or the screen with that id of that stop'),
     run: (a, st) => {
       if (!a.screen) return;
       const rec = findScreenIn(a.poi ?? st.current, a.screen);
@@ -35,27 +35,27 @@ export const ACTIONS = {
       newTab: z.boolean().default(true),
       label: z.string().min(1).optional(),
       confirm: z.boolean().default(false),
-    }),
+    }).describe('open a link, in a new tab unless newTab is false; with confirm the visitor is asked first, seeing the label'),
     run: (a, st) => { if (a.confirm) st.askConfirm(a); else openLink(a); },
   },
   /** Collapse or expand the content panel. */
   togglePanel: {
-    schema: z.strictObject({ type: z.literal('togglePanel') }),
+    schema: z.strictObject({ type: z.literal('togglePanel') }).describe('hide or show the content panel'),
     run: (_, st) => st.togglePanel(),
   },
   /** Set a shared key (src/net/shared.js) to `value` for everyone in the event (or this page alone outside one). */
   set: {
-    schema: z.strictObject({ type: z.literal('set'), key: z.string().min(1).max(200), value: z.any() }),
+    schema: z.strictObject({ type: z.literal('set'), key: z.string().min(1).max(200), value: z.any() }).describe('set a shared value for everyone in the event'),
     run: a => setShared(a.key, a.value),
   },
   /** Flip a boolean shared key; `initial` is what it counts as before anyone set it. */
   toggle: {
-    schema: z.strictObject({ type: z.literal('toggle'), key: z.string().min(1).max(200), initial: z.boolean().default(false) }),
+    schema: z.strictObject({ type: z.literal('toggle'), key: z.string().min(1).max(200), initial: z.boolean().default(false) }).describe('flip a shared true/false value'),
     run: a => toggleShared(a.key, a.initial),
   },
   /** Dispatch a DOM `CustomEvent` named `scene-rooms:<name>` on `window`, for a page that embeds the viewer. */
   emit: {
-    schema: z.strictObject({ type: z.literal('emit'), name: z.string().min(1), detail: z.any().optional() }),
+    schema: z.strictObject({ type: z.literal('emit'), name: z.string().min(1), detail: z.any().optional() }).describe('send a DOM event scene-rooms:<name> to a page that embeds the viewer'),
     run: (a, st) => window.dispatchEvent(new CustomEvent(`scene-rooms:${a.name}`, { detail: { ...(a.detail ?? {}), poi: st.current } })),
   },
 };

@@ -17,6 +17,12 @@ export const controlDesk = {
   }),
   media: ['screens[].src'],
   hotspots: p => [...p.screens.map((s, k) => s.id ?? `scr${k}`), ...(p.switch ? ['switch'] : [])],
+  geometry: p => {
+    const a = (p.arc / 2) * Math.PI / 180, R = p.radius;
+    const cols = Math.max(1, p.columns), rows = Math.max(1, Math.ceil(p.screens.length / cols));
+    const hx = Math.max(R * Math.sin(a) + 0.55, (cols * (p.screenWidth + 0.1)) / 2 + 0.1);
+    return { min: [-hx, 0, -1.0], max: [hx, 1.65 + rows * (p.screenHeight + 0.1), Math.max(R * (1 - Math.cos(a)) + 0.55, p.chairs ? 1.6 : 0.55)], mount: 'floor' };
+  },
   placement: p => {
     const rows = Math.max(1, Math.ceil(p.screens.length / Math.max(1, p.columns)));
     const top = 1.65 + rows * (p.screenHeight + 0.1);

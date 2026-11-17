@@ -10,5 +10,6 @@ export const wardrobe = {
     openAngle: z.number().min(0).max(180).default(105),
   }),
   hotspots: ['doors'],
+  geometry: p => ({ min: [-p.width / 2, 0, -p.depth / 2], max: [p.width / 2, p.height, p.depth / 2 + 0.11], mount: 'floor' }),
   placement: p => ({ focus: [0, p.height * 0.5, 0], cameraDistance: Math.max(6, p.height * 1.9), cameraHeight: p.height * 0.58, markerOffset: [0, p.height + 0.7, 0] }),
 };

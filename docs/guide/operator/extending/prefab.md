@@ -4,7 +4,7 @@ This page walks through adding a new built-in object type, a `lamp`, from geomet
 
 ## 1. Write the component
 
-Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` and returns a group in **local space**: origin as documented, front facing +Z, metres. Build it from the helpers in `src/scene/core.jsx`:
+Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` and returns a group in **local space**: origin as documented, front facing +Z, metres. Build it from the helpers in `src/scene/core.js`:
 
 - `<Solid shape args fill line …meshProps>`: a hatched mesh with an outline. `fill` is `"main"`, `"fine"` or `false`; `line` is a line style or `false`.
 - `<Segs points line>`: line segments from a flat `[x,y,z, x,y,z, …]` array.
@@ -13,7 +13,7 @@ Create `src/prefabs/Lamp.jsx`. A prefab receives `{ props, active, hovered }` an
 ```jsx
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Solid } from '../scene/core.jsx';
+import { Solid } from '../scene/core.js';
 import { reducedMotion } from '../lib/env.js';
 
 /** Floor lamp (origin = floor centre). The shade grows slightly while its POI is open. */
@@ -64,6 +64,8 @@ export const lamp = {
 - For a screen, give the prop the `screenSchema` from `src/prefabs/screenSchema.js` (or `screenOrSource`, which also accepts a bare source name) and render `<ScreenSurface {...config} id="screen" w h />` from `src/prefabs/media.jsx`. Every screen source then works in your prefab. Pass a stable `id` so the screen's zoom and session state survive re-renders, and respect `zoom: false`.
 
 - Name the parts a scene may make clickable in `hotspots` (a list, or a function of the props), and give the matching `<Solid>` a `hotspot="name"` prop. A `ScreenSurface`'s hotspot is its `id`. For the lamp, `hotspots: ['shade']` and `<Solid ref={shade} hotspot="shade" …>` let a scene write `"actions": { "shade": { "type": "goTo", "poi": "…" } }`; see [Actions and hotspots](../reference/actions.md).
+
+- Add `geometry` so scene checks and wall placement know the object's size: a function of the props returning the solid body's box in local space, `{ min: [x,y,z], max: [x,y,z], mount }`, in metres before scale. `mount` is what the origin sits on: `'floor'`, `'wall'` (the back of the box, z = 0, is the wall surface), `'ceiling'` or `'free'`. Add `front: '-z'` if the prefab faces −Z and `round: true` for a disc-shaped footprint. Leave out lines such as cables and beams. For the lamp: `geometry: p => ({ min: [-0.4, 0, -0.4], max: [0.4, p.height + 0.25, 0.4], mount: 'floor', round: true })`. It is optional; without it the object renders the same but is skipped by the geometry checks.
 
 Then register it in `src/prefabs/registry.js`: import `lamp` and add it to `META`. `normalisePrefab` checks it (defaults validate, placement is finite, hotspots are names) and it becomes part of `BUILTIN`; every registry the loader builds includes the built-ins, so `lamp` is now a valid `type` and the "unknown type" error lists it. `make test` checks every built-in prefab the same way.
 

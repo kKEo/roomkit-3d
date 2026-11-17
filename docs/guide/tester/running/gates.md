@@ -10,13 +10,14 @@ A change may be merged only when the author has run, and the reviewer has seen t
 | --- | --- | --- |
 | Lint | `make lint` | it reports an error |
 | Unit tests | `make test` | any test fails; this includes building every scene in `public/scenes/` |
+| Scene checks | `make scene-check` | a scene has an error: an object outside the room, a reference to a missing POI or file, a broken block in a Markdown page (see [Scene checks](scene-checks.md)) |
 | Build | `make build` | it fails |
 | Scenes load | open every scene from `public/scenes/index.json` | any scene shows **Could not load the scene** (the unit tests catch config errors; this catches hosting and media ones) |
 | Panels render | visit every point of interest in every scene | a block is red, or the console shows an error |
 | Docs build | `make docs-check` | it fails, for any change under `docs/` |
 | Exploratory pass | the parts of the [exploratory checklist](../exploring/exploratory.md) that match the change | the reviewer finds a regression |
 
-Why these: each one is cheap, and each catches a class of mistake the others cannot. Lint catches hook and scoping mistakes, the tests catch config and schema errors, the build catches code errors, panel rendering catches content errors inside Markdown, and exploration catches motion and layout. `make check` runs the first three.
+Why these: each one is cheap, and each catches a class of mistake the others cannot. Lint catches hook and scoping mistakes, the tests catch config and schema errors, the build catches code errors, panel rendering catches content errors inside Markdown, and exploration catches motion and layout. `make check` runs the first four.
 
 ## CI
 

@@ -8,7 +8,7 @@ export const TYPE_INFO = {
   pictureFrame: ['▭', 'a framed picture, optionally with a shape in front'],
   wardrobe: ['▯', 'a cabinet whose doors open at its stop'],
   cinemaScreen: ['▬', 'a big screen on a stage, with speakers'],
-  desk: ['⌸', 'a desk with a monitor, keyboard and chair'],
+  desk: ['⌸', 'a desk with a monitor, keyboard and chair; its front is the chair side, where the visitor stands'],
   controlDesk: ['◠', 'a curved desk with a wall of screens'],
   serverRack: ['▥', 'racks of servers behind folding doors'],
   door: ['⍐', 'a door in a wall'],

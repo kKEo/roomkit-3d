@@ -13,7 +13,7 @@
           "screens": "rain, image, video, text, graph, stats, terminal, dashboard, form — all with an optional live feed",
           "edit": ["open edit.html?scene=cinema", "change anything, watch it live, download the folder"]
         } } } },
-    { "type": "pedestal", "position": [12.5, 0, 15], "props": { "shape": "torusKnot", "height": 2.6, "size": 1.0 } }
+    { "type": "pedestal", "position": [11.5, 0, 17], "props": { "shape": "torusKnot", "height": 2.6, "size": 1.0 } }
   ],
   "camera": { "position": [5.5, 2.9, 9.5], "target": [12.5, 1.7, 9.5] },
   "marker": { "position": [12.5, 3.6, 9.5] },

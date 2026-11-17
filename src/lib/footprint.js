@@ -124,3 +124,69 @@ export function withFootprint(room) {
   const b = bounds(footprint);
   return { ...room, footprint, bounds: b, centre: centroid(footprint), width: b.width, depth: b.depth };
 }
+
+/** Distance from a point to segment A→B. */
+export function distToSegment(x, z, [ax, az], [bx, bz]) {
+  const dx = bx - ax, dz = bz - az, len2 = dx * dx + dz * dz;
+  const t = len2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len2)) : 0;
+  return Math.hypot(x - ax - dx * t, z - az - dz * t);
+}
+
+const COMPASS = [['north', 0, 1], ['south', 0, -1], ['east', -1, 0], ['west', 1, 0]];
+
+/**
+ * The room's walls: `edges(poly)` with `index`, `compass` and `name`. North is −Z, so the north wall is the one
+ * whose inner side faces +Z; `compass` is null for a wall that runs at an angle. `name` is what to call the wall
+ * in a message: its compass side when only one wall has it, else "south wall (edge 2)" or "wall (edge 3)".
+ * `left` and `right` say which way the wall runs for someone standing in the room facing it.
+ */
+export function walls(poly) {
+  const list = edges(poly).map((e, index) => {
+    const hit = COMPASS.find(([, nx, nz]) => e.normal[0] * nx + e.normal[1] * nz > 0.999);
+    // seen from inside, facing the wall: `right` is the unit direction to the right, `left` the wall's left end
+    const right = [e.normal[1], -e.normal[0]];
+    const left = e.a[0] * right[0] + e.a[1] * right[1] <= e.b[0] * right[0] + e.b[1] * right[1] ? e.a : e.b;
+    return { ...e, index, compass: hit ? hit[0] : null, right, left };
+  });
+  const count = c => list.filter(w => w.compass === c).length;
+  return list.map(w => ({ ...w, name: !w.compass ? `wall (edge ${w.index})` : count(w.compass) === 1 ? `${w.compass} wall` : `${w.compass} wall (edge ${w.index})` }));
+}
+
+/** The wall nearest to a point: `{ wall, distance }`. */
+export function nearestWall(wallList, x, z) {
+  let best = null;
+  for (const wall of wallList) {
+    const distance = distToSegment(x, z, wall.a, wall.b);
+    if (!best || distance < best.distance) best = { wall, distance };
+  }
+  return best;
+}
+
+/** Inside the polygon, or within `tol` metres of its outline (a point on a wall counts as inside). */
+export function insideOrNear(poly, x, z, tol = 0.05) {
+  if (containsPoint(poly, x, z)) return true;
+  return poly.some((a, i) => distToSegment(x, z, a, poly[(i + 1) % poly.length]) <= tol);
+}
+
+/** How far along a wall a point is, in metres from the wall's left end (seen from inside). */
+export const alongWall = (wall, x, z) => (x - wall.left[0]) * wall.right[0] + (z - wall.left[1]) * wall.right[1];
+
+/**
+ * The corners a thing can stand in: the room's convex vertices, as `{ index, point, walls: [a, b], compass, name }`.
+ * `index` is the vertex's number in the footprint and `walls` the two that meet there. `compass` is "north-east"
+ * for the corner between a north and an east wall, null when one of its walls runs at an angle; `name` is what to
+ * call the corner in a message, with its number when two corners share a compass name.
+ */
+export function corners(poly) {
+  const list = walls(poly), n = poly.length, sign = Math.sign(signedArea(poly)) || 1;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = list[(i - 1 + n) % n], b = list[i];
+    // an inner corner (the L's elbow) or a straight run turns the other way, or not at all
+    if ((a.dir[0] * b.dir[1] - a.dir[1] * b.dir[0]) * sign <= 1e-9) continue;
+    const ns = [a, b].find(w => w.compass === 'north' || w.compass === 'south'), ew = [a, b].find(w => w.compass === 'east' || w.compass === 'west');
+    out.push({ index: i, point: poly[i], walls: [a, b], compass: ns && ew ? `${ns.compass}-${ew.compass}` : null });
+  }
+  const count = c => out.filter(k => k.compass === c).length;
+  return out.map(k => ({ ...k, name: !k.compass ? `corner ${k.index}` : count(k.compass) === 1 ? `${k.compass} corner` : `${k.compass} corner (${k.index})` }));
+}

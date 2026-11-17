@@ -32,7 +32,7 @@ export const formSchema = z.strictObject({
   })).default([]),
   submit: z.string().optional(),
   action: z.string().optional(),
-});
+}).describe('a form; with "action" (a URL) it posts the fields as JSON, without it it only says it is a prototype');
 
 /** One number of a stats block or a stats screen: `delta` like "+4%" or -2 shows as up/down, `unit` small after the value. */
 export const statItem = z.strictObject({ value: text, label: text, delta: text.optional(), unit: text.optional() });
@@ -48,10 +48,10 @@ export function deltaDirection(delta) {
 
 /** `data` schema per block type; `markdown` and `heading` take `text` instead. */
 export const BLOCK_DATA = {
-  stats: z.array(statItem),
-  cards: z.array(z.strictObject({ title: text, text: text.optional(), meta: text.optional() })),
-  list: z.array(z.strictObject({ title: text, text: text.optional(), icon: text.optional() })),
-  timeline: z.array(z.strictObject({ title: text, text: text.optional() })),
+  stats: z.array(statItem).describe('a row of figures; delta like "+4%" shows as ▲ or ▼, unit small after the value'),
+  cards: z.array(z.strictObject({ title: text, text: text.optional(), meta: text.optional() })).describe('a two-column grid of cards'),
+  list: z.array(z.strictObject({ title: text, text: text.optional(), icon: text.optional() })).describe('a list with an icon (default "/") per entry'),
+  timeline: z.array(z.strictObject({ title: text, text: text.optional() })).describe('a vertical timeline'),
   form: formSchema,
 };
 

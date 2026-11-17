@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../state/store.js';
-import { Solid, Segs, useWorld } from './core.jsx';
+import { Solid, Segs, useWorld } from './core.js';
 import { circlePts } from '../lib/math.js';
 
 const tmp = new THREE.Vector3();

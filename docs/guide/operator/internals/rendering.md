@@ -1,6 +1,6 @@
 # Rendering and the look
 
-This page explains how the "scratchboard" look is produced and which knobs in `theme` drive it. The relevant code is `src/scene/materials/hatch.js`, `src/scene/core.jsx`, `src/scene/rain.js` and `src/main.jsx`.
+This page explains how the "scratchboard" look is produced and which knobs in `theme` drive it. The relevant code is `src/scene/materials/hatch.js`, `src/scene/core.js`, `src/scene/rain.js` and `src/main.jsx`.
 
 ## Colour handling
 

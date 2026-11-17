@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, useWorld, useHotspot } from '../scene/core.jsx';
+import { Solid, useWorld, useHotspot } from '../scene/core.js';
 import { useShared } from '../net/shared.js';
 import { ScreenSurface } from './media.jsx';
 import { Chair } from './Desk.jsx';

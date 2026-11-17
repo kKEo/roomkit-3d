@@ -56,7 +56,7 @@ The selected object carries handles in the room, in the colours of the room's di
 | **Move**: a small square between two arrows | drag it to slide the object across that plane, for example over the floor |
 | **Rotate** (or press `R`): a ring | drag it to turn the object around that direction; the green ring turns it to face another way |
 
-Moves go in steps of 10 cm and turns in steps of 15°; hold `Shift` while dragging to go freely. `Esc` during a drag puts the object back. When you let go, the new position or rotation is written into the object's file (the numbers in its settings follow), and `⌘Z` / `Ctrl+Z` takes it back. Dragging a handle never selects anything else or moves the camera to another stop. The handles work in Preview and in Select; they are not shown for a whole stop, or while you are up close to a screen.
+Moves go in steps of 10 cm and turns in steps of 15°; hold `Shift` while dragging to go freely. `Esc` during a drag puts the object back. When you let go, the new position or rotation is written into the object's file (the numbers in its settings follow), and `⌘Z` / `Ctrl+Z` takes it back. An object whose file says where it stands in words (`at` a wall or a corner, `near` another object) or which way it looks (`facing`) gets plain numbers instead once you move or turn it: the settings show **placed at** or **facing** with a **Convert** button that does the same without moving anything. Dragging a handle never selects anything else or moves the camera to another stop. The handles work in Preview and in Select; they are not shown for a whole stop, or while you are up close to a screen.
 
 ## Add an object, then decide what it is
 
@@ -109,9 +109,9 @@ A control desk, a desk, a cinema screen, and a scene's own objects built on scre
 
 A mistake, in either view, shows at the bottom in red as `file › field: problem`. The file turns red in the list, and in the tree the object, its stop and the group get a ⚠ with the number of problems. Selected, the object shows the problem above its settings. The room keeps showing the last version that worked.
 
-![The editor with the Landscape stop's picture frame selected: the frame, its stop and the Stops group carry a red ⚠ 1 in the tree, the inspector shows objects.0: Unrecognized key "positon" above the frame's settings, and the same line is at the bottom of the pane](images/editor-error.png)
+![The editor with the Landscape stop's picture frame selected: the frame, its stop and the Stops group carry a red ⚠ 1 in the tree, the inspector shows objects.0: unknown key "positon": did you mean "position"? with the list of known keys above the frame's settings, and the same line is at the bottom of the pane](images/editor-error.png)
 
-*A misspelt `position` in a stop's file. The tree marks the object and its stop; the room on the right is unchanged.*
+*A misspelt `position` in a stop's file. The message names the key that was probably meant; the tree marks the object and its stop; the room on the right is unchanged.*
 
 Pictures and videos: write their paths as usual (`"media/photo.jpg"`); they show once the files are imported (see below) or are in the folder's `media/` directory on the server.
 
