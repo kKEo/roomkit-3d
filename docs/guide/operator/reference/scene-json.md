@@ -75,6 +75,7 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `overview.target` | `[x, y, z]` | computed | default `[0, 0, −0.06·depth]`; give both keys or neither |
 | `start` | POI id, `{ position, target }` or `null` | `null` | where the page opens when the address has no `#poi`, instead of the overview: a POI id (must exist; the `cinema` example lands on its screen) or a fixed camera pose. A pose is flown to like the overview (no panel, no hash); `0` and the logo still go to `overview`. The editor's **Export…** writes the pose of the current view here |
 | `freeFly` | boolean | `true` | `false` switches free flight off: the fly keys, the middle-button look, the finger gestures and the fly hint do nothing; the mouse wheel only moves between stops, and on a touchscreen a swipe does |
+| `collide` | boolean | `true` | a camera flown by hand slides along the walls, pillars, floor and ceiling instead of passing through them, once it is inside the room (it can still fly in from the overview); `false` lets it fly through them and out of the room |
 
 ## effects
 

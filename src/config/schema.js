@@ -210,6 +210,7 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
       start: z.union([z.string().min(1), strict({ position: vec3, target: vec3 })]).nullable().optional().describe('where the page opens: a stop id, { position, target }, or null for the whole-room view'),
       /** whether visitors may take the camera by hand (WASD / QE, middle-drag) */
       freeFly: z.boolean().describe('whether visitors may fly the camera by hand'),
+      collide: z.boolean().describe('whether walls, pillars and the ceiling stop a camera flown by hand once it is inside the room; false = it flies through them'),
     }),
     effects: strict({
       ease: z.enum(EASE_NAMES).describe('the curve of flights between stops'),

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore, runtime } from '../state/store.js';
@@ -7,6 +7,7 @@ import { reducedMotion } from '../lib/env.js';
 import { DEG } from '../lib/math.js';
 import { flightCurve, flightDuration, posAt } from '../lib/flight.js';
 import { presence } from '../net/sync.js';
+import { collide, roomColliders } from '../lib/collide.js';
 
 const V3 = THREE.Vector3;
 const UP = new V3(0, 1, 0);
@@ -22,9 +23,12 @@ const GRAB = 5;         // free fly, touch: how far away (m) the point is that a
  * Fingers take hold of the picture instead: a one-finger drag turns the view so the room follows the finger
  * (drag right, look left), a two-finger drag slides the camera the other way and a pinch moves it along the
  * gaze. `px` is the angle one pixel covers (radians), which is what makes the room keep up with the finger.
+ * With `walls` (from `roomColliders`) the camera slides along walls, pillars and the ceiling instead of
+ * passing through them, once it is inside the room.
  */
-function steer(b, vel, speed, dt, tmp, px) {
+function steer(b, vel, speed, dt, tmp, px, walls) {
   const { fly } = runtime;
+  const from = tmp.from.copy(b.pos);
   const f = tmp.fwd.subVectors(b.tgt, b.pos);
   const reach = Math.max(1, f.length());
   f.normalize();
@@ -51,6 +55,7 @@ function steer(b, vel, speed, dt, tmp, px) {
   b.pos.addScaledVector(r, -t.pan.x * m).addScaledVector(UP, t.pan.y * m).addScaledVector(f, t.pinch * m * 2);
   t.pan.x = t.pan.y = t.pinch = 0;
   b.pos.y = Math.max(0.2, b.pos.y); // stay above the floor
+  if (walls) collide(walls, from, b.pos);
   b.tgt.copy(b.pos).addScaledVector(f, reach);
 }
 
@@ -78,8 +83,10 @@ export function CameraRig() {
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
   const returnPose = useRef(null); // where the camera was when a screen was zoomed into: where Esc takes it back
-  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0, wasFree: false }).current;
+  const tmp = useRef({ from: new V3(), fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0, wasFree: false }).current;
   const vel = useRef(new V3()).current; // free-fly velocity
+  // what free fly bumps into; null when the scene lets the camera through walls
+  const walls = useMemo(() => (scene?.camera.collide ? roomColliders(scene.room) : null), [scene]);
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
   // `reverse`: play the flight profile backwards in time (the way back from a screen mirrors the way in)
@@ -179,7 +186,7 @@ export function CameraRig() {
       if (!tmp.wasFree) presence.flight({ kind: 'free', from: { position: b.pos.toArray(), target: b.tgt.toArray() } });
       const { width, depth } = scene.room;
       const fov = (size.width < size.height ? scene.camera.fovPortrait : scene.camera.fov) * DEG;
-      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp, fov / size.height);
+      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp, fov / size.height, walls);
       presence.pose(b.pos, b.tgt);
     } else vel.set(0, 0, 0);
     tmp.wasFree = st.free;

@@ -83,7 +83,7 @@ Visitors with a keyboard and mouse can also leave the stops and fly the camera t
 | Slide forward or back | Scroll the mouse wheel |
 | Stop flying | Go to any stop the usual way: an arrow key, a number key, `0`, a click on a diamond, a label or the top bar. The camera flies there from wherever you are |
 
-The keys sit where `W`, `A`, `S`, `D`, `Q` and `E` are on an English keyboard, whatever the layout (on a French keyboard that is `Z`, `Q`, `S`, `D`, `A`, `E`). Free flying is off while you are up close to a screen. A room's author can also switch it off altogether (see [Export a scene or a site](editor.md#export-a-scene-or-a-site)); the bottom hint then does not mention the fly keys.
+The keys sit where `W`, `A`, `S`, `D`, `Q` and `E` are on an English keyboard, whatever the layout (on a French keyboard that is `Z`, `Q`, `S`, `D`, `A`, `E`). Walls, pillars, the floor and the ceiling stop you: the camera slides along them rather than passing through, so you stay in the room (starting from the whole-room view outside, you can fly in, but not back out). Free flying is off while you are up close to a screen. A room's author can also switch it off altogether (see [Export a scene or a site](editor.md#export-a-scene-or-a-site)); the bottom hint then does not mention the fly keys.
 
 ### On a phone or tablet
 
