@@ -96,6 +96,7 @@ Fingers fly the camera. The first drag starts it, the text panel closes, and the
 | Slide sideways, up or down | Drag with two fingers; again the room follows them |
 | Go to a stop, or use a screen | Tap it, as you would click it. A short tap never starts flying |
 | Stop flying | Tap a number in the top bar, a diamond or a label, or the logo for the whole room |
+| Fill the whole screen with the room | Tap the full screen button (the four corners) in the top-right corner; tap it again to leave. An iPhone's browser cannot do this, so the button is not there |
 
 Where a room's author has switched free flying off, a swipe left or right goes to the next or previous stop instead.
 

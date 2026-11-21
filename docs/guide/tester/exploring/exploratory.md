@@ -117,6 +117,7 @@ Run `make dev` and open stop 07 of the default room. Its node table, FLEET numbe
 | --- | --- |
 | Window narrower than 760 px | panel becomes a bottom sheet; nav shows numbers only; minimap and hint hidden; subject shifted above the sheet |
 | Portrait phone (device emulation with touch) | wider FOV; larger buttons in the top bar and on labels; the touch hint shows at the bottom on the overview and while flying, never over the sheet |
+| Touch: tap the four-corners button at the right end of the top bar, then again | the page fills the screen without the browser's bars and the button shows as pressed, with corners pointing inwards; the second tap (or the system's own way out) brings the bars back and the button follows. With a mouse the button is not there; nor on an iPhone, nor in the editor |
 | Phone on its side, tablet upright (touch) | nav shows numbers only, in one row; the panel does not run under the top bar; the hint lies over neither the map nor the panel |
 | Touch: zoom into a screen that has neighbours (`cinema`, stop 3) | arrow buttons next to Back for the sides that have a screen, each moving there; no `Esc` cap on Back; the keyboard does not open until a field is tapped |
 | The editor (`/edit.html`) with touch | exactly as with a mouse: no arrow buttons, the key hints, a swipe changes the stop |

@@ -43,6 +43,7 @@ nav button:hover { color: var(--text) }
 nav button[aria-current="true"] { color: var(--accent); border-color: var(--line); box-shadow: inset 0 -2px 0 var(--accent) }
 nav button[aria-current="true"] b { opacity: 1 }
 .iconbtn { background: none; border: 1px solid var(--line); width: 34px; height: 34px; cursor: pointer; color: var(--text-dim); display: grid; place-items: center; flex: none }
+.fsbtn { display: none }
 .iconbtn:hover, .iconbtn[aria-pressed="true"], .iconbtn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent) }
 
 /* ——— Content panel ——— */
@@ -240,6 +241,7 @@ html:not(.editing) :is(.top, .mlabel, .hint, #minimap, .zbar, .vctl) { -webkit-u
 html:not(.editing) #stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none }
 /* `touch` is on <html> while the visitor's last press was a finger (store.setTouch) */
 html.touch:not(.editing) .zdir { display: block }
+html.touch:not(.editing) .fsbtn { display: grid }
 html.touch:not(.editing) :is(.zback, .confirm-box) kbd { display: none }
 html.touch:not(.editing) .hint { white-space: normal; text-align: center; width: max-content; max-width: calc(100vw - 24px) }
 html.touch:not(.editing) .iconbtn { width: 40px; height: 40px }

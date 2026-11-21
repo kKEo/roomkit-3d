@@ -19,6 +19,7 @@ This page lists every word of the interface a scene can replace through `scene.j
 | `hidePanel` / `showPanel` | `Hide content panel (H)` / `Show content panel (H)` | panel button |
 | `hideMarkers` / `showMarkers` | `Hide floating markers (M)` / `Show floating markers (M)` | marker button |
 | `options` | `Options` | Options button and panel heading |
+| `enterFullscreen` / `exitFullscreen` | `Full screen` / `Leave full screen` | full screen button, at the right end of the top bar on a touchscreen |
 | `optionsTabs.general`, `.camera`, `.system`, `.online` | `General`, `Camera`, `System`, `Online` | Options tabs (Online only in an event) |
 | `online` | `{n} online` | the header badge in an event |
 | `onlineTitle`, `onlineNobody`, `onlineYou`, `onlineHint` | `Visitors in this event`, … | Options → Online |

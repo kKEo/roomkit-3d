@@ -1,10 +1,29 @@
+import { useEffect, useState } from 'react';
 import { useStore } from '../state/store.js';
+import { canFullscreen, isFullscreen, toggleFullscreen, onFullscreenChange } from '../lib/fullscreen.js';
 import { pad2, fmt } from '../lib/text.js';
 import { useSync } from '../net/sync.js';
 
 function Brand({ text }) {
   const parts = text.split('/');
   return parts.map((p, i) => <span key={i}>{i > 0 && <span className="dim">/</span>}{p}</span>);
+}
+
+/** Full screen, at the very end of the bar (the corner of the view); the stylesheet shows it on a touchscreen only. */
+function FullscreenButton({ ui }) {
+  const [full, setFull] = useState(isFullscreen);
+  useEffect(() => onFullscreenChange(setFull), []);
+  if (!canFullscreen()) return null;
+  const label = full ? ui.exitFullscreen : ui.enterFullscreen;
+  return (
+    <button className="iconbtn fsbtn" aria-pressed={full} title={label} aria-label={label} onClick={() => toggleFullscreen()}>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        {full
+          ? <path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" />
+          : <path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" />}
+      </svg>
+    </button>
+  );
 }
 
 export function Header() {
@@ -45,6 +64,7 @@ export function Header() {
       <button className="iconbtn" aria-expanded={optionsOpen} aria-controls="options" title={ui.options} aria-label={ui.options} onClick={toggleOptions}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4h7M13 4h1M2 12h1M7 12h7" /><circle cx="11" cy="4" r="1.8" /><circle cx="5" cy="12" r="1.8" /></svg>
       </button>
+      <FullscreenButton ui={ui} />
     </header>
   );
 }

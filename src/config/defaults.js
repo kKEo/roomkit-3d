@@ -62,6 +62,8 @@ export const SCENE_DEFAULTS = {
     hideMarkers: 'Hide floating markers (M)',
     showMarkers: 'Show floating markers (M)',
     options: 'Options',
+    enterFullscreen: 'Full screen',
+    exitFullscreen: 'Leave full screen',
     optionsTabs: { general: 'General', camera: 'Camera', system: 'System', online: 'Online' },
     online: '{n} online',
     onlineTitle: 'Visitors in this event',
