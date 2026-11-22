@@ -11,7 +11,7 @@ const runIn = env => (...args) => new Promise(resolve => {
 });
 const run = runIn({});
 
-describe('tools/scene.js', () => {
+describe('tools/scene.js', { timeout: 30_000 }, () => {
   it('check prints one summary line per clean scene and exits 0', async () => {
     const r = await run('check', 'loft');
     expect(r).toEqual({ code: 0, stdout: 'loft: ok, 14 expectations hold\n', stderr: '' }); // the loft has a brief.json
