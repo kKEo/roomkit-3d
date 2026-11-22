@@ -22,9 +22,10 @@ describe('tools/scene.js', () => {
   it('keys lists the sections, prints one, and refuses one it does not have', async () => {
     expect((await run('keys')).stdout).toMatch(/^sections .*\n {2}scene +the top level of scene\.json/);
     expect((await run('keys', 'room')).stdout).toMatch(/^scene\.json › room\n {2}width: number > 0 = 30 — metres east–west/);
-    const r = await run('keys', 'walls');
+    expect((await run('keys', 'walls')).stdout).toMatch(/^scene\.json › room › walls: a list of interior walls/);
+    const r = await run('keys', 'doors');
     expect(r.code).toBe(2);
-    expect(r.stderr).toMatch(/^no section "walls" \(there are: scene, room, theme, /);
+    expect(r.stderr).toMatch(/^no section "doors" \(there are: scene, room, walls, theme, /);
   });
 
   it('prefab: a new type from the template, checked, read back, and refused when it is wrong', async () => {

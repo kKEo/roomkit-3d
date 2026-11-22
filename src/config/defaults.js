@@ -11,6 +11,7 @@ export const SCENE_DEFAULTS = {
     wallPanels: 3,
     skirting: [0.35, 8.5],
     pillars: [],
+    walls: [],
     lights: [[0, 8.4, 0]],
   },
   theme: {

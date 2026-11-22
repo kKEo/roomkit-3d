@@ -29,7 +29,8 @@ describe('objectSchema › at', () => {
 
   it('refuses an unknown wall, a fraction past 1, along with distance, and unknown keys', () => {
     const msg = at => objectSchema.safeParse({ type: 'door', at }).error.issues.map(i => `${i.path.join('.')}: ${i.message}`);
-    expect(msg({ wall: 'up' })).toEqual(['at.wall: a wall is "north", "south", "east", "west" or its number in room.footprint']);
+    expect(msg({ wall: 1.5 })).toEqual(['at.wall: a wall is "north", "south", "east", "west", its number in room.footprint or the name of one of room.walls']);
+    expect(msg({ wall: 'north', face: 'up' })).toEqual(['at.face: a face is "north", "south", "east" or "west": the side of the wall it looks to']);
     expect(msg({ wall: 'north', along: 1.4 })).toEqual(['at.along: a fraction 0–1; use "distance" for metres']);
     expect(msg({ wall: 'north', along: 0.2, distance: 3 })).toEqual(['at: give "along" (a fraction) or "distance" (metres), not both']);
     expect(msg({ wall: 'north', hight: 2 })[0]).toMatch(/^at: unknown key "hight": did you mean "height"\? \(known: wall, corner, centre, near, /);

@@ -30,6 +30,17 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Flying inside, hold `W` into a wall, then also `D`; fly up into the ceiling; fly at a pillar (`?scene=loft`) and round the L's inner corner | the camera stops short of the wall and slides along it, never sees through it or out of the room; it stops under the ceiling; it goes round the pillar and the corner |
 | From the whole-room view (`0`), hold `W` | the camera flies in over the wall or through the ceiling, then cannot leave |
 | A scene with `camera.collide: false` | the camera flies through walls again |
+
+## Several rooms
+
+| Try | Expect |
+| --- | --- |
+| `?scene=flat`, then `→` through the tour, and `←` back | each flight goes through a doorway, never through a wall; the camera looks ahead along the way and turns to the stop near the end; the panel opens as usual |
+| From the gallery, press `3` (studio), then `1` (hall) | through the divider's doorway, then through the eastern doorway of the hall wall |
+| `0`, then `1` | the overview flight comes in over the walls, as in any scene |
+| Fly by hand (`W`) at an interior wall, then along it into a doorway, then up into the lintel | stops at the wall and slides; passes through the doorway; stops under the lintel |
+| The minimap | the interior walls are drawn, with a gap at each doorway |
+| The picture on the divider (gallery) | hangs on the gallery side, facing west; clicking it flies to the studio through the doorway |
 | `W` during a flight between stops | the flight stops where it is; no panel opens |
 | Then `0`, `2`, a diamond, a nav button | each flies there from the current spot and ends free fly; the hint and hash come back |
 | Hold `W`, switch to another window, come back | the camera is not still flying |

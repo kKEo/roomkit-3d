@@ -6,6 +6,7 @@
  * freely; once inside, it stays inside.
  */
 import { containsPoint, edges } from './footprint.js';
+import { wallPieces } from './walls.js';
 
 /** How close (m) the camera's centre may come to a wall, a pillar, the floor or the ceiling. */
 export const CAMERA_RADIUS = 0.3;
@@ -15,8 +16,9 @@ const PILLAR_HALF = 0.75;
 /**
  * What a camera bumps into in this room: `{ footprint, height, radius, segments }`. Each segment is
  * `{ a: [x, z], b: [x, z], pad, y0, y1 }`: a vertical wall strip from `y0` to `y1`, `pad` metres thick on each side.
- * `room` is a scene's room with its footprint filled in (`withFootprint`); `walls` is a list of extra
- * `{ a, b, pad, y0, y1 }` strips (interior walls).
+ * `room` is a scene's room with its footprint filled in (`withFootprint`); its interior walls (`room.walls`) are
+ * added as their solid pieces (src/lib/walls.js), so the camera passes only through their openings. `walls` is a
+ * list of further `{ a, b, pad, y0, y1 }` strips.
  */
 export function roomColliders(room, { radius = CAMERA_RADIUS, walls = [] } = {}) {
   const segments = edges(room.footprint).map(({ a, b }) => ({ a, b, pad: 0, y0: -Infinity, y1: Infinity }));
@@ -24,6 +26,7 @@ export function roomColliders(room, { radius = CAMERA_RADIUS, walls = [] } = {})
     const h = PILLAR_HALF, c = [[x - h, z - h], [x + h, z - h], [x + h, z + h], [x - h, z + h]];
     c.forEach((a, i) => segments.push({ a, b: c[(i + 1) % 4], pad: 0, y0: -Infinity, y1: Infinity }));
   }
+  for (const p of wallPieces(room)) segments.push({ a: p.a, b: p.b, pad: p.thickness / 2, y0: p.y0, y1: p.y1 });
   segments.push(...walls);
   return { footprint: room.footprint, height: room.height, radius, segments };
 }

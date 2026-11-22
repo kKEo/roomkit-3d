@@ -1,0 +1,77 @@
+{
+  "text": "A flat of three rooms under one roof. A long hall along the south side with the front door in the south wall and a small sculpture on a plinth in the middle. Two doorways lead north from the hall: the western one into a gallery with three pictures on its north wall and one on the wall it shares with the studio; the eastern one into a studio with a desk against the north wall and a wardrobe in the north-east corner. A doorway in the wall between them joins the gallery and the studio. The tour goes hall, gallery, studio, and the camera flies through the doorways, never through a wall.",
+  "expect": [
+    {
+      "room": {
+        "width": 36,
+        "depth": 24,
+        "height": 6
+      }
+    },
+    {
+      "stops": [
+        "hall",
+        "gallery",
+        "studio"
+      ]
+    },
+    {
+      "object": "front door",
+      "wall": "south"
+    },
+    {
+      "object": "front door",
+      "click": "door",
+      "goTo": null
+    },
+    {
+      "count": "pictureFrame",
+      "is": 3,
+      "wall": "north"
+    },
+    {
+      "object": "shared picture",
+      "wall": "divider"
+    },
+    {
+      "object": "desk",
+      "wall": "north"
+    },
+    {
+      "object": "desk",
+      "facing": "south"
+    },
+    {
+      "object": "wardrobe",
+      "corner": "north-east"
+    },
+    {
+      "stop": "hall",
+      "sees": [
+        "sculpture"
+      ]
+    },
+    {
+      "stop": "gallery",
+      "sees": [
+        "left picture",
+        "middle picture",
+        "right picture"
+      ]
+    },
+    {
+      "stop": "gallery",
+      "order": [
+        "left picture",
+        "middle picture",
+        "right picture"
+      ]
+    },
+    {
+      "stop": "studio",
+      "sees": [
+        "desk"
+      ]
+    }
+  ]
+}

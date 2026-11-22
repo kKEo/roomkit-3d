@@ -36,9 +36,37 @@ export function autoPlacement(obj, prefabDefaults) {
 
 /**
  * Pulls a camera that stands outside the room back along its line of sight, to `margin` metres inside the
- * wall it crossed. A camera already inside, or one whose target is outside too, is returned as is.
+ * wall it crossed, and then in front of the first interior wall (`pieces`, from `wallPieces`) between it and
+ * its target. A camera already inside, or one whose target is outside too, is returned as is.
  */
-export function clampCamera(camera, footprint, margin = 0.6) {
+export function clampCamera(camera, footprint, margin = 0.6, pieces = []) {
+  return clampToPieces(clampToFootprint(camera, footprint, margin), pieces, margin);
+}
+
+/** Where segment T→P first enters one of the outlines, as a fraction of its length past 1 %; null when it does not. */
+function firstEntry(polys, [tx, tz], [px, pz]) {
+  let best = null;
+  for (const poly of polys) {
+    for (let i = 0; i < poly.length; i++) {
+      const [cx, cz] = poly[i], [dx, dz] = poly[(i + 1) % poly.length];
+      const r = [px - tx, pz - tz], s = [dx - cx, dz - cz], den = r[0] * s[1] - r[1] * s[0];
+      if (Math.abs(den) < 1e-12) continue;
+      const t = ((cx - tx) * s[1] - (cz - tz) * s[0]) / den, u = ((cx - tx) * r[1] - (cz - tz) * r[0]) / den;
+      if (t > 0.01 && t <= 1 && u >= 0 && u <= 1 && (best == null || t < best)) best = t;
+    }
+  }
+  return best;
+}
+
+function clampToPieces(camera, pieces, margin) {
+  const [px, py, pz] = camera.position, [tx, , tz] = camera.target;
+  const hit = firstEntry(pieces.filter(pc => pc.y0 <= py && py <= pc.y1).map(pc => pc.poly), [tx, tz], [px, pz]);
+  if (hit == null) return camera;
+  const len = Math.hypot(px - tx, pz - tz), d = Math.max(hit * len - margin, (hit * len) / 2);
+  return { ...camera, position: [tx + ((px - tx) / len) * d, py, tz + ((pz - tz) / len) * d] };
+}
+
+function clampToFootprint(camera, footprint, margin) {
   const [px, py, pz] = camera.position, [tx, , tz] = camera.target;
   if (containsPoint(footprint, px, pz)) return camera;
   const inside = clipSegment(footprint, tx, tz, px, pz)[0];

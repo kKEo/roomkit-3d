@@ -49,6 +49,16 @@ export function objectBox(obj, registry) {
   };
 }
 
+/**
+ * A solid piece of an interior wall (`wallPieces`, src/lib/walls.js) as a box of the same shape `objectBox`
+ * gives, so `pointInBox` and `segmentHitsBox` take it as they take an object.
+ */
+export function wallBox(piece) {
+  const m = new THREE.Matrix4().compose(new THREE.Vector3(piece.centre[0], piece.y0, piece.centre[1]), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), piece.yaw), new THREE.Vector3(1, 1, 1));
+  const local = { min: [-piece.length / 2, 0, -piece.thickness / 2], max: [piece.length / 2, piece.y1 - piece.y0, piece.thickness / 2] };
+  return { poly: piece.poly, centre: piece.centre, y0: piece.y0, y1: piece.y1, round: false, local, inverse: m.clone().invert() };
+}
+
 /** The square base of a pillar as an outline. */
 export const pillarPoly = ([x, z]) => [[x - PILLAR_HALF, z - PILLAR_HALF], [x + PILLAR_HALF, z - PILLAR_HALF], [x + PILLAR_HALF, z + PILLAR_HALF], [x - PILLAR_HALF, z + PILLAR_HALF]];
 

@@ -131,7 +131,7 @@ export function showroomFiles({ name, files, own }) {
   const lights = Array.from({ length: lamps }, (_, i) => [Math.round((-width / 2 + ((i + 0.5) * width) / lamps) * 100) / 100, r1(height - 0.4), 0]);
   for (const [path, value] of [[['room', 'width'], width], [['room', 'height'], height], [['room', 'depth'], depth], [['room', 'lights'], lights], [['room', 'skirting'], [0.35]], [['poi'], stops],
     [['camera', 'intro'], { position: [0, r1(height * 0.9), r1(depth / 2 + Math.max(width, depth) * 0.6)], target: [0, r1(height / 3), 0], duration: 3200 }]]) scene = setAt(scene, path, value);
-  for (const path of [['room', 'footprint'], ['room', 'pillars'], ['camera', 'start'], ['camera', 'overview']]) scene = removeAt(scene, path);
+  for (const path of [['room', 'footprint'], ['room', 'pillars'], ['room', 'walls'], ['camera', 'start'], ['camera', 'overview']]) scene = removeAt(scene, path);
   if (width > 36) scene = setAt(scene, ['theme', 'fog'], [14, Math.ceil(width * 1.4)]);
   out.set('scene.json', scene);
   out.set('prefabs/catalog.json', catalogFile({ own, previous: files.get('prefabs/catalog.json'), title: `${before.title ?? name} objects` }));

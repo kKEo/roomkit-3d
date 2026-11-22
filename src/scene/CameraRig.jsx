@@ -97,7 +97,8 @@ export function CameraRig() {
     const dist = p0.distanceTo(p1);
     const curve = flightCurve(p0, p1, { arc, room: scene.room });
     const f0 = b.tgt.clone().sub(p0).normalize(), f1 = t1.clone().sub(p1).normalize();
-    const duration = dur || flightDuration(dist, reducedMotion);
+    // a flight through doorways is longer than the straight line, and takes the time its own length takes
+    const duration = dur || flightDuration(curve?.userData?.routed ? curve.getLength() : dist, reducedMotion);
     transit.current = {
       curve, len: curve ? curve.getLength() : 0, p1, t0: b.tgt.clone(), t1,
       start: performance.now(),
@@ -165,7 +166,15 @@ export function CameraRig() {
       const ease = tr.reverse ? 1 - EASE[settings.ease](1 - t) : EASE[settings.ease](t);
       const gaze = tr.reverse ? 1 - EASE.cubic(Math.min(1, (1 - t) * 1.3)) : EASE.cubic(Math.min(1, t * 1.3));
       posAt(tr, ease, b.pos);
-      b.tgt.lerpVectors(tr.t0, tr.t1, gaze);
+      if (tr.curve?.userData?.routed) {
+        // through doorways: look along the way for most of the flight, turn to the stop in its last part
+        const c = Math.min(1, Math.max(0, ease));
+        tr.curve.getPointAt(Math.min(1, c + 0.08), tmp.look);
+        if (tmp.look.distanceToSquared(b.pos) < 1e-6) tmp.look.copy(tr.t1);
+        else tmp.look.sub(b.pos).normalize().multiplyScalar(4).add(b.pos);
+        const away = EASE.cubic(Math.min(1, t / 0.2)), home = EASE.cubic(Math.min(1, Math.max(0, (t - 0.7) / 0.3)));
+        b.tgt.lerpVectors(tr.t0, tmp.look, away).lerp(tr.t1, home);
+      } else b.tgt.lerpVectors(tr.t0, tr.t1, gaze);
       const bell = Math.sin(Math.PI * t);
       if (tr.warp) {
         warpFov = bell * settings.warp;

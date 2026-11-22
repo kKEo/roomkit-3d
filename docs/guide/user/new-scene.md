@@ -41,6 +41,20 @@ A room need not be a box. Give `footprint` instead of `width` and `depth`: the c
 
 Walls, grids, the minimap and the whole-room view all follow the outline. The `loft` example scene is built this way.
 
+For several rooms, split the outline with interior walls, each with doorways in it. This 36 × 24 m flat has a hall along the south and two rooms north of it, joined to the hall and to each other by doorways:
+
+```json
+"room": {
+  "width": 36, "depth": 24, "height": 6, "lights": [[-9, 5.6, -5], [9, 5.6, -5], [0, 5.6, 7]],
+  "walls": [
+    { "name": "hall wall", "from": [-18, 2], "to": [18, 2], "openings": [{ "distance": 9, "width": 2.6, "height": 4.4 }, { "distance": 27, "width": 2.6, "height": 4.4 }] },
+    { "name": "divider", "from": [0, -12], "to": [0, 2], "openings": [{ "distance": 7, "width": 2.6, "height": 4.4 }] }
+  ]
+}
+```
+
+`from` and `to` are the wall's ends, `distance` (or `along`, 0 to 1) is where each doorway's centre is from the `from` end. The camera flies from stop to stop through the doorways, and someone flying freely can only leave a room by one. To hang a picture on an interior wall, name the wall and the side it is on: `"at": { "wall": "divider", "face": "west", "height": 3 }`. The `flat` example scene is built this way; every key is in the [scene.json reference](../operator/reference/scene-json.md#roomwalls).
+
 ![The Cyan Loft scene seen whole from above: an L-shaped cyan wireframe room with three stops, and an L-shaped minimap in the corner](images/loft-room.png)
 
 *The `loft` example: an L-shaped `footprint`, with the minimap following the same outline.*

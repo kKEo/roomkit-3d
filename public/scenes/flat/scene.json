@@ -1,0 +1,37 @@
+{
+  "title": "Flat — three rooms and doorways",
+  "brand": "Flat/Three rooms",
+  "room": {
+    "width": 36,
+    "depth": 24,
+    "height": 6,
+    "grid": { "floor": 2, "ceiling": 0 },
+    "wallPanels": 4,
+    "skirting": [0.3],
+    "walls": [
+      { "name": "hall wall", "from": [-18, 2], "to": [18, 2], "openings": [{ "distance": 9, "width": 2.6, "height": 4.4 }, { "distance": 27, "width": 2.6, "height": 4.4 }] },
+      { "name": "divider", "from": [0, -12], "to": [0, 2], "openings": [{ "distance": 7, "width": 2.6, "height": 4.4 }] }
+    ],
+    "lights": [[-9, 5.6, -5], [9, 5.6, -5], [-9, 5.6, 7], [9, 5.6, 7]]
+  },
+  "theme": {
+    "accent": "#ffb347",
+    "accentInk": "#1f1200",
+    "highlight": "#ffe2b8",
+    "text": "#ffe9cc",
+    "textDim": "#b08a5a",
+    "surface": "rgba(24,14,2,.78)",
+    "fog": [14, 48]
+  },
+  "camera": {
+    "intro": { "position": [0, 30, 30], "target": [0, 0, -1], "duration": 3000 },
+    "overview": { "position": [0, 30, 24], "target": [0, 0, -1] }
+  },
+  "effects": { "particles": 240 },
+  "ui": { "loading": "Opening the flat" },
+  "decor": [
+    { "type": "door", "name": "front door", "at": { "wall": "south" }, "props": { "width": 2.2, "height": 4 }, "actions": { "door": { "type": "goTo", "poi": null } } },
+    { "type": "bench", "name": "hall bench", "at": { "wall": "south", "distance": 26 }, "props": { "width": 4, "height": 0.5 } }
+  ],
+  "poi": ["poi/hall.json", "poi/gallery.json", "poi/studio.json"]
+}

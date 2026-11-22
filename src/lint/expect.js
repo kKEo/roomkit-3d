@@ -1,4 +1,5 @@
-import { corners, walls } from '../lib/footprint.js';
+import { corners } from '../lib/footprint.js';
+import { roomWalls } from '../lib/walls.js';
 import { DIRECTIONS, SIDES, findCorner, findWall } from '../config/placement.js';
 import { unknownKeys } from '../config/keyHelp.js';
 import { framing, objectBox, sceneObjects, segmentHitsBox } from './geometry.js';
@@ -35,6 +36,9 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
 /** The outline of an object on the floor; one without a declared size is the point it stands on. */
 const foot = x => x.box?.poly ?? [[x.obj.position[0], x.obj.position[2]]];
 const centre = x => x.box?.centre ?? [x.obj.position[0], x.obj.position[2]];
+
+/** How far an object's outline is from a wall; an interior wall named without a face is measured from either face. */
+const wallGap = (x, wall) => Math.max(0, gap(foot(x), [wall.a, wall.b]) - (wall.interior && !wall.face ? wall.pad : 0));
 
 function wallOf(ctx, name) {
   const found = findWall(ctx.walls, name);
@@ -74,7 +78,7 @@ export const EXPECTATIONS = [
     form: '{ "object": X, "wall": "north", "within": 0.1 }',
     says: 'X is on or against that wall (a compass side or the wall\'s number), at most `within` metres off it; default 0.1',
     test(e, ctx) {
-      const wall = wallOf(ctx, e.wall), x = ctx.object(e.object), d = gap(foot(x), [wall.a, wall.b]), max = e.within ?? 0.1;
+      const wall = wallOf(ctx, e.wall), x = ctx.object(e.object), d = wallGap(x, wall), max = e.within ?? 0.1;
       return d <= max + 0.01 ? null : `${q(e.object)} is ${n(d)} m from the ${wall.name}, not within ${n(max)} m`;
     },
   },
@@ -182,7 +186,7 @@ export const EXPECTATIONS = [
     test(e, ctx) {
       if (!ctx.scene.registry.has(e.count)) throw new Invalid(`there is no object type "${e.count}" (types: ${ctx.scene.registry.types().join(', ')})`);
       const wall = e.wall === undefined ? null : wallOf(ctx, e.wall), poi = e.stop === undefined ? null : ctx.stop(e.stop);
-      const found = ctx.all.filter(x => x.obj.type === e.count && (!poi || x.owner === poi.id) && (!wall || gap(foot(x), [wall.a, wall.b]) <= 0.11)).length;
+      const found = ctx.all.filter(x => x.obj.type === e.count && (!poi || x.owner === poi.id) && (!wall || wallGap(x, wall) <= 0.11)).length;
       const where = `${wall ? ` on the ${wall.name}` : ''}${poi ? ` in stop ${q(poi.id)}` : ''}`;
       return found === e.is ? null : `there ${found === 1 ? 'is' : 'are'} ${found} ${e.count}${where}, not ${e.is}`;
     },
@@ -250,7 +254,7 @@ export function checkBrief(scene, pois, raw) {
   const named = new Map();
   for (const x of all) if (str(x.obj.name)) named.set(x.obj.name, [...(named.get(x.obj.name) ?? []), x]);
   const ctx = {
-    scene, pois, all, walls: walls(scene.room.footprint), corners: corners(scene.room.footprint),
+    scene, pois, all, walls: roomWalls(scene.room), corners: corners(scene.room.footprint),
     object(name) {
       const hits = named.get(name) ?? [];
       if (hits.length === 1) return hits[0];

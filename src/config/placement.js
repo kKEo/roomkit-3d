@@ -1,4 +1,6 @@
-import { corners, walls } from '../lib/footprint.js';
+import { corners } from '../lib/footprint.js';
+import { roomWalls } from '../lib/walls.js';
+import { closest } from './keyHelp.js';
 
 /**
  * Placement by words instead of coordinates. An object may say where it stands with `at`, in place of `position`
@@ -51,12 +53,35 @@ export const wallYaw = (wall, front = '+z') => yawTowards(wall.normal, front);
 /** The floor direction a prefab's front points in at a yaw. */
 const frontAt = (yaw, front = '+z') => { const t = (yaw * Math.PI) / 180, k = front === '-z' ? -1 : 1; return [Math.sin(t) * k, Math.cos(t) * k]; };
 
-/** The wall an `at.wall` names, or `{ error }` saying why it names none. */
-export function findWall(wallList, name) {
+const COMPASS_SIDES = ['north', 'south', 'east', 'west'];
+
+/**
+ * The wall an `at.wall` names, or `{ error }` saying why it names none. `wallList` is `roomWalls(room)`: the
+ * footprint's edges, then both faces of each interior wall. An interior wall is named by its `name` and one of
+ * its faces by `face`; without a face the result is `{ wall: <its centre line>, faces }`, which an expectation
+ * can measure against but nothing can be placed on.
+ */
+export function findWall(wallList, name, face) {
+  const outer = wallList.filter(w => !w.interior);
   if (typeof name === 'number') {
-    return wallList[name] ? { wall: wallList[name] } : { error: `no wall ${name} (this room has edges 0–${wallList.length - 1})` };
+    return outer[name] ? { wall: outer[name] } : { error: `no wall ${name} (this room has edges 0–${outer.length - 1})` };
   }
-  const hits = wallList.filter(w => w.compass === name);
+  if (!COMPASS_SIDES.includes(name)) {
+    const faces = wallList.filter(w => w.interior === name);
+    const names = [...new Set(wallList.filter(w => w.interior).map(w => w.interior))];
+    if (!faces.length) {
+      const meant = closest(name, [...COMPASS_SIDES, ...names]);
+      return { error: `no wall "${name}"${meant ? `: did you mean "${meant}"?` : ''} (a wall is "north", "south", "east", "west", its number in room.footprint${names.length ? ` or an interior wall: ${names.map(k => `"${k}"`).join(', ')}` : ''})` };
+    }
+    if (face == null) {
+      const [f] = faces, a = [(f.a[0] + faces[1].a[0]) / 2, (f.a[1] + faces[1].a[1]) / 2], b = [(f.b[0] + faces[1].b[0]) / 2, (f.b[1] + faces[1].b[1]) / 2];
+      return { wall: { ...f, a, b, pad: f.pad, face: null, name: `"${name}" wall` }, faces: faces.map(w => w.face) };
+    }
+    const hit = faces.find(w => w.face === face);
+    return hit ? { wall: hit } : { error: `"${name}" has no ${face} face (its faces look ${faces.map(w => w.face).join(' and ')})` };
+  }
+  if (face != null) return { error: `"face" is only for an interior wall; the ${name} wall has one side` };
+  const hits = outer.filter(w => w.compass === name);
   if (hits.length === 1) return { wall: hits[0] };
   if (!hits.length) return { error: `this room has no ${name} wall (it has: ${wallList.map(w => w.name).join(', ')}); give the edge index` };
   return { error: `"${name}" names ${hits.length} walls of this room (edges ${hits.map(w => w.index).join(' and ')}); give the edge index` };
@@ -114,8 +139,9 @@ function plan(obj, g, room, wallList, cornerList, fail) {
   if (!at) return { yaw: () => obj.rotation[1], spot: () => obj.position };
 
   if (at.wall != null) {
-    const found = findWall(wallList, at.wall);
-    if (found.error) { fail('at.wall', found.error); return null; }
+    const found = findWall(wallList, at.wall, at.face);
+    if (found.error) { fail(at.face != null && typeof at.wall === 'string' && !COMPASS_SIDES.includes(at.wall) ? 'at.face' : 'at.wall', found.error); return null; }
+    if (found.faces) { fail('at.face', `say which face of "${at.wall}": ${found.faces.map(f => `"${f}"`).join(' or ')}`); return null; }
     const { wall } = found;
     if (at.distance != null && at.distance > wall.length + 1e-6) { fail('at.distance', `${at.distance} is past the end of the wall (${tidy(wall.length)} m long)`); return null; }
     const d = at.distance ?? (at.along ?? 0.5) * wall.length;
@@ -187,7 +213,7 @@ function plan(obj, g, room, wallList, cornerList, fail) {
 export function placeAll(entries, room, registry) {
   const out = entries.map(e => e.obj);
   if (!entries.some(e => e.obj.at || e.obj.facing != null)) return out;
-  const wallList = walls(room.footprint), cornerList = corners(room.footprint);
+  const wallList = roomWalls(room), cornerList = corners(room.footprint);
   const n = entries.length;
   const failed = new Array(n).fill(false);
   const fail = (i, path, msg) => { failed[i] = true; entries[i].fail(path, msg); };
@@ -273,7 +299,7 @@ export function placementText(at) {
   const up = at.height ? `${at.height} m up` : null;
   let parts;
   if (at.wall != null) {
-    const wall = typeof at.wall === 'number' ? `wall ${at.wall}` : `${at.wall} wall`;
+    const wall = typeof at.wall === 'number' ? `wall ${at.wall}` : at.face ? `the ${at.face} face of "${at.wall}"` : `${at.wall} wall`;
     const where = at.distance != null ? `${at.distance} m from its left end` : `${Math.round((at.along ?? 0.5) * 100)}% along`;
     parts = [wall, where, up, at.offset ? `${at.offset} m out` : null, at.turn ? `turned ${at.turn}°` : null];
   } else if (at.corner != null) {

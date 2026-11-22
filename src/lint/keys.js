@@ -74,6 +74,15 @@ export const SECTIONS = {
     },
   },
   room: { title: 'the room: size or outline, grids, pillars, lights', text: section('room') },
+  walls: {
+    title: 'interior walls and their doorways, for several rooms in one scene',
+    text: () => {
+      const wall = scene().properties.room.properties.walls.items, opening = wall.properties.openings.items;
+      return ['scene.json › room › walls: a list of interior walls, each', ...lines(wall),
+        'room › walls › openings: a list of doorways in that wall, each', ...lines(opening, {}, 'openings.'),
+        '  objects hang on or stand against a wall with `at: { "wall": "<name>", "face": "south" }`'];
+    },
+  },
   theme: { title: 'colours, fog, fonts, hatching', text: section('theme') },
   camera: { title: 'view angle, the first flight, where the page opens', text: section('camera') },
   effects: { title: 'flight curve, parallax, particles, markers', text: section('effects') },

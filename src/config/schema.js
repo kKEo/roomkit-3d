@@ -29,25 +29,27 @@ export const prefabsDeclSchema = z.record(
 const color = z.string().min(3);
 
 /** The keys that go with each form of `at`, besides the one that names the form. */
-const AT_FORMS = { wall: ['along', 'distance', 'height', 'offset', 'turn'], corner: ['inset', 'height'], centre: ['shift', 'height'], near: ['side', 'gap', 'height'] };
+const AT_FORMS = { wall: ['face', 'along', 'distance', 'height', 'offset', 'turn'], corner: ['inset', 'height'], centre: ['shift', 'height'], near: ['side', 'gap', 'height'] };
 const quoted = list => list.map(k => `"${k}"`).join(', ');
 
 /**
  * `objects[].at`: where an object stands, in words instead of coordinates; src/config/placement.js works out the
- * position and rotation. One of four forms, named by its first key: `wall` (a compass side, north is −Z, or the
- * wall's number in `room.footprint`), `corner` (a compass corner or the vertex's number), `centre` (the middle of
+ * position and rotation. One of four forms, named by its first key: `wall` (a compass side, north is −Z, the
+ * wall's number in `room.footprint`, or an interior wall's name with its `face`), `corner` (a compass corner or the vertex's number), `centre` (the middle of
  * the floor) or `near` (the `name` of another object). One strict object rather than a union of four, so a wrong
  * value is reported at its own key.
  */
 export const atSchema = strict({
-  wall: z.union([z.enum(['north', 'south', 'east', 'west']), z.number().int().min(0)], { error: 'a wall is "north", "south", "east", "west" or its number in room.footprint' }).optional()
-    .describe('form 1, on or against a wall: a compass side (north is −Z) or the wall\'s number in room.footprint. A wall object lands on the wall, any other stands with its back to it'),
+  wall: z.union([z.number().int().min(0), z.string().min(1)], { error: 'a wall is "north", "south", "east", "west", its number in room.footprint or the name of one of room.walls' }).optional()
+    .describe('form 1, on or against a wall: a compass side (north is −Z), the wall\'s number in room.footprint, or the name of an interior wall (room.walls) with its "face". A wall object lands on the wall, any other stands with its back to it'),
   corner: z.union([z.enum(CORNER_NAMES), z.number().int().min(0)], { error: `a corner is ${quoted(CORNER_NAMES)} or its number in room.footprint` }).optional()
     .describe('form 2, in a corner, touching both walls: a compass corner or the vertex\'s number in room.footprint; looks diagonally into the room unless "facing" is given'),
   centre: z.literal(true, { error: 'write "centre": true for the middle of the room' }).optional()
     .describe('form 3, the middle of the floor: always true'),
   near: z.string({ error: 'the "name" of the object to stand next to' }).min(1, 'the "name" of the object to stand next to').optional()
     .describe('form 4, next to another object: that object\'s "name"; looks the way it does unless "facing" is given'),
+  face: z.enum(['north', 'south', 'east', 'west'], { error: 'a face is "north", "south", "east" or "west": the side of the wall it looks to' }).optional()
+    .describe('wall: which face of an interior wall, by the side it looks to ("south" is the face seen from the south); only for a wall of room.walls'),
   along: z.number().min(0, 'a fraction 0–1; use "distance" for metres').max(1, 'a fraction 0–1; use "distance" for metres').optional()
     .describe('wall: where along it, 0 (its left end, seen from inside the room) to 1; default 0.5'),
   distance: z.number().min(0).optional().describe('wall: the same in metres from its left end; give this or "along"'),
@@ -174,6 +176,19 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
       wallPanels: z.number().nonnegative().describe('spacing of the vertical wall lines; 0 = none'),
       skirting: z.array(z.number()).describe('heights of the horizontal wall lines; keep them under the ceiling'),
       pillars: z.array(vec2).describe('[x, z] of round pillars, floor to ceiling'),
+      walls: z.array(strict({
+        name: z.string().min(1).refine(s => !['north', 'south', 'east', 'west'].includes(s), 'a wall\'s name is not a compass side, which names the room\'s own walls').describe('what objects (`at: { wall, face }`), expectations and the read-back call it; unique'),
+        from: vec2.describe('[x, z] of one end'),
+        to: vec2.describe('[x, z] of the other end'),
+        thickness: positive.default(0.2).describe('metres; default 0.2'),
+        height: positive.optional().describe('metres; default the ceiling. A camera flies over a wall more than a metre under the ceiling'),
+        openings: z.array(strict({
+          along: z.number().min(0).max(1).optional().describe('where its centre is, 0 (the "from" end) to 1 (the "to" end); default 0.5'),
+          distance: z.number().min(0).optional().describe('the same in metres from the "from" end; give this or "along"'),
+          width: positive.default(1.2).describe('metres; default 1.2. A flight between stops goes through an opening at least 0.8 m wide'),
+          height: positive.default(2.4).describe('metres from the floor; default 2.4. Higher than the wall: open to the top'),
+        })).default([]).describe('doorways: gaps in the wall a camera can fly through'),
+      })).describe('interior walls that split the floor plan into rooms, each with its openings; see `keys walls`'),
       lights: z.array(vec3).min(1, 'at least one light is required').describe('[x, y, z] of each light, at least one, inside the room and about 0.4 m under the ceiling'),
     }),
     theme: strict({

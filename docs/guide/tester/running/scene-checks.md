@@ -43,7 +43,14 @@ Unlike the loading screen, which stops at the first broken file, the check reads
 | `WALL_FACING` | warn | a wall object faces out of the room |
 | `CAM_OUTSIDE_ROOM` | warn | a POI's camera is behind a wall or above the ceiling |
 | `CAM_IN_OBJECT` | warn | a POI's camera is inside an object |
-| `CAM_BLOCKED` | warn | another POI's object or a decor object stands between a camera and its target |
+| `CAM_BLOCKED` | warn | another POI's object, a decor object or an interior wall stands between a camera and its target |
+| `CAM_IN_WALL` | warn | a POI's camera is inside an interior wall |
+| `WALL_NAME_TAKEN` | error | two interior walls (`room.walls`) have the same `name` |
+| `WALL_OUTSIDE` | warn | an end of an interior wall is outside the floor plan |
+| `OPENING_PAST_END` | error | an opening reaches past an end of its wall |
+| `OPENING_OVERLAP` | warn | two openings of one wall overlap |
+| `OBJ_IN_WALL` | warn | an object reaches into an interior wall |
+| `OPENING_BLOCKED` | warn | an object stands in a doorway, lower than its top, where visitors and flights pass |
 | `CAM_FRAMING` | warn | from a POI's camera none of the POI's own objects fills 1% of the picture |
 | `THEME_CONTRAST` | warn | text would be hard to read: `text` on `background` or on `surface`, or `accentInk` on `accent`, under 4.5:1; `textDim` on `surface` or `accent` on `background` under 3:1 |
 | `EXPECT_FAILED` | error | the scene is not what its `brief.json` says; the message says what is true instead |

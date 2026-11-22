@@ -1,5 +1,6 @@
 import { bounds, containsPoint, distToSegment } from '../lib/footprint.js';
 import { objectBox, pillarPoly, sceneObjects } from './geometry.js';
+import { wallPieces } from '../lib/walls.js';
 
 /**
  * A scene's floor plan from the built config: as text, for a terminal or a coding agent, and as SVG, for people.
@@ -15,7 +16,7 @@ function items(scene, pois) {
 /**
  * The plan as lines of text. A character is `step` metres wide and a line 2 × `step` metres tall, which looks
  * square in a terminal; `step` is 0.5 m unless the room is wider than `maxCols` characters.
- * `#` wall, `.` floor, `o` pillar, a letter per object (see the legend), a digit where each stop's camera stands.
+ * `#` wall (interior walls too; a doorway is a gap), `.` floor, `o` pillar, a letter per object (see the legend), a digit where each stop's camera stands.
  */
 export function planText(scene, pois, { maxCols = 96 } = {}) {
   const poly = scene.room.footprint, b = bounds(poly);
@@ -34,6 +35,13 @@ export function planText(scene, pois, { maxCols = 96 } = {}) {
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (containsPoint(shape, xAt(c), zAt(r))) { grid[r][c] = ch; hit = true; }
     return hit;
   };
+  for (const pc of wallPieces(scene.room)) {
+    if (pc.y0 > 0) continue; // a lintel: the doorway under it stays open
+    // a thin wall can fall between the cells: mark the cells along its centre line too
+    fill(pc.poly, '#');
+    const steps = Math.ceil(pc.length / (step / 2));
+    for (let k = 0; k <= steps; k++) grid[rowOf(pc.a[1] + ((pc.b[1] - pc.a[1]) * k) / steps)][colOf(pc.a[0] + ((pc.b[0] - pc.a[0]) * k) / steps)] = '#';
+  }
   for (const p of scene.room.pillars) if (!fill(pillarPoly(p), 'o')) grid[rowOf(p[1])][colOf(p[0])] = 'o';
   const list = items(scene, pois);
   for (const it of list) {
@@ -65,6 +73,7 @@ export function planSvg(scene, pois, { scale = 24, pad = 2 } = {}) {
     `<title>${esc(scene.title)}: floor plan, north up</title>`,
     `<rect width="100%" height="100%" fill="#0b0f0c"/>`,
     `<polygon points="${pts(poly)}" fill="#101a13" stroke="#39d98a" stroke-width="3"/>`,
+    ...wallPieces(scene.room).map(pc => `<polygon points="${pts(pc.poly)}" fill="#39d98a" fill-opacity="${pc.y0 > 0 ? '.2' : '.8'}" stroke="#39d98a"/>`),
     ...scene.room.pillars.map(p => `<polygon points="${pts(pillarPoly(p))}" fill="#39d98a" fill-opacity=".5"/>`),
   ];
   for (const it of items(scene, pois)) {

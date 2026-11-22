@@ -1,0 +1,14 @@
+{
+  "id": "gallery",
+  "label": "Gallery",
+  "kicker": "north-west room",
+  "objects": [
+    { "type": "pictureFrame", "name": "left picture", "at": { "wall": "north", "distance": 4, "height": 2.8 }, "props": { "width": 2.6, "height": 1.8, "exhibit": "torus" } },
+    { "type": "pictureFrame", "name": "middle picture", "at": { "wall": "north", "distance": 9, "height": 2.8 }, "props": { "width": 2.2, "height": 2.4, "exhibit": "octahedron" } },
+    { "type": "pictureFrame", "name": "right picture", "at": { "wall": "north", "distance": 14, "height": 2.8 }, "props": { "width": 2.6, "height": 1.8, "exhibit": "cone" } },
+    { "type": "pictureFrame", "name": "shared picture", "at": { "wall": "divider", "face": "west", "distance": 2.8, "height": 2.8 }, "props": { "width": 2.4, "height": 1.8, "exhibit": "sphere" },
+      "actions": { "frame": { "type": "goTo", "poi": "studio" } } }
+  ],
+  "camera": { "position": [-9, 2.8, -1], "target": [-9, 2.8, -12] },
+  "content": { "markdown": "content/gallery.md" }
+}
