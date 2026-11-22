@@ -70,7 +70,7 @@ describe('the MCP server', () => {
     const listed = await call('scene_write', { scene: 'demo', path: 'scene.json', text: JSON.stringify({ ...scene, poi: ['poi/desk.json'] }, null, 2) });
     expect(listed.text.split('\n')).toEqual([
       'replaced public/scenes/demo/scene.json',
-      'error CONFIG  demo/poi/desk.json › objects.0.at.wall: a wall is "north", "south", "east", "west" or its number in room.footprint',
+      'error CONFIG  demo/poi/desk.json › objects.0.at.wall: no wall "nrth": did you mean "north"? (a wall is "north", "south", "east", "west", its number in room.footprint)',
       'info  EXPECT_SKIPPED  demo/brief.json: the scene has config errors, so the brief was not checked',
       'demo: 1 errors, 0 warnings, 1 notes',
     ]);

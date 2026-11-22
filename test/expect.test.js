@@ -97,7 +97,7 @@ describe('brief.json: what cannot be read is said to be invalid, with what to wr
     [{ object: 7, wall: 'north' }, 'INVALID: "object" must be the "name" of an object'],
     [{ object: 'table', wall: 'north' }, 'INVALID: no object is named "table" (named objects: desk, left, middle, door, bench, twin, plinth)'],
     [{ object: 'twin', wall: 'north' }, 'INVALID: "twin" names 2 objects; give them different names'],
-    [{ object: 'desk', wall: 'up' }, 'INVALID: this room has no up wall (it has: north wall, east wall, south wall, west wall); give the edge index'],
+    [{ object: 'desk', wall: 'up' }, 'INVALID: no wall "up" (a wall is "north", "south", "east", "west", its number in room.footprint)'],
     [{ object: 'desk', corner: 'north' }, 'INVALID: this room has no north corner (it has: north-west corner, north-east corner, south-east corner, south-west corner); give the vertex number'],
     [{ object: 'door', click: 'door' }, 'INVALID: say what the click does: one of "goTo", "opens", "action"'],
     [{ stop: 'wing', sees: ['desk'] }, 'INVALID: no stop has the id "wing" (stops: hall)'],

@@ -35,7 +35,41 @@ The floor is at `y = 0`. By default the room is a `width` × `depth` box centred
 | `wallPanels` | number ≥ 0 | `3` | spacing of vertical wall lines; `0` = none |
 | `skirting` | number[] | `[0.35, 8.5]` | heights of horizontal wall lines |
 | `pillars` | `[x, z][]` | `[]` | 1.1 m round pillars, floor to ceiling, also drawn on the minimap |
+| `walls` | object[] | `[]` | interior walls that split the floor plan into rooms, each with its doorways; see [room.walls](#roomwalls) below |
 | `lights` | `[x, y, z][]` | `[[0, 8.4, 0]]` | at least one. They light the hatch shader. A light within 0.8 m of the ceiling is drawn as a flush panel, a lower one as a pendant. |
+
+### room.walls
+
+Several rooms in one scene are one outline (`width` × `depth` or `footprint`) split by interior walls. Each wall is a straight run with gaps in it, `openings`, which a camera can pass through. `node tools/scene.js keys walls` prints these keys.
+
+```json
+"walls": [
+  { "name": "hall wall", "from": [-18, 2], "to": [18, 2], "openings": [{ "distance": 9, "width": 2.6, "height": 4.4 }, { "distance": 27, "width": 2.6, "height": 4.4 }] },
+  { "name": "divider", "from": [0, -12], "to": [0, 2], "openings": [{ "along": 0.5 }] }
+]
+```
+
+| Key | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `name` | string | — | required and unique, not a compass side. Objects hang on a wall by it (`"at": { "wall": "divider", "face": "west" }`), expectations and the read-back name it |
+| `from`, `to` | `[x, z]` | — | the ends of the wall's centre line; keep them on or inside the outline |
+| `thickness` | number > 0 | `0.2` | metres |
+| `height` | number > 0 | the ceiling | a wall more than a metre under the ceiling is a low partition: flights between stops go over it, and a camera flown by hand can too |
+| `openings` | object[] | `[]` | the doorways, each one below |
+| `openings.along` | 0–1 | `0.5` | where the opening's centre is, from the `from` end (0) to the `to` end (1) |
+| `openings.distance` | metres ≥ 0 | — | the same in metres from the `from` end; give `along` or `distance`, not both |
+| `openings.width` | number > 0 | `1.2` | metres; a flight between stops uses an opening at least 0.8 m wide |
+| `openings.height` | number > 0 | `2.4` | metres from the floor; a wall over it (a lintel) fills the rest, unless the opening is as high as the wall |
+
+What the walls do:
+
+- **Drawing.** Each wall is drawn as solid stretches between its openings, with a lintel over each opening lower than the wall; the minimap and `plan` draw them with a gap at each doorway.
+- **Flights between stops.** A flight from one stop to another that a tall wall separates goes through the doorways, the shortest way, passing each one 0.7 m under its top (at least 1 m up). The camera looks along the way and turns to the stop in the last part of the flight. Flights from outside the room (the intro, the overview) go over the walls as before.
+- **Flying by hand.** With `camera.collide` the camera slides along interior walls and lintels like the outer walls, and leaves a room only through an opening.
+- **Automatic cameras.** A stop without a `camera` whose automatic one would stand behind an interior wall is pulled in front of it.
+- **Checks.** `WALL_NAME_TAKEN`, `WALL_OUTSIDE`, `OPENING_PAST_END`, `OPENING_OVERLAP`, `OBJ_IN_WALL`, `OPENING_BLOCKED`, `CAM_IN_WALL`, and `CAM_BLOCKED` for a wall between a camera and what it looks at; see the tester guide's scene checks.
+
+The `flat` example scene is three rooms joined this way.
 
 ## theme
 
@@ -75,6 +109,7 @@ Colours accept anything `THREE.Color` parses (hex, `rgb()`, CSS names), except `
 | `overview.target` | `[x, y, z]` | computed | default `[0, 0, −0.06·depth]`; give both keys or neither |
 | `start` | POI id, `{ position, target }` or `null` | `null` | where the page opens when the address has no `#poi`, instead of the overview: a POI id (must exist; the `cinema` example lands on its screen) or a fixed camera pose. A pose is flown to like the overview (no panel, no hash); `0` and the logo still go to `overview`. The editor's **Export…** writes the pose of the current view here |
 | `freeFly` | boolean | `true` | `false` switches free flight off: the fly keys, the middle-button look, the finger gestures and the fly hint do nothing; the mouse wheel only moves between stops, and on a touchscreen a swipe does |
+| `collide` | boolean | `true` | a camera flown by hand slides along the walls, pillars, floor and ceiling instead of passing through them, once it is inside the room (it can still fly in from the overview); `false` lets it fly through them and out of the room |
 
 ## effects
 

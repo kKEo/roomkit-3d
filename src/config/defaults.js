@@ -11,6 +11,7 @@ export const SCENE_DEFAULTS = {
     wallPanels: 3,
     skirting: [0.35, 8.5],
     pillars: [],
+    walls: [],
     lights: [[0, 8.4, 0]],
   },
   theme: {
@@ -37,6 +38,7 @@ export const SCENE_DEFAULTS = {
     fovPortrait: 68,
     intro: { position: [0, 6.5, 27], target: [0, 3, 0], duration: 3200 },
     freeFly: true,
+    collide: true,
   },
   multiplayer: { url: null, event: null },
   effects: { ease: 'quint', parallax: 0.8, warp: 12, particles: 520, panelOffset: 0.16, markers: true },

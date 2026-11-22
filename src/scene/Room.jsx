@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Solid, Segs, Outline, useWorld } from './core.js';
 import { edges, gridSegments } from '../lib/footprint.js';
+import { wallPieces } from '../lib/walls.js';
 
 /** The room shell: the footprint polygon extruded from the floor to the ceiling (inner faces are drawn). */
 function useShellGeometry(footprint, height) {
@@ -20,11 +21,12 @@ function useShellGeometry(footprint, height) {
   return geometry;
 }
 
-/** Room shell, floor/ceiling grids, wall panelling, pillars and light fixtures — all from scene.room. */
+/** Room shell, interior walls, floor/ceiling grids, wall panelling, pillars and light fixtures — all from scene.room. */
 export function Room() {
   const { room, mats } = useWorld();
   const { height: RH, footprint } = room;
   const shell = useShellGeometry(footprint, RH);
+  const pieces = useMemo(() => wallPieces(room), [room]);
   // the ceiling's grid and lamps would cover the view from above (overview), so hide them up there
   const ceilingParts = useRef(null);
   useFrame(({ camera }) => { if (ceilingParts.current) ceilingParts.current.visible = camera.position.y < RH; });
@@ -66,6 +68,11 @@ export function Room() {
         )}
       </group>
       {walls.length > 0 && <Segs points={walls} line="faint" />}
+
+      {pieces.map((p, i) => (
+        // an interior wall between its openings, or the lintel over one; both faces are drawn
+        <Solid key={`w${i}`} args={[p.length, p.y1 - p.y0, p.thickness]} position={[p.centre[0], (p.y0 + p.y1) / 2, p.centre[1]]} rotation={[0, p.yaw, 0]} line="thick" />
+      ))}
 
       {room.pillars.map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}>

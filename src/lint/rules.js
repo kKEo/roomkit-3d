@@ -1,9 +1,10 @@
-import { insideOrNear, nearestWall, walls, bounds } from '../lib/footprint.js';
+import { insideOrNear, nearestWall, bounds } from '../lib/footprint.js';
+import { interiorWalls, roomWalls, wallPieces } from '../lib/walls.js';
 import { BLOCK_DATA, FEED_BLOCKS, feedBlockSchema, parseBlockData } from '../ui/blocks/schema.js';
 import { sceneRefs } from '../editor/export.js';
 import { wallYaw } from '../config/placement.js';
 import * as THREE from 'three';
-import { PILLAR_HALF, framing, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
+import { PILLAR_HALF, wallBox, framing, objectBox, penetration, pillarPoly, pointInBox, sceneObjects, segmentHitsBox } from './geometry.js';
 import { checkBrief } from './expect.js';
 import { parseCatalog } from '../editor/catalog.js';
 
@@ -196,13 +197,33 @@ function room({ scene, files, add, sceneFile }) {
   scene.room.pillars.forEach(([x, z], i) => {
     if (!insideOrNear(footprint, x, z, TOL)) add('warn', 'PILLAR_OUTSIDE', sceneFile, `room.pillars.${i}`, `the pillar at [${x}, ${z}] is outside the floor plan`);
   });
+  const names = new Set();
+  for (const w of interiorWalls(scene.room)) {
+    const at = `room.walls.${w.index}`;
+    if (names.has(w.name)) add('error', 'WALL_NAME_TAKEN', sceneFile, `${at}.name`, `two interior walls are called "${w.name}"`, 'give each its own name: objects and expectations find a wall by it');
+    names.add(w.name);
+    for (const [key, p] of [['from', w.a], ['to', w.b]]) {
+      if (!insideOrNear(footprint, p[0], p[1], TOL)) add('warn', 'WALL_OUTSIDE', sceneFile, `${at}.${key}`, `the "${w.name}" wall's end at [${p.map(fmt).join(', ')}] is outside the floor plan`, 'end an interior wall on or inside the room\'s outline');
+    }
+    const sorted = [...w.openings].sort((a, b) => a.from - b.from);
+    for (const o of w.openings) {
+      if (o.from < -TOL || o.to > w.length + TOL) add('error', 'OPENING_PAST_END', sceneFile, `${at}.openings.${o.index}`, `the opening of "${w.name}" runs from ${fmt(o.from)} to ${fmt(o.to)} m, past the ends of the ${fmt(w.length)} m wall`, 'move it along or make it narrower');
+    }
+    for (let k = 1; k < sorted.length; k++) {
+      if (sorted[k].from < sorted[k - 1].to - TOL) add('warn', 'OPENING_OVERLAP', sceneFile, `${at}.openings.${sorted[k].index}`, `openings ${sorted[k - 1].index} and ${sorted[k].index} of "${w.name}" overlap`, 'make them one wider opening, or move them apart');
+    }
+  }
 }
 
 const label = e => `${e.obj.name ?? e.obj.type} (${e.key})`;
 
 function objects({ scene, all, add }) {
   const { footprint, height, pillars } = scene.room;
-  const wallList = walls(footprint);
+  const wallList = roomWalls(scene.room), pieces = wallPieces(scene.room);
+  const doorways = interiorWalls(scene.room).flatMap(w => w.openings.map(o => {
+    const h = w.thickness / 2 + 0.3, [nx, nz] = w.normal, a = [w.a[0] + w.dir[0] * o.from, w.a[1] + w.dir[1] * o.from], b = [w.a[0] + w.dir[0] * o.to, w.a[1] + w.dir[1] * o.to];
+    return { w, o, poly: [[a[0] + nx * h, a[1] + nz * h], [b[0] + nx * h, b[1] + nz * h], [b[0] - nx * h, b[1] - nz * h], [a[0] - nx * h, a[1] - nz * h]] };
+  }));
   const boxes = [];
   const unknown = new Set();
   for (const e of all) {
@@ -228,6 +249,12 @@ function objects({ scene, all, add }) {
     const worst = Math.max(...box.poly.map(([x, z]) => (insideOrNear(footprint, x, z, TOL) ? 0 : nearestWall(wallList, x, z).distance)));
     if (worst > 0) add('error', 'OBJ_OUTSIDE', e.file, `${e.path}.position`, `${label(e)} reaches ${fmt(worst)} m outside the room`, 'move it inwards by at least that much, or make it smaller');
 
+    const wall = pieces.find(pc => Math.min(box.y1, pc.y1) - Math.max(box.y0, pc.y0) > TOL && penetration(box.poly, pc.poly) > TOL);
+    if (wall) add('warn', 'OBJ_IN_WALL', e.file, `${e.path}.position`, `${label(e)} reaches ${fmt(penetration(box.poly, wall.poly))} m into the "${wall.wall}" wall`, 'move it out of the wall; `at: { wall, face }` puts it against one face');
+    else {
+      const door = doorways.find(d => box.y0 < d.o.height - TOL && penetration(box.poly, d.poly) > TOL);
+      if (door) add('warn', 'OPENING_BLOCKED', e.file, `${e.path}.position`, `${label(e)} stands in the doorway of "${door.w.name}" (opening ${door.o.index})`, 'move it clear: visitors and flights between stops pass through there');
+    }
     if (box.y1 > height + TOL) add('warn', 'OBJ_ABOVE_CEILING', e.file, `${e.path}.position`, `${label(e)} reaches y ${fmt(box.y1)}, above the ${height} m ceiling`);
     if (box.y0 < -TOL) add('warn', 'OBJ_BELOW_FLOOR', e.file, `${e.path}.position`, `${label(e)} reaches y ${fmt(box.y0)}, below the floor`);
     else if (box.mount === 'floor' && Math.abs(e.obj.position[1]) > 0.02) add('warn', 'OBJ_FLOATING', e.file, `${e.path}.position`, `${label(e)} stands on the floor but its y is ${e.obj.position[1]}`, 'set y to 0, or put the step it stands on in the scene');
@@ -254,6 +281,7 @@ const span = (poly, i) => Math.max(...poly.map(p => p[i])) - Math.min(...poly.ma
 function cameras({ scene, pois, all, files, add }) {
   const { footprint, height } = scene.room;
   const boxes = all.filter(e => !e.obj.unplaced).map(e => ({ ...e, box: objectBox(e.obj, scene.registry) })).filter(e => e.box && !e.box.tilted);
+  const walls = wallPieces(scene.room).map(pc => ({ pc, box: wallBox(pc) }));
   for (const p of pois) {
     if (p.objects[0].unplaced && !pageCamera(files, p)) continue; // the automatic camera follows an object that is not placed
     const file = `${scene.name}/${p.file}`, [x, y, z] = p.camera.position;
@@ -267,6 +295,12 @@ function cameras({ scene, pois, all, files, add }) {
     }
     const inside = boxes.find(e => pointInBox(e.box, p.camera.position));
     if (inside) { add('warn', 'CAM_IN_OBJECT', file, 'camera.position', `the camera of "${p.id}" ${here} is inside ${label(inside)}, which is ${fmt(span(inside.box.poly, 0))} m east–west by ${fmt(span(inside.box.poly, 1))} m north–south around [${inside.box.centre.map(fmt).join(', ')}]`, `${fix}, clear of that object, or move the object`); continue; }
+    const inWall = walls.find(w => pointInBox(w.box, p.camera.position));
+    if (inWall) { add('warn', 'CAM_IN_WALL', file, 'camera.position', `the camera of "${p.id}" ${here} is inside the "${inWall.pc.wall}" wall`, `${fix}, to one side of that wall`); continue; }
+    // short of the target: what a stop looks at often hangs on a wall face, and touching it is not looking through it
+    const near = p.camera.position.map((v, k) => v + (p.camera.target[k] - v) * 0.98);
+    const wall = walls.find(w => segmentHitsBox(w.box, p.camera.position, near));
+    if (wall) { add('warn', 'CAM_BLOCKED', file, 'camera', `the "${wall.pc.wall}" wall stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, on the same side of the wall as the stop, or look through an opening`); continue; }
     const blocker = boxes.find(e => e.owner !== p.id && segmentHitsBox(e.box, p.camera.position, p.camera.target));
     if (blocker) { add('warn', 'CAM_BLOCKED', file, 'camera', `${label(blocker)} stands between the camera of "${p.id}" ${here} and what it looks at`, `${fix}, or move the object out of the line of sight`); continue; }
     // the stop's own objects: at least one of them should be something to look at from here

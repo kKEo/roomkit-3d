@@ -24,7 +24,7 @@ describe('keys: every key of a scene\'s files, printed from the schemas', () => 
     expect(room).toContain('  grid.floor: number ≥ 0 = 1.5 — floor grid spacing in metres; 0 = none');
     expect(keysText('poi')).toContain('  id (required): string — unique in the scene; the #hash in the address, and what goTo actions name');
     expect(keysText('effects').find(l => l.includes('ease'))).toBe('  ease: "quint" | "expo" | "back" | "sine" | "linear" = "quint" — the curve of flights between stops');
-    expect(keysText('at').find(l => l.trimStart().startsWith('wall'))).toMatch(/^ {2}wall: "north" \| "south" \| "east" \| "west" \| integer ≥ 0 — form 1, on or against a wall/);
+    expect(keysText('at').find(l => l.trimStart().startsWith('wall'))).toMatch(/^ {2}wall: integer ≥ 0 \| string — form 1, on or against a wall: a compass side/);
   });
 
   it.each(['room', 'theme', 'camera', 'effects', 'multiplayer', 'poi', 'object', 'at', 'screen'])('%s: every key says what it does', name => {

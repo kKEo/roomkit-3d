@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore, runtime } from '../state/store.js';
@@ -7,6 +7,7 @@ import { reducedMotion } from '../lib/env.js';
 import { DEG } from '../lib/math.js';
 import { flightCurve, flightDuration, posAt } from '../lib/flight.js';
 import { presence } from '../net/sync.js';
+import { collide, roomColliders } from '../lib/collide.js';
 
 const V3 = THREE.Vector3;
 const UP = new V3(0, 1, 0);
@@ -22,9 +23,12 @@ const GRAB = 5;         // free fly, touch: how far away (m) the point is that a
  * Fingers take hold of the picture instead: a one-finger drag turns the view so the room follows the finger
  * (drag right, look left), a two-finger drag slides the camera the other way and a pinch moves it along the
  * gaze. `px` is the angle one pixel covers (radians), which is what makes the room keep up with the finger.
+ * With `walls` (from `roomColliders`) the camera slides along walls, pillars and the ceiling instead of
+ * passing through them, once it is inside the room.
  */
-function steer(b, vel, speed, dt, tmp, px) {
+function steer(b, vel, speed, dt, tmp, px, walls) {
   const { fly } = runtime;
+  const from = tmp.from.copy(b.pos);
   const f = tmp.fwd.subVectors(b.tgt, b.pos);
   const reach = Math.max(1, f.length());
   f.normalize();
@@ -51,6 +55,7 @@ function steer(b, vel, speed, dt, tmp, px) {
   b.pos.addScaledVector(r, -t.pan.x * m).addScaledVector(UP, t.pan.y * m).addScaledVector(f, t.pinch * m * 2);
   t.pan.x = t.pan.y = t.pinch = 0;
   b.pos.y = Math.max(0.2, b.pos.y); // stay above the floor
+  if (walls) collide(walls, from, b.pos);
   b.tgt.copy(b.pos).addScaledVector(f, reach);
 }
 
@@ -78,8 +83,10 @@ export function CameraRig() {
   const transit = useRef(null);
   const last = useRef({ nav: null, zoom: null });
   const returnPose = useRef(null); // where the camera was when a screen was zoomed into: where Esc takes it back
-  const tmp = useRef({ fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0, wasFree: false }).current;
+  const tmp = useRef({ from: new V3(), fwd: new V3(), right: new V3(), up: new V3(), look: new V3(), centre: new V3(), vo: { x: 0, y: 0 }, still: 0, wasFree: false }).current;
   const vel = useRef(new V3()).current; // free-fly velocity
+  // what free fly bumps into; null when the scene lets the camera through walls
+  const walls = useMemo(() => (scene?.camera.collide ? roomColliders(scene.room) : null), [scene]);
 
   // `arc`: lift the path through the room centre (POI to POI); otherwise fly straight (zoom in/out)
   // `reverse`: play the flight profile backwards in time (the way back from a screen mirrors the way in)
@@ -90,7 +97,8 @@ export function CameraRig() {
     const dist = p0.distanceTo(p1);
     const curve = flightCurve(p0, p1, { arc, room: scene.room });
     const f0 = b.tgt.clone().sub(p0).normalize(), f1 = t1.clone().sub(p1).normalize();
-    const duration = dur || flightDuration(dist, reducedMotion);
+    // a flight through doorways is longer than the straight line, and takes the time its own length takes
+    const duration = dur || flightDuration(curve?.userData?.routed ? curve.getLength() : dist, reducedMotion);
     transit.current = {
       curve, len: curve ? curve.getLength() : 0, p1, t0: b.tgt.clone(), t1,
       start: performance.now(),
@@ -158,7 +166,15 @@ export function CameraRig() {
       const ease = tr.reverse ? 1 - EASE[settings.ease](1 - t) : EASE[settings.ease](t);
       const gaze = tr.reverse ? 1 - EASE.cubic(Math.min(1, (1 - t) * 1.3)) : EASE.cubic(Math.min(1, t * 1.3));
       posAt(tr, ease, b.pos);
-      b.tgt.lerpVectors(tr.t0, tr.t1, gaze);
+      if (tr.curve?.userData?.routed) {
+        // through doorways: look along the way for most of the flight, turn to the stop in its last part
+        const c = Math.min(1, Math.max(0, ease));
+        tr.curve.getPointAt(Math.min(1, c + 0.08), tmp.look);
+        if (tmp.look.distanceToSquared(b.pos) < 1e-6) tmp.look.copy(tr.t1);
+        else tmp.look.sub(b.pos).normalize().multiplyScalar(4).add(b.pos);
+        const away = EASE.cubic(Math.min(1, t / 0.2)), home = EASE.cubic(Math.min(1, Math.max(0, (t - 0.7) / 0.3)));
+        b.tgt.lerpVectors(tr.t0, tmp.look, away).lerp(tr.t1, home);
+      } else b.tgt.lerpVectors(tr.t0, tr.t1, gaze);
       const bell = Math.sin(Math.PI * t);
       if (tr.warp) {
         warpFov = bell * settings.warp;
@@ -179,7 +195,7 @@ export function CameraRig() {
       if (!tmp.wasFree) presence.flight({ kind: 'free', from: { position: b.pos.toArray(), target: b.tgt.toArray() } });
       const { width, depth } = scene.room;
       const fov = (size.width < size.height ? scene.camera.fovPortrait : scene.camera.fov) * DEG;
-      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp, fov / size.height);
+      steer(b, vel, Math.max(6, Math.max(width, depth) / 2), dt, tmp, fov / size.height, walls);
       presence.pose(b.pos, b.tgt);
     } else vel.set(0, 0, 0);
     tmp.wasFree = st.free;

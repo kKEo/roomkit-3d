@@ -6,6 +6,7 @@ import { isFeed } from '../data/feedSchema.js';
 import { satisfies, validRange } from '../lib/semver.js';
 import { autoPlacement, clampCamera, overviewCamera } from '../lib/autoCamera.js';
 import { withFootprint } from '../lib/footprint.js';
+import { wallPieces } from '../lib/walls.js';
 import { placeAll } from './placement.js';
 
 /**
@@ -231,7 +232,7 @@ function autoViews(poi, room, registry) {
   const first = poi.objects[0];
   const auto = autoPlacement(first, registry.get(first.type).placement(first.props));
   // an object near a wall would put the camera behind it: keep it in the room
-  poi.camera ??= room ? clampCamera(auto.camera, room.footprint) : auto.camera;
+  poi.camera ??= room ? clampCamera(auto.camera, room.footprint, 0.6, wallPieces(room)) : auto.camera;
   poi.marker ??= auto.marker;
 }
 

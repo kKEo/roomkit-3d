@@ -28,7 +28,7 @@ Follow `.claude/skills/build-scene/SKILL.md`. In short: write what the descripti
 
 What a scene folder holds:
 
-- `scene.json`: the room (`room.width/height/depth`, or a `room.footprint` polygon), theme, cameras, `decor` (objects that belong to no stop) and `poi` (the stop files, in tour order). It is merged over `src/config/defaults.js`, so only write what differs.
+- `scene.json`: the room (`room.width/height/depth`, or a `room.footprint` polygon; `room.walls` splits it into several rooms joined by doorways, see `node tools/scene.js keys walls`), theme, cameras, `decor` (objects that belong to no stop) and `poi` (the stop files, in tour order). It is merged over `src/config/defaults.js`, so only write what differs.
 - `poi/<id>.json`: one stop: `id`, `label`, `objects` (at least one), `content` (`{ "markdown": "content/<id>.md" }` or `{ "blocks": [...] }`), and optionally `camera` and `marker`. Leave `camera` out and it is placed in front of the first object, 4 to 12 m back depending on the type; write it out when that spot is taken or the stop has several main objects.
 - `content/*.md`, `media/*`, `data/*`, `prefabs/*.js`: panel pages, pictures and video, feed data, the scene's own object types.
 - `brief.json` (optional): `{ "text": "<the description>", "expect": [ … ] }`, what the scene was built from and what must therefore be true of it. `check` evaluates every expectation; `node tools/scene.js keys brief` lists the forms. The viewer never reads it.
@@ -38,6 +38,7 @@ Space: metres, `y` is up, the floor is `y = 0`. North is −Z, east is +X; a def
 Placing objects, in words wherever the description uses words (the loader works out the numbers and knows each type's size):
 
 - By a wall: `"at": { "wall": "north", "along": 0.4, "height": 3 }`. A wall object lands on the wall facing in; a floor object stands with its back to the wall. Only `wall` is required: `along` defaults to 0.5 (the middle) and `height` to 0, which suits doors and floor objects; for a `pictureFrame`, `height` is its centre.
+- On an interior wall (`room.walls`): `"at": { "wall": "divider", "face": "west" }`, where `face` is the side of the wall the object is on.
 - In a corner: `"at": { "corner": "north-east" }`. In the middle: `"at": { "centre": true }`.
 - Next to another object: `"at": { "near": "desk", "side": "front", "gap": 1 }`, where `desk` is that object's `name` and `side` is `left`, `right`, `front`, `behind` or a compass side.
 - Which way it looks: `"facing": "west"`, `"facing": "centre"` or `"facing": "<name>"`, in place of `rotation`.

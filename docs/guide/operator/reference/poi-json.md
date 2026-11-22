@@ -44,7 +44,8 @@ Used in `objects` and in `scene.json` `decor`.
 
 | Key | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `wall` | `"north"`, `"south"`, `"east"`, `"west"` or a number | — | north is −Z, the far wall of the default view; east is +X. A number is the wall's place in `room.footprint` (wall `0` runs from the first corner to the second), for a room where two walls face the same way or one runs at an angle |
+| `wall` | `"north"`, `"south"`, `"east"`, `"west"`, a number or an interior wall's name | — | north is −Z, the far wall of the default view; east is +X. A number is the wall's place in `room.footprint` (wall `0` runs from the first corner to the second), for a room where two walls face the same way or one runs at an angle. A name is one of `room.walls`, with its `face` |
+| `face` | `"north"`, `"south"`, `"east"` or `"west"` | — | only for an interior wall, and needed there: which of its two faces, by the side it looks to. `"west"` is the face seen from the west. Left and right along it are as seen standing in front of that face |
 | `along` | 0–1 | `0.5` | where along the wall, from its left end to its right, seen from inside the room |
 | `distance` | metres ≥ 0 | — | the same from the left end in metres; give `along` or `distance`, not both |
 | `height` | number | `0` | the origin's `y`: `0` for a door or a wardrobe, the centre height for a picture frame |
@@ -55,6 +56,12 @@ A wall object (frame, door, cinema screen) lands on the wall surface. Any other 
 
 ```text
 loft/poi/wall.json › objects.0.at.wall: "south" names 2 walls of this room (edges 2 and 4); give the edge index
+```
+
+On an interior wall (`room.walls` in `scene.json`), say which face:
+
+```json
+{ "type": "pictureFrame", "name": "shared picture", "at": { "wall": "divider", "face": "west", "distance": 2.8, "height": 2.8 } }
 ```
 
 #### In a corner

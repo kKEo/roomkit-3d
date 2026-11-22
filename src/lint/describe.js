@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { alongWall, distToSegment, nearestWall, walls } from '../lib/footprint.js';
+import { alongWall, distToSegment, nearestWall } from '../lib/footprint.js';
+import { interiorWalls, roomWalls } from '../lib/walls.js';
 import { framing, objectBox, penetration, sceneObjects } from './geometry.js';
 import { TYPE_INFO } from '../editor/types.js';
 import { placementText, facingText } from '../config/placement.js';
@@ -73,15 +74,22 @@ function cameraLines(poi, scene, all) {
   ];
 }
 
+/** An interior wall in words: where it runs, how thick and high, and its doorways. */
+function interiorLine(w) {
+  const doors = w.openings.map(o => `${n(o.width)} m wide and ${n(o.height)} m high, ${n(Math.max(0, o.from))}–${n(Math.min(w.length, o.to))} m from the ${pt(w.a)} end`);
+  return `interior wall "${w.name}": ${pt(w.a)} to ${pt(w.b)}, ${n(w.length)} m, ${n(w.thickness)} m thick, ${n(w.height)} m high; faces ${compass(w.normal)} and ${compass([-w.normal[0], -w.normal[1]])}; ${doors.length ? `openings: ${doors.join('; ')}` : 'no openings'}`;
+}
+
 /** The read-back as lines of text; `brief` is the description the scene was built from (its `brief.json › text`), printed first. */
 export function describeScene(scene, pois, { brief = null } = {}) {
-  const { room } = scene, wallList = walls(room.footprint);
+  const { room } = scene, wallList = roomWalls(room);
   const all = sceneObjects(scene, pois).map(e => ({ ...e, box: objectBox(e.obj, scene.registry) }));
   const out = [
     `${scene.name}: "${scene.title}"`,
     ...(brief ? [`brief: ${brief}`] : []),
     `room: ${n(room.width)} m east–west by ${n(room.depth)} m north–south, ${n(room.height)} m high; x grows east, z grows south, y is up, the floor is y 0`,
-    `walls: ${wallList.map(w => `${w.name} ${n(w.length)} m`).join(', ')}`,
+    `walls: ${wallList.filter(w => !w.interior).map(w => `${w.name} ${n(w.length)} m`).join(', ')}`,
+    ...interiorWalls(room).map(interiorLine),
     `pillars: ${room.pillars.length ? room.pillars.map(pt).join(' ') : 'none'}; lights: ${room.lights.length}`,
     '',
     `decor, ${scene.decor.length} objects that belong to no stop:`,

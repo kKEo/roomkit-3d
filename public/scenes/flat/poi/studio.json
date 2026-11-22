@@ -1,0 +1,11 @@
+{
+  "id": "studio",
+  "label": "Studio",
+  "kicker": "north-east room",
+  "objects": [
+    { "type": "desk", "name": "desk", "at": { "wall": "north", "distance": 27 } },
+    { "type": "wardrobe", "name": "wardrobe", "at": { "corner": "north-east", "inset": 0.3 }, "props": { "height": 3.6 } }
+  ],
+  "camera": { "position": [9, 2.6, -2], "target": [10.5, 1.4, -10] },
+  "content": { "markdown": "content/studio.md" }
+}

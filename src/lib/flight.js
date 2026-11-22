@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { route } from './walls.js';
 
 /**
  * The shape and timing of a camera flight, shared by the camera (src/scene/CameraRig.jsx) and the
@@ -9,14 +10,26 @@ import * as THREE from 'three';
 /**
  * The path from `p0` to `p1` (THREE.Vector3): with `arc`, lifted through the room centre like a POI-to-POI
  * flight; otherwise a straight line (zooming into a screen). Null when the two points coincide.
+ * In a room with interior walls (`room.walls`) a flight between two points inside the room that a wall
+ * separates goes through the doorways instead (`route`, src/lib/walls.js), and is marked `userData.routed`; an
+ * arc in such a room is lifted but not pulled towards the centre, which may stand behind a wall.
  */
 export function flightCurve(p0, p1, { arc = true, room } = {}) {
   const dist = p0.distanceTo(p1);
   if (dist <= 0.01) return null;
   if (!arc || !room) return new THREE.LineCurve3(p0.clone(), p1.clone());
+  const walled = room.walls?.length > 0;
+  if (walled) {
+    const via = route(room, p0.toArray(), p1.toArray());
+    if (via) {
+      const curve = new THREE.CatmullRomCurve3([p0.clone(), ...via.map(p => new THREE.Vector3(...p)), p1.clone()], false, 'centripetal');
+      curve.userData = { routed: true };
+      return curve;
+    }
+  }
   const mid = p0.clone().lerp(p1, 0.5);
   mid.y = Math.min(room.height - 0.6, mid.y + 1.2 + dist * 0.07);
-  mid.lerp(new THREE.Vector3(room.centre[0], mid.y, room.centre[1]), 0.3);
+  if (!walled) mid.lerp(new THREE.Vector3(room.centre[0], mid.y, room.centre[1]), 0.3);
   return new THREE.CatmullRomCurve3([p0.clone(), mid, p1.clone()], false, 'centripetal');
 }
 

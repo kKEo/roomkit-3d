@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useStore, runtime } from '../state/store.js';
 import { pad2 } from '../lib/text.js';
+import { wallPieces } from '../lib/walls.js';
 
-/** Top-down map: room footprint, pillars, POI markers and the camera's view cone. */
+/** Top-down map: room footprint, interior walls, pillars, POI markers and the camera's view cone. */
 export function Minimap() {
   const ref = useRef(null);
   useEffect(() => {
     const cv = ref.current, ctx = cv.getContext('2d');
-    let raf;
+    let raf, pieces = null, piecesOf = null;
     const draw = () => {
       raf = requestAnimationFrame(draw);
       if (!cv.clientWidth) return;
@@ -23,6 +24,8 @@ export function Minimap() {
       ctx.beginPath();
       footprint.forEach(([x, z], i) => (i ? ctx.lineTo(X(x), Z(z)) : ctx.moveTo(X(x), Z(z))));
       ctx.closePath(); ctx.stroke();
+      if (piecesOf !== scene.room) { piecesOf = scene.room; pieces = wallPieces(scene.room).filter(p => p.y0 <= 0); }
+      for (const { a, b: e } of pieces) { ctx.beginPath(); ctx.moveTo(X(a[0]), Z(a[1])); ctx.lineTo(X(e[0]), Z(e[1])); ctx.stroke(); }
       ctx.globalAlpha = 0.35; ctx.fillStyle = accent;
       scene.room.pillars.forEach(([x, z]) => ctx.fillRect(X(x) - 2 * k, Z(z) - 2 * k, 4 * k, 4 * k));
       ctx.font = `${9 * k}px ${scene.theme.fonts.body}`; ctx.textAlign = 'center';
