@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useStore, runtime, viewRect } from '../state/store.js';
 import { coarsePointer } from '../lib/env.js';
 import { createGestures } from '../lib/touch.js';
+import { isPinch, wheelFly, pinchDelta } from '../lib/wheel.js';
 
 /** Id of the POI named by the #hash, or null (the room overview) when there is none or it is unknown. */
 export function poiIdFromHash() {
@@ -18,9 +19,10 @@ const ARROW_DIR = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', Arrow
  * WASD / QE, a middle-button drag (look) and, once flying, the wheel steer the camera by hand.
  *
  * On a touchscreen the fingers steer it: a one-finger drag looks around, a two-finger drag slides and a pinch
- * moves forward or back (src/lib/touch.js); a tap stays a click. Where the scene has free flight off there is
- * nothing to steer, so a finger swipes between stops as the mouse does. The editor keeps the swipe as well and
- * never learns about touch: its page has its own controls.
+ * moves forward or back (src/lib/touch.js); a tap stays a click. A drag with the mouse, or a press-and-drag on a
+ * touchpad, looks around the same way, and a pinch on a touchpad moves forward or back (src/lib/wheel.js). Where
+ * the scene has free flight off there is nothing to steer, so a drag swipes between stops. The editor keeps the
+ * swipe as well and never learns about touch: its page has its own controls.
  */
 export function useInput(stageRef, enabled) {
   useEffect(() => {
@@ -30,7 +32,7 @@ export function useInput(stageRef, enabled) {
     const inUi = t => t.closest && t.closest('#panel, .options, .screen-ui, .editor, .confirm');
     const editing = document.documentElement.classList.contains('editing');
     const gestures = createGestures();
-    // fingers fly the camera here; false where they swipe between stops instead
+    // fingers and the dragging mouse fly the camera here; false where they swipe between stops instead
     const fingersFly = () => !editing && canFly();
     if (!editing && coarsePointer) st().setTouch(true);
 
@@ -82,12 +84,19 @@ export function useInput(stageRef, enabled) {
       gestures.cancel();
       const t = runtime.fly.touch;
       t.look.x = t.look.y = t.pan.x = t.pan.y = t.pinch = 0;
+      runtime.fly.slide = 0;
     };
 
     let wheelAcc = 0, wheelLock = 0;
     const onWheel = e => {
       if (inUi(e.target) || st().zoom) return;
-      if (st().free) { runtime.fly.dolly += e.deltaY; return; }
+      if (isPinch(e)) {
+        // a pinch on a touchpad: forward or back, in place of the browser's page zoom; it starts the flight as fingers do
+        if (!fingersFly()) return;
+        e.preventDefault();
+        st().freeFly();
+      }
+      if (st().free) { const w = wheelFly(e); runtime.fly.dolly += w.dolly; runtime.fly.slide += w.slide; return; }
       wheelAcc += e.deltaY;
       const now = performance.now();
       if (now < wheelLock) return;
@@ -105,22 +114,35 @@ export function useInput(stageRef, enabled) {
     // the hints and controls follow the device last pressed with, so a laptop with a touchscreen gets both
     const onAnyDown = e => { if (!editing) st().setTouch(e.pointerType === 'touch'); };
 
+    // Safari tells a touchpad pinch as gesture events with a scale (and repeats a touchscreen's pinch so: left alone)
+    let pinchScale = 1;
+    const onGestureStart = e => { if (!st().touch && fingersFly()) e.preventDefault(); pinchScale = 1; };
+    const onGesture = e => {
+      if (st().touch || !fingersFly() || st().zoom || inUi(e.target)) return;
+      e.preventDefault();
+      st().freeFly();
+      if (st().free) runtime.fly.dolly += wheelFly({ ctrlKey: true, deltaY: pinchDelta(pinchScale, e.scale) }).dolly;
+      pinchScale = e.scale;
+    };
+
+    // a finger, or the mouse with its main button held, dragging across the room
     const onTouchMove = e => {
-      if (e.pointerType !== 'touch') return;
       const g = gestures.move(e.pointerId, e.clientX, e.clientY);
       if (!g || st().zoom || !fingersFly()) return;
       st().freeFly();
       if (!st().free) return;
+      // the mouse keeps its drag past the edge of the room (a finger does by itself); a drag is no longer a click
+      if (e.pointerType !== 'touch' && !stage.hasPointerCapture(e.pointerId)) stage.setPointerCapture(e.pointerId);
       const t = runtime.fly.touch;
       t.look.x += g.look.x; t.look.y += g.look.y;
       t.pan.x += g.pan.x; t.pan.y += g.pan.y;
       t.pinch += g.pinch;
     };
-    const onTouchEnd = e => { if (e.pointerType === 'touch') gestures.up(e.pointerId); };
+    const onTouchEnd = e => gestures.up(e.pointerId);
 
     let down = null, looking = false;
     const onDown = e => {
-      if (e.pointerType === 'touch' && fingersFly()) { gestures.down(e.pointerId, e.clientX, e.clientY); return; }
+      if (fingersFly() && (e.pointerType === 'touch' || e.button === 0)) { gestures.down(e.pointerId, e.clientX, e.clientY); return; }
       if (e.button === 1 && canFly()) {
         // middle button looks around: no autoscroll or paste, and keep the drag when the pointer leaves the canvas
         e.preventDefault();
@@ -145,7 +167,7 @@ export function useInput(stageRef, enabled) {
     addEventListener('keydown', onKey);
     addEventListener('keyup', onKeyUp);
     addEventListener('blur', onBlur);
-    addEventListener('wheel', onWheel, { passive: true });
+    addEventListener('wheel', onWheel, { passive: false });
     addEventListener('pointermove', onMove);
     addEventListener('pointerdown', onAnyDown, true);
     addEventListener('hashchange', onHash);
@@ -155,6 +177,8 @@ export function useInput(stageRef, enabled) {
     stage.addEventListener('pointermove', onTouchMove);
     stage.addEventListener('pointerup', onTouchEnd);
     stage.addEventListener('pointercancel', onTouchEnd);
+    stage.addEventListener('gesturestart', onGestureStart);
+    stage.addEventListener('gesturechange', onGesture);
     return () => {
       removeEventListener('keydown', onKey);
       removeEventListener('keyup', onKeyUp);
@@ -170,6 +194,8 @@ export function useInput(stageRef, enabled) {
       stage.removeEventListener('pointermove', onTouchMove);
       stage.removeEventListener('pointerup', onTouchEnd);
       stage.removeEventListener('pointercancel', onTouchEnd);
+      stage.removeEventListener('gesturestart', onGestureStart);
+      stage.removeEventListener('gesturechange', onGesture);
     };
   }, [stageRef, enabled]);
 }

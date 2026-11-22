@@ -13,14 +13,17 @@ const V3 = THREE.Vector3;
 const UP = new V3(0, 1, 0);
 const LOOK = 0.004;     // free fly: radians per pixel of middle-drag
 const PITCH = 1.45;     // free fly: how far up / down the gaze may tilt (short of straight up, where yaw breaks down)
-const DOLLY = 0.005;    // free fly: metres per unit of wheel delta
+const DOLLY = 0.005;    // free fly: metres per unit of wheel delta, along the gaze and sideways
 const GRAB = 5;         // free fly, touch: how far away (m) the point is that a two-finger drag keeps under the fingers
 
 /**
  * Free fly: yaw / pitch the gaze by the pending middle-drag, accelerate towards the held WASD / QE
  * direction and slide along the gaze by the pending wheel delta. Moves the base pose `b` in place.
  *
- * Fingers take hold of the picture instead: a one-finger drag turns the view so the room follows the finger
+ * A sideways scroll (a touchpad) slides it right or left the same way.
+ *
+ * Fingers, and the mouse dragging with its main button, take hold of the picture instead: a one-finger drag
+ * turns the view so the room follows the finger
  * (drag right, look left), a two-finger drag slides the camera the other way and a pinch moves it along the
  * gaze. `px` is the angle one pixel covers (radians), which is what makes the room keep up with the finger.
  * With `walls` (from `roomColliders`) the camera slides along walls, pillars and the ceiling instead of
@@ -51,6 +54,9 @@ function steer(b, vel, speed, dt, tmp, px, walls) {
   const step = fly.dolly * Math.min(1, dt * 10);
   fly.dolly -= step;
   b.pos.addScaledVector(f, -step * DOLLY);
+  const side = fly.slide * Math.min(1, dt * 10);
+  fly.slide -= side;
+  b.pos.addScaledVector(r, side * DOLLY);
   const m = px * GRAB; // metres per pixel at the grabbed distance
   b.pos.addScaledVector(r, -t.pan.x * m).addScaledVector(UP, t.pan.y * m).addScaledVector(f, t.pinch * m * 2);
   t.pan.x = t.pan.y = t.pinch = 0;

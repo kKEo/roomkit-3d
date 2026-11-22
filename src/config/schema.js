@@ -223,7 +223,7 @@ export function makeSchemas(registry = BUILTIN_REGISTRY) {
       overview: strict({ position: vec3, target: vec3 }).optional().describe('{ position, target } of the whole-room view; default outside the south wall, above the ceiling'),
       /** where the page opens when the address has no `#poi`: a POI id, a fixed pose, or null for the overview */
       start: z.union([z.string().min(1), strict({ position: vec3, target: vec3 })]).nullable().optional().describe('where the page opens: a stop id, { position, target }, or null for the whole-room view'),
-      /** whether visitors may take the camera by hand (WASD / QE, middle-drag) */
+      /** whether visitors may take the camera by hand (WASD / QE, a drag, a pinch) */
       freeFly: z.boolean().describe('whether visitors may fly the camera by hand'),
       collide: z.boolean().describe('whether walls, pillars and the ceiling stop a camera flown by hand once it is inside the room; false = it flies through them'),
     }),

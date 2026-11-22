@@ -15,7 +15,7 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | Mouse wheel: one notch, then a hard flick | each moves exactly one stop; further scrolling is ignored for 0.9 s (long trackpad momentum may move once more after that) |
 | Scroll inside a long panel | the panel scrolls; the room does not move |
 | Click a diamond, a floating label, a nav button, the pager | each goes to its stop |
-| Drag across the canvas and release on a diamond | a mostly horizontal drag over 50 px moves one stop as a swipe; it never also counts as a click on the diamond |
+| Drag across the canvas and release on a diamond | the view turns (see [Free fly](#free-fly)); it never also counts as a click on the diamond. In a scene with `camera.freeFly: false`, and in the editor, a mostly horizontal drag over 50 px moves one stop as a swipe instead |
 | Type in the contact form, including the letters H, M and digits | text is entered; panel, markers and stops do not change |
 | Change the hash by hand in the address bar | the camera flies to that stop |
 
@@ -27,6 +27,10 @@ This page is a checklist for a manual session, grouped by area. Pick the areas y
 | `A`, `S`, `D`, `Q`, `E`, then with `Shift` | left, back, right, down, up; a third of the speed with `Shift`; never below the floor |
 | Middle-drag on the canvas, also out past its edge | the view turns with the mouse (down looks down) and stops short of straight up or down; no autoscroll, no stop change |
 | Wheel while flying | slides forward / back smoothly instead of changing stops |
+| At a stop, drag across the canvas with the mouse (or press and drag on a touchpad), also out past its edge | the panel closes and the view turns so the room follows the pointer (drag right, see what is on the left), still turning outside the window; a press that moves under 10 px stays a click |
+| Touchpad, at a stop: pinch out, then in (Chrome or Firefox, and Safari) | the panel closes and the camera moves forward, then back; the page itself does not zoom. Over the panel or Options the browser's own zoom still works |
+| Touchpad while flying: two-finger scroll up / down, then sideways | forward / back, then a slide left / right; before flying, the same scroll changes stops and sideways does nothing |
+| `Ctrl` + mouse wheel over the room | moves the camera like a pinch (the two cannot be told apart) instead of zooming the page |
 | Flying inside, hold `W` into a wall, then also `D`; fly up into the ceiling; fly at a pillar (`?scene=loft`) and round the L's inner corner | the camera stops short of the wall and slides along it, never sees through it or out of the room; it stops under the ceiling; it goes round the pillar and the corner |
 | From the whole-room view (`0`), hold `W` | the camera flies in over the wall or through the ceiling, then cannot leave |
 | A scene with `camera.collide: false` | the camera flies through walls again |

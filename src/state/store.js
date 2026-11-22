@@ -39,7 +39,7 @@ export const useStore = create((set, get) => ({
   zoom: null,      // { key, poi (id), center, normal, up, w, h, screen } — screen the camera is zoomed into
   zoomReturn: null, // { current, shown, free } from before the zoom: what exitZoom restores (the camera pose is CameraRig's)
   afterZoom: null, // { free: true } while the camera flies back from a screen to resume free flight on arrival
-  free: false,     // the visitor is flying the camera by hand (WASD, middle-drag, touch gestures); any navigation ends it
+  free: false,     // the visitor is flying the camera by hand (WASD, a drag, touch gestures); any navigation ends it
   touch: false,    // the visitor's last press was a finger: touch hints and controls show (the viewer only; see setTouch)
   confirm: null,   // an `openUrl` action waiting for the visitor's yes (the same object the scene binds, so a prefab can tell it is its own)
   /**
@@ -214,9 +214,9 @@ export const runtime = {
   gl: null,                     // the WebGLRenderer, set by Telemetry, read by Options → System
   glAttrs: null,                // { antialias, power } the WebGL context was created with, set by the Viewer
   stats: null,                  // live rendering figures while the probe runs, see src/scene/Telemetry.jsx
-  // free-fly input: held key codes, Shift, pending look (px) and wheel delta; `touch` is what the fingers did since the
+  // free-fly input: held key codes, Shift, pending look (px) and wheel delta (`dolly` along the gaze, `slide` sideways); `touch` is what the fingers did since the
   // last frame, in px: a one-finger drag (look), a two-finger drag (pan) and a pinch (positive = apart), src/lib/touch.js
-  fly: { keys: new Set(), slow: false, look: { x: 0, y: 0 }, dolly: 0, touch: { look: { x: 0, y: 0 }, pan: { x: 0, y: 0 }, pinch: 0 } },
+  fly: { keys: new Set(), slow: false, look: { x: 0, y: 0 }, dolly: 0, slide: 0, touch: { look: { x: 0, y: 0 }, pan: { x: 0, y: 0 }, pinch: 0 } },
 };
 
 /** The canvas rectangle the overlays project into; the whole window until the first frame. */

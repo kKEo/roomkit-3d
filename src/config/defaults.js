@@ -51,7 +51,7 @@ export const SCENE_DEFAULTS = {
     unsupported: 'This browser cannot show the room',
     unsupportedHint: 'The room is drawn with WebGL 2, which this browser does not support or has turned off. Open the page in a current Chrome, Edge, Firefox or Safari, with hardware acceleration enabled.',
     kicker: '{n} of {total}',
-    hint: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room, [W][A][S][D] fly',
+    hint: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room, drag to look around, [W][A][S][D] fly',
     hintNoFly: '[←][→] or mouse wheel — move, [1]–[{keys}] areas, [0] whole room, [Space] look closer, click a marker in the room',
     // the same hints on a touchscreen
     hintTouch: 'tap a marker or a number to go there, tap a screen to look closer, drag to look around, pinch to move',
@@ -108,7 +108,7 @@ export const SCENE_DEFAULTS = {
     formFailed: 'Sending failed — please try again.',
     canvasLabel: '3D room with {total} areas',
     zoomHint: '[←][→][↑][↓] other screens (with [Ctrl/⌘] while typing), [Esc] back to the room',
-    flyHint: '[W][A][S][D] fly, [Q][E] down / up, [Shift] slower, middle-drag — look, wheel — forward / back, [0] whole room',
+    flyHint: '[W][A][S][D] fly, [Q][E] down / up, [Shift] slower, drag — look, wheel or pinch — forward / back, [0] whole room',
     flyHintTouch: 'drag — look around, pinch — forward / back, two fingers — slide, tap a marker or a number to go there',
     zoomHintTouch: 'the arrows open the other screens, tap outside the screen to go back to the room',
     videoHintTouch: 'the arrows open the other screens, tap outside the screen to go back to the room',
