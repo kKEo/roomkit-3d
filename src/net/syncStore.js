@@ -25,6 +25,7 @@ export const useSync = create(() => ({
   peers: [],          // [{ id, name, color }], for lists; poses live in the client
   profile: loadProfile(),
   version: 0,         // bumps on every shared-state change, for React subscribers (src/net/shared.js)
+  held: 0,            // bumps when what a peer holds open changes (src/net/held.js)
   rejected: null,     // the server's latest `reject` (a new object each time), so the shared state can drop the write it refused
   rtt: null,
   rates: null,        // { inKb, outKb } per second, over the last couple of seconds

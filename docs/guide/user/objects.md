@@ -17,10 +17,10 @@ Put these at height `0`.
 | Type | What it is | Settings worth knowing |
 | --- | --- | --- |
 | `desk` | A desk with a monitor, keyboard and chair. Visitors look at it from the chair side. | `screen`: `"rain"` (default), `"image"` or `"video"` with `src` for the file, or a full screen like the ones on a control desk (`{ "source": "text", "title": "…", "lines": [...] }`). `chair`: `false` to remove it. |
-| `wardrobe` | A two-door wardrobe with clothes and boxes inside. Its doors swing open while its panel is shown. | `width`, `height`, `depth`. `openOnFocus`: `false` keeps it shut. |
+| `wardrobe` | A two-door wardrobe with clothes and boxes inside. Its doors swing open while its panel is shown (in a shared event: while anyone has it open). | `width`, `height`, `depth`. `openOnFocus`: `false` keeps it shut. |
 | `pedestal` | A low stand with a slowly turning shape floating above it, wrapped in rings. | `shape`: `icosahedron`, `dodecahedron`, `octahedron`, `box`, `sphere`, `cone`, `torusKnot` and more. `height` of the floating shape. |
 | `controlDesk` | A curved control-centre console with operator chairs and a wall of screens behind it. Every screen can show something different (see below). | `screens`: one entry per screen. `columns`: screens per row (3). `segments`, `radius`, `arc`: the shape of the desk. `chairs`: how many. |
-| `serverRack` | A row of server cabinets with blinking lights and cables to the ceiling, behind a bi-fold door that folds open to both sides while its panel is shown. | `count` of cabinets. `cables`: `false` to remove the cables. `openOnFocus`: `false` keeps the door shut. |
+| `serverRack` | A row of server cabinets with blinking lights and cables to the ceiling, behind a bi-fold door that folds open to both sides while its panel is shown (in a shared event: while anyone has it open). | `count` of cabinets. `cables`: `false` to remove the cables. `openOnFocus`: `false` keeps the door shut. |
 | `bench` | A plain block to sit on, or use as a plinth. | `width`, `height`, `depth`. |
 
 ## Things that hang on a wall
@@ -176,7 +176,7 @@ What a click can do:
 | Action | Example | Effect |
 | --- | --- | --- |
 | go to a stop | `{ "type": "goTo", "poi": "studio" }` | flies there and opens its panel; `"poi": null` shows the whole room |
-| open a link | `{ "type": "openUrl", "url": "https://example.com" }` | in a new tab (add `"newTab": false` to leave the page). Add `"label": "Gallery"` to name the place and `"confirm": true` to ask before going; a door shows the label on its wing and swings ajar while the question is open |
+| open a link | `{ "type": "openUrl", "url": "https://example.com" }` | in a new tab (add `"newTab": false` to leave the page). Add `"label": "Gallery"` to name the place and `"confirm": true` to ask before going; a door shows the label on its wing and swings ajar while the question is open (in a shared event, for everyone) |
 | hide or show the panel | `{ "type": "togglePanel" }` | the same as the `H` key |
 | step up to a screen | `{ "type": "zoom", "screen": "scr2" }` | zooms into that screen of the current stop |
 

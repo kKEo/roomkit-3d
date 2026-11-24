@@ -39,7 +39,7 @@ export function Lamp({ props, active }) {
 Rules that keep prefabs consistent:
 
 - Respect `reducedMotion` for anything that moves continuously.
-- Use `active` (panel open) for "reveal" animations, as the wardrobe does.
+- Use `active` (panel open; in a shared event, open for any visitor) for "reveal" animations, as the wardrobe does.
 - Memoise anything derived from props (`useMemo`); `Segs` already compares its points by value.
 - Don't create materials. Reuse `mats.fills` and `mats.lines` so the theme applies and nothing leaks.
 

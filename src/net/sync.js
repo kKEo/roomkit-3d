@@ -1,6 +1,7 @@
 import { createSyncClient } from './client.js';
 import { runtime } from '../state/store.js';
 import { useSync, syncClient, setSyncClient, PROFILE_KEY } from './syncStore.js';
+import { sendHeld } from './held.js';
 
 export { useSync, syncClient };
 
@@ -63,6 +64,7 @@ export function startSync(scene) {
   client.subscribe((what, arg) => {
     if (what === 'status' || what === 'peers') publish();
     else if (what === 'state' || what === 'lease') useSync.setState(s => ({ version: s.version + 1 }));
+    else if (what === 'holds') useSync.setState(s => ({ held: s.held + 1 }));
     else if (what === 'reject') { useSync.setState({ rejected: arg }); console.warn('sync: rejected', arg); } // src/net/shared.js drops the write it refers to
   });
   // tell the newcomers (and the room after a reconnect) where this visitor is: still, where the camera is now
@@ -70,6 +72,7 @@ export function startSync(scene) {
     const c = client;
     const here = { position: [...runtime.pose.position], target: [...runtime.pose.target] };
     c.intent(welcomeIntent(c.lastIntent, c.lastIntentAt, here, runtime.transiting, Date.now()));
+    sendHeld(true); // and what it holds open: the server forgot it with the old connection
     publish();
   });
   setSyncClient(client);

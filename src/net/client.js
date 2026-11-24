@@ -7,14 +7,15 @@ import {
  * the room's view of the other visitors (`peers`) and of the shared state (`shared`). No React and no
  * browser globals (the WebSocket class, the clock and the timers are injected), so it runs under test.
  *
- * - `peers`: id → `{ id, name, color, intent, samples, flags }`. `intent` is the peer's latest flight
+ * - `peers`: id → `{ id, name, color, intent, samples, flags, holds }`. `intent` is the peer's latest flight
  *   (stamped with the server time it started); `samples` the last few poses received while it flies by
- *   hand, each with the local time of arrival, for interpolation (src/scene/Avatars.jsx).
+ *   hand, each with the local time of arrival, for interpolation (src/scene/Avatars.jsx); `holds` the
+ *   keys it holds open (src/net/held.js).
  * - `shared`: key → `{ value, seq, by, owner?, until? }`, applied in the server's order.
  * - `serverNow()`: the server's clock, from the round trips of the pings (median offset).
  *
  * Listeners (`subscribe`) are called with an event name: 'status', 'peers' (join / leave / profile),
- * 'intent' (id), 'poses', 'state' (key), 'lease' (key), 'reject' (message). Poses arrive many times a
+ * 'intent' (id), 'holds' (id), 'poses', 'state' (key), 'lease' (key), 'reject' (message). Poses arrive many times a
  * second; everything else rarely.
  */
 export function createSyncClient({
@@ -140,7 +141,7 @@ export function createSyncClient({
         seq = msg.seq; tickMs = msg.tickMs;
         offsets = [msg.now - now()];
         peers.clear();
-        for (const peer of msg.peers) peers.set(peer.id, { ...peer, samples: [], flags: 0 });
+        for (const peer of msg.peers) peers.set(peer.id, { ...peer, samples: [], flags: 0, holds: [] });
         shared.clear();
         for (const [k, e] of Object.entries(msg.state)) shared.set(k, e);
         setStatus('online');
@@ -150,10 +151,11 @@ export function createSyncClient({
         onWelcome?.();
         break;
       }
-      case 'join': peers.set(msg.peer.id, { ...msg.peer, samples: [], flags: 0 }); emit('peers'); break;
+      case 'join': peers.set(msg.peer.id, { ...msg.peer, samples: [], flags: 0, holds: [] }); emit('peers'); break;
       case 'leave': peers.delete(msg.id); emit('peers'); break;
       case 'profile': { const p = peers.get(msg.id); if (p) { p.name = msg.name; p.color = msg.color; emit('peers'); } break; }
       case 'intent': { const p = peers.get(msg.id); if (p) { p.intent = msg.intent; p.samples.length = 0; emit('intent', msg.id); } break; }
+      case 'hold': { const p = peers.get(msg.id); if (p) { p.holds = msg.keys; emit('holds', msg.id); } break; }
       case 'state': {
         if (msg.seq <= seq && shared.has(msg.key) && shared.get(msg.key).seq >= msg.seq) break; // already applied (a resume replayed it)
         seq = Math.max(seq, msg.seq);
@@ -238,6 +240,8 @@ export function createSyncClient({
     op: (key, value, base) => sendJson({ t: 'op', key, value, ...(base != null ? { base } : {}) }),
     grab: key => sendJson({ t: 'grab', key }),
     drop: key => sendJson({ t: 'drop', key }),
+    /** Say which keys this visitor holds open now (the whole list, replacing the last one). */
+    hold: keys => sendJson({ t: 'hold', keys }),
     setProfile: ({ name, color }) => {
       if (name) profile.name = name;
       if (color) profile.color = color;

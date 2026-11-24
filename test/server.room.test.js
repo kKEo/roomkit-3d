@@ -388,3 +388,53 @@ describe('touch', () => {
     expect(ca.lastSeen).toBeLessThan(ck.now()); // the other room never touched its client
   });
 });
+
+describe('holds', () => {
+  const holdsOf = (c, id) => c.json().filter(m => m.t === 'hold' && m.id === id).at(-1)?.keys;
+
+  it('tells the room what a visitor holds open, and a newcomer what everyone holds', () => {
+    const a = conn(), b = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    a.clear();
+    room.message(ca, msg({ t: 'hold', keys: ['poi:archive', 'poi:archive', 'ask:decor:1'] }));
+    expect(holdsOf(b, ca.id)).toEqual(['poi:archive', 'ask:decor:1']);
+    expect(a.json()).toEqual([]); // not echoed to the holder
+    const c = conn();
+    room.join(c, JOIN('Cy'));
+    expect(c.json()[0].t).toBe('welcome');
+    expect(holdsOf(c, ca.id)).toEqual(['poi:archive', 'ask:decor:1']);
+    room.message(ca, msg({ t: 'hold', keys: [] }));
+    expect(holdsOf(b, ca.id)).toEqual([]);
+    const d = conn();
+    room.join(d, JOIN('Di'));
+    expect(d.json().some(m => m.t === 'hold')).toBe(false);
+  });
+
+  it('drops a list that is too long', () => {
+    const a = conn(), b = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    room.message(ca, msg({ t: 'hold', keys: Array.from({ length: 17 }, (_, i) => `k${i}`) }));
+    expect(holdsOf(b, ca.id)).toBeUndefined();
+  });
+
+  it('a visitor who leaves holds nothing when it comes back, by resume or by taking its place over', () => {
+    const a = conn(), b = conn();
+    const ca = room.join(a, JOIN('Ada'));
+    room.join(b, JOIN('Bob'));
+    const { token } = a.json()[0];
+    room.message(ca, msg({ t: 'hold', keys: ['poi:archive'] }));
+    // the old connection is not known to be dead yet: the peers keep the avatar, but not what it held
+    const a2 = conn();
+    room.join(a2, JOIN('Ada', { resume: { id: ca.id, token } }));
+    expect(holdsOf(b, ca.id)).toEqual([]);
+    room.message(ca, msg({ t: 'hold', keys: ['poi:desk'] }));
+    room.leave(ca);
+    const a3 = conn();
+    room.join(a3, JOIN('Ada', { resume: { id: ca.id, token } }));
+    const c = conn();
+    room.join(c, JOIN('Cy'));
+    expect(c.json().some(m => m.t === 'hold')).toBe(false);
+  });
+});

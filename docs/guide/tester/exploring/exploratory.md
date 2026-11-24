@@ -276,4 +276,6 @@ Needs `make server` running next to `make dev`. Open the same event in two brows
 4. In the booth, click the lever on the control desk: the console lights go out in both browsers. Reload one: still out.
 5. On the big screen, pause the film and seek: the other browser's film pauses at the same second; play again: both run in step (within a second).
 6. Stop the server for 10 seconds and start it again: the badge turns amber (*reconnecting*), then green; the avatars come back; the state is kept when the server was started with `STATE_DIR`.
-7. `make bots BOTS=100` against the server while a browser is in event `load`: 100 avatars circle the room, the frame rate holds, the overlay's ↓ shows about 13 kB/s.
+7. Go to the server rack's stop in one browser: its doors fold open in the other browser too, and close there when the first one moves on, or closes its tab, unless the other stands at that stop itself. Reload the second browser while the first is at the stop: the doors are open after the reload.
+8. At the exits, click a door in one browser: it swings ajar in both while the question is open, and shuts in both on *Cancel*.
+9. `make bots BOTS=100` against the server while a browser is in event `load`: 100 avatars circle the room, the frame rate holds, the overlay's ↓ shows about 13 kB/s.

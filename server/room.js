@@ -10,7 +10,9 @@ import {
  * A connection is `{ send(data), close(code, reason) }`; `data` is a string (JSON) or an ArrayBuffer.
  *
  * What the room keeps:
- * - *clients*: id (u16, reused after a while), profile, latest pose, latest flight intent, liveness;
+ * - *clients*: id (u16, reused after a while), profile, latest pose, latest flight intent, liveness, and
+ *   what the visitor *holds* open (`hold`): a few keys that last only while it is connected, so a door
+ *   someone stands in front of shuts for everyone when that visitor goes, with nothing to clean up;
  * - *state*: a flat map key → `{ value, seq, by, owner?, until? }`. Every accepted op gets the next
  *   sequence number (one counter per room), so every client applies the same ops in the same order:
  *   last writer wins, where "last" is the server's order. A key may be *leased* (`grab`): only the
@@ -109,6 +111,8 @@ export function createRoom({
       const old = client.conn;
       client.conn = conn; // first, so the old connection's close no longer counts as this client leaving (see `leave`)
       renamed = client.name !== msg.name || client.color !== msg.color;
+      // the page behind the new connection says again what it holds (it may be a reloaded one that holds nothing)
+      if (client.holds.length) { client.holds = []; broadcast({ t: 'hold', id: client.id, keys: [] }, client); }
       client.name = msg.name; client.color = msg.color;
       try { old?.close(4004, 'replaced'); } catch { /* gone */ }
       log(`takeover ${client.id}`);
@@ -116,7 +120,7 @@ export function createRoom({
       if (clients.size >= maxClients) return fail('full', 'this event is full');
       const id = allocId();
       if (id == null) return fail('full', 'this event is full');
-      client = { id, token: token(), conn, name: msg.name, color: msg.color, pose: null, flags: 0, intent: null, lastSeen: 0, lastPose: 0, opBudget: opsPerSec, opRefill: 0, msgBudget: msgsPerSec, msgRefill: 0, leases: new Set() };
+      client = { id, token: token(), conn, name: msg.name, color: msg.color, pose: null, flags: 0, intent: null, lastSeen: 0, lastPose: 0, opBudget: opsPerSec, opRefill: 0, msgBudget: msgsPerSec, msgRefill: 0, leases: new Set(), holds: [] };
     }
     client.lastSeen = client.opRefill = client.msgRefill = now();
     clients.set(client.id, client);
@@ -126,6 +130,8 @@ export function createRoom({
     const here = [];
     for (const c of clients.values()) if (c !== client && c.pose) here.push({ id: c.id, pose: c.pose, flags: c.flags });
     if (here.length) send(client, packPoses(here));
+    // and what each of them holds open (a message of its own, not a field of `welcome`, so an older page still reads its welcome)
+    for (const c of clients.values()) if (c !== client && c.holds.length) sendJson(client, { t: 'hold', id: c.id, keys: c.holds });
     if (!takeover) broadcast({ t: 'join', peer: peerOf(client) }, client);
     else if (renamed) broadcast({ t: 'profile', id: client.id, name: client.name, color: client.color }, client);
     if (!tickTimer) start();
@@ -171,6 +177,11 @@ export function createRoom({
         if (msg.name) client.name = msg.name;
         if (msg.color) client.color = msg.color;
         broadcast({ t: 'profile', id: client.id, name: client.name, color: client.color });
+        break;
+      }
+      case 'hold': {
+        client.holds = [...new Set(msg.keys)];
+        broadcast({ t: 'hold', id: client.id, keys: client.holds }, client);
         break;
       }
       case 'op': op(client, msg, t); break;
@@ -259,6 +270,7 @@ export function createRoom({
     clients.delete(client.id);
     dirty.delete(client.id);
     client.conn = null;
+    client.holds = []; // its peers forget them with the `leave`; a resume says them again
     ghosts.set(client.id, { client, since: now() });
     // an avatar nobody steers should not stay on screen: tell the peers it is gone; a resume brings a fresh join
     broadcast({ t: 'leave', id: client.id });

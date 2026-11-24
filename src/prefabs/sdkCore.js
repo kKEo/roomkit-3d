@@ -9,6 +9,7 @@ import { useStore, runtime } from '../state/store.js';
 import { toRad, circlePts } from '../lib/math.js';
 import { META_SDK } from './metaSdk.js';
 import { useShared, useSharedOwner, getShared, setShared, toggleShared } from '../net/shared.js';
+import { useHeld } from '../net/held.js';
 
 /**
  * The part of a scene prefab's SDK that needs no browser: React, three.js, React Three Fiber's hooks and the app's
@@ -33,6 +34,8 @@ export function sdkCore(moduleUrl) {
     useWorld, useHotspot, useStore, runtime, toRad, circlePts,
     // state shared by everyone in an event (src/net/shared.js)
     useShared, useSharedOwner, getShared, setShared, toggleShared,
+    // something this visitor holds open while it lasts, seen by everyone in the event (src/net/held.js)
+    useHeld,
     // the prefab's own files
     moduleUrl,
     assetUrl: rel => new URL(rel, moduleUrl).href,

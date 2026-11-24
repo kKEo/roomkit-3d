@@ -12,6 +12,7 @@ import { Markers } from './Markers.jsx';
 import { PlacedObject } from '../prefabs/index.jsx';
 import { EditMarks } from './EditMarks.jsx';
 import { Avatars } from './Avatars.jsx';
+import { useHeld } from '../net/held.js';
 
 // the editor's move / rotate handles, in a chunk of their own that only the editor loads
 const Gizmo = lazy(() => import('./Gizmo.jsx').then(m => ({ default: m.Gizmo })));
@@ -32,7 +33,8 @@ function Ticker({ world }) {
 }
 
 function PoiObjects({ poi }) {
-  const active = useStore(s => s.shown === poi.id);
+  // in an event a stop is in focus for everyone while anyone has its panel open, so its doors open for all
+  const active = useHeld(`poi:${poi.id}`, useStore(s => s.shown === poi.id));
   const hovered = useStore(s => s.hover === poi.id);
   return (
     <PoiContext.Provider value={poi.id}>

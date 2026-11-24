@@ -139,6 +139,8 @@ In full, `component(sdk)` gets:
 | `Solid`, `Segs`, `Outline`, `useGeometry`, `shapeArgs` | the building blocks from `src/scene/core.js`; `Solid` takes `hotspot="name"` |
 | `ScreenSurface` | a screen plane, every source included (`src/prefabs/media.jsx`) |
 | `useWorld`, `useHotspot`, `useStore`, `runtime` | `{ mats, rain, room, theme }`, pointer handlers for a hotspot, the zustand store and the per-frame runtime |
+| `useShared`, `useSharedOwner`, `getShared`, `setShared`, `toggleShared` | state everyone in a shared event sees alike, which stays as it was left ([Shared events](../internals/multiplayer.md#shared-state)) |
+| `useHeld(key, on)` | holds `key` open for everyone while `on` is true and returns whether anyone holds it: for state that should fall back when nobody keeps it up ([Held open](../internals/multiplayer.md#held-open)) |
 | `reducedMotion`, `toRad`, `circlePts` | helpers the built-ins use |
 | `moduleUrl`, `assetUrl(rel)` | the module's own URL and a path resolved against it (see below) |
 | `useGLTF(url)`, `useModel(url)`, `useTexture(url)` | a glTF/GLB (cached, shared), a fresh copy of its scene for this instance, an image texture; all suspend while loading |

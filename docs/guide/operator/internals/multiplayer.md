@@ -35,11 +35,17 @@ Conventions:
 
 - A screen's state uses the screen's session key as a prefix: `<scene>:<poi>:<slot>/<screen id>.video` holds `{ playing, at, t0, rate }` for a video screen (`src/net/videoSync.js`): the media time `at` it had at server time `t0`, so a late joiner seeks to the right moment from the server clock, which every client estimates from its pings.
 - A prefab's own keys are given by the scene author, such as the control desk's `switch.key` (`booth.power` in the `cinema` scene).
-- Keys are limited to 200 characters, values to 4 kB, writes to 10 per second per visitor, and an event holds at most 2000 keys (a write or a grab of a new key beyond that is rejected with `limit`). Every other message a visitor sends that is passed on to the room (flight intents, profile changes, grabs, drops) shares a second budget of 10 per second; beyond it the message is dropped, and a grab is answered with a `limit` reject. Pings are not counted.
+- Keys are limited to 200 characters, values to 4 kB, writes to 10 per second per visitor, and an event holds at most 2000 keys (a write or a grab of a new key beyond that is rejected with `limit`). Every other message a visitor sends that is passed on to the room (flight intents, holds, profile changes, grabs, drops) shares a second budget of 10 per second; beyond it the message is dropped, and a grab is answered with a `limit` reject. Pings are not counted.
 
 ### Leases
 
 For continuous manipulation (dragging an object, later) a client may `grab` a key: the server records it as the holder and refuses other writers until the holder `drop`s it, disconnects, or stays silent for 5 seconds (an op refreshes the lease). `grabShared` / `dropShared` in `src/net/shared.js`; the editor's handles call them around a drag.
+
+### Held open
+
+Some state lasts only while somebody keeps it up: the wardrobe's and the server rack's doors are open while a visitor has that stop's panel open, and a door stands ajar while a visitor is asked whether to go through. Writing that into the shared map would leave a door open for ever when the visitor who opened it closes the tab. So it travels as presence instead (`src/net/held.js`): each page tells the room the short list of keys it *holds* (`hold`, at most 16, the whole list each time), and a key counts as held while this page or any peer holds it. The server keeps the list with the client, not in the state: it is gone with the visitor's `leave`, it is never persisted, and a page says it again after every `welcome`.
+
+A component uses one hook: `const open = useHeld(key, on)` holds `key` while `on` is true and returns whether anyone holds it (`on` itself outside an event). The keys in use are `poi:<stop id>` (someone has that stop's panel open; it is what every prefab receives as `active`, so in an event `active` means "in focus for anyone") and `ask:<stop id or decor>:<slot>` (someone is asked about that door's link). Use the shared map for what should stay as it was left (a switch), and a hold for what should fall back when nobody is there.
 
 ### Why not a CRDT
 
@@ -55,6 +61,7 @@ A connection opens at `/ws/<event>` and sends a `join` (`{ t, v, scene, name, co
 | `intent` (a flight) | `intent` (with `id` and the server time `at`) |
 | `op { key, value, base? }` | `state { key, value, seq, by }` or `reject { key, reason }` |
 | `grab { key }`, `drop { key }` | `lease { key, owner, until }` |
+| `hold { keys }` | `hold { id, keys }` (also once per holding peer after a `welcome`) |
 | `profile { name?, color? }` | `profile`, `join`, `leave` |
 | `ping { c }` | `pong { c, s }` |
 

@@ -1,7 +1,8 @@
 import { useContext, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Solid, Segs, shapeArgs, useWorld, ActionsContext } from '../scene/core.js';
+import { Solid, Segs, shapeArgs, useWorld, ActionsContext, PoiContext, SlotContext } from '../scene/core.js';
+import { useHeld } from '../net/held.js';
 import { useStore } from '../state/store.js';
 import { reducedMotion } from '../lib/env.js';
 import { DEG } from '../lib/math.js';
@@ -38,13 +39,15 @@ function Nameplate({ text, width, ...rest }) {
 /**
  * Door in a wall (origin = wall surface at floor level, facing +Z): a plain frame around a clickable
  * door wing, with a swing arc on the floor. The wing swings ajar while its action waits to be
- * confirmed, and carries a nameplate when the action has a `label`.
+ * confirmed (in an event, for everyone while anyone is asked), and carries a nameplate when the
+ * action has a `label`.
  */
 export function Door({ props }) {
   const { width: w, height: h } = props;
   const actions = useContext(ActionsContext);
   const action = actions.door;
-  const pending = useStore(s => s.confirm != null && s.confirm === action);
+  const poi = useContext(PoiContext), slot = useContext(SlotContext);
+  const pending = useHeld(`ask:${poi ?? 'decor'}:${slot}`, useStore(s => s.confirm != null && s.confirm === action));
   const s = w / 2 - 0.3;
   const wingW = w - 0.25, wingH = h - 0.1;
   const wing = useRef();

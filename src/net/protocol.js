@@ -10,7 +10,8 @@ import { EASE } from '../lib/easing.js';
  *   is fixed-width integers (DataView, little-endian). A client sends its own pose (`packPose`), the
  *   server batches every pose that changed since its last tick into one frame (`packPoses`).
  * - **text** frames carry everything else as JSON with a `t` field, validated with zod on both ends
- *   (`clientMessage`, `serverMessage`): join/welcome, flight intents, shared-state ops, leases, ping.
+ *   (`clientMessage`, `serverMessage`): join/welcome, flight intents, shared-state ops, leases, what a
+ *   visitor holds open (`hold`), ping.
  *
  * Positions are quantised to 1 cm within ±327 m, angles to 1/10000 rad, so a pose is 10 bytes and a
  * batch entry 13 (id + pose + flags). See docs/guide/operator/internals/multiplayer.md.
@@ -119,6 +120,9 @@ const vec3 = z.tuple([z.number(), z.number(), z.number()]);
 export const viewSchema = z.strictObject({ position: vec3, target: vec3 });
 const id = z.number().int().min(0).max(65535);
 const key = z.string().min(1).max(200);
+/** What one visitor holds open at a time (src/net/held.js): a few keys, replaced as a whole. */
+export const MAX_HOLDS = 16;
+const holds = z.array(key).max(MAX_HOLDS);
 const name = z.string().trim().min(1).max(24);
 const color = z.string().regex(/^#[0-9a-f]{6}$/i, 'a colour is #rrggbb');
 /** Any JSON value a shared key may hold, bounded in size by the server's message limit. */
@@ -163,6 +167,7 @@ export const clientMessage = z.discriminatedUnion('t', [
   z.strictObject({ t: z.literal('grab'), key }),
   z.strictObject({ t: z.literal('drop'), key }),
   z.strictObject({ t: z.literal('profile'), name: name.optional(), color: color.optional() }),
+  z.strictObject({ t: z.literal('hold'), keys: holds }),
   base.ping,
 ]);
 
@@ -194,6 +199,7 @@ export const serverMessage = z.discriminatedUnion('t', [
   z.strictObject({ t: z.literal('state'), key, value, seq: z.number().int(), by: id.nullable() }),
   z.strictObject({ t: z.literal('lease'), key, owner: id.nullable(), until: z.number().optional() }),
   z.strictObject({ t: z.literal('reject'), key, reason: z.enum(['leased', 'stale', 'limit', 'size']), seq: z.number().int().optional(), value: value.optional() }),
+  z.strictObject({ t: z.literal('hold'), id, keys: holds }),
   z.strictObject({ t: z.literal('pong'), c: z.number(), s: z.number() }),
   z.strictObject({ t: z.literal('error'), code: z.enum(['version', 'full', 'scene', 'invalid', 'origin']), message: z.string() }),
 ]);
