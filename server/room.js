@@ -338,9 +338,11 @@ export function createRoom({
     return true;
   }
   const takeDirty = () => { const d = stateDirty; stateDirty = false; return d; };
+  /** The snapshot taken with `takeDirty` could not be written: keep it owed, so the next attempt writes it. */
+  const markDirty = () => { stateDirty = true; };
 
   return {
-    scene, join, message, touch, leave, forget, tick, sweep, close, snapshot, restore, takeDirty,
+    scene, join, message, touch, leave, forget, tick, sweep, close, snapshot, restore, takeDirty, markDirty,
     get size() { return clients.size; },
     get seq() { return seq; },
     get stats() { return { ...stats, clients: clients.size, ghosts: ghosts.size, keys: state.size }; },
