@@ -18,6 +18,8 @@ import { sendGuarded } from './send.js';
  *   MAX_CLIENTS per event (default 200)
  *   MAX_BUFFERED_KB how much a client may be behind before it is dropped (default 1024; a quarter of it already stops its pose frames)
  *   STATE_DIR   directory for per-event state snapshots (default: none, state lives in memory only)
+ *   PERSIST_MS  how often changed state is written to STATE_DIR, and a failed write tried again (default 10000)
+ *   STATUS_TOKEN bearer token for /status (default: none, and /status answers only requests from this machine)
  *   EMPTY_TTL_MS how long an event nobody is in stays open, with its state (default 60000)
  *   LOG         "debug" for per-client messages
  */
@@ -33,6 +35,8 @@ const DEBUG = env('LOG', '') === 'debug';
 const EVENT_NAME = /^[a-z0-9][a-z0-9-_]{0,63}$/i;
 const MAX_MESSAGE = 16 * 1024;
 const EMPTY_TTL = +env('EMPTY_TTL_MS', 60000); // an empty event (nobody left to resume) is dropped after this
+const PERSIST_MS = Math.max(100, +env('PERSIST_MS', 10000));
+const STATUS_TOKEN = env('STATUS_TOKEN', '');
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const debug = DEBUG ? log : () => {};
@@ -75,13 +79,28 @@ function persist(event, room) {
     const file = snapshotPath(event);
     fs.writeFileSync(file + '.tmp', JSON.stringify(room.snapshot()));
     fs.renameSync(file + '.tmp', file);
-  } catch (e) { log(`event ${event}: could not persist state: ${e.message}`); }
+  } catch (e) {
+    // still owed: the next round tries again, so a full or read-only volume that is fixed loses nothing
+    room.markDirty();
+    log(`event ${event}: could not persist state: ${e.message}`);
+  }
 }
-if (STATE_DIR) setInterval(() => { for (const [event, { room }] of rooms) persist(event, room); }, 10000).unref();
+if (STATE_DIR) setInterval(() => { for (const [event, { room }] of rooms) persist(event, room); }, PERSIST_MS).unref();
+
+/**
+ * Who may read /status: it names every live event, and an event's name is all it takes to join it and write its
+ * state. With STATUS_TOKEN set, a request bearing it; without, only a request from this machine (a reverse proxy
+ * in front, such as the Caddy of compose.yml, connects from another address, so the outside world gets 404).
+ */
+function mayReadStatus(req) {
+  if (STATUS_TOKEN) return req.headers.authorization === `Bearer ${STATUS_TOKEN}`;
+  const a = req.socket.remoteAddress ?? '';
+  return a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
+}
 
 const server = http.createServer((req, res) => {
   if (req.url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok'); return; }
-  if (req.url === '/status') {
+  if (req.url === '/status' && mayReadStatus(req)) {
     const body = Object.fromEntries([...rooms].map(([event, { room }]) => [event, { scene: room.scene, ...room.stats }]));
     res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); return;
   }

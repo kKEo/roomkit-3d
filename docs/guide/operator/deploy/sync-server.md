@@ -22,10 +22,12 @@ Open two browsers on `http://localhost:5180/?scene=loft&event=demo` and fly abou
 | `MAX_CLIENTS` | `200` | per event |
 | `MAX_BUFFERED_KB` | `1024` | how far a visitor's connection may fall behind before the server drops it. A quarter of this already stops sending it position frames (the next one replaces them anyway); beyond it the connection is closed and the page reconnects and resumes. It keeps a visitor who stopped reading from filling the server's memory |
 | `EMPTY_TTL_MS` | `60000` | how long an event with nobody in it stays open; coming back in time keeps it, and its state |
-| `STATE_DIR` | none | directory for one JSON snapshot per event (the shared state, not the visitors), written every 10 s when it changed and on shutdown, restored when the event opens again |
+| `STATE_DIR` | none | directory for one JSON snapshot per event (the shared state, not the visitors), written every `PERSIST_MS` when it changed and on shutdown, restored when the event opens again. A write that fails (a full or read-only volume) is tried again on the next round, so nothing is lost once the volume is fixed |
+| `PERSIST_MS` | `10000` | how often changed state is written to `STATE_DIR` |
+| `STATUS_TOKEN` | none | token for `/status`: requests must send `Authorization: Bearer <token>`. Without it, `/status` answers only requests from the server's own machine |
 | `LOG` | | `debug` logs every join and leave |
 
-Endpoints besides `/ws/<event>`: `/healthz` (`ok`) and `/status` (JSON: per event, the scene, counts of messages, bytes, poses, ops, clients and keys).
+Endpoints besides `/ws/<event>`: `/healthz` (`ok`) and `/status` (JSON: per event, the scene, counts of messages, bytes, poses, ops, clients and keys). `/status` names every live event, and knowing an event's name is enough to join it, so it is not public: set `STATUS_TOKEN` and call `curl -H "Authorization: Bearer $STATUS_TOKEN" https://<host>/status`, or, without a token, ask from the server's machine (`curl http://127.0.0.1:8787/status`). Anyone else gets 404.
 
 An event is named by its path (`/ws/<name>`, letters, digits, `-` and `_`) and belongs to the scene of its first visitor; a visitor of another scene is refused. An event with nobody in it (and nobody left who could resume) closes after a minute; with `STATE_DIR` its state is kept.
 

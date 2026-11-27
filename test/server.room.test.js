@@ -267,6 +267,8 @@ describe('shared state', () => {
     const snap = JSON.parse(JSON.stringify(room.snapshot()));
     expect(room.takeDirty()).toBe(true);
     expect(room.takeDirty()).toBe(false);
+    room.markDirty(); // the write of that snapshot failed: it is owed again
+    expect(room.takeDirty()).toBe(true);
     const other = createRoom({ scene: 'loft', now: ck.now, setTimer: ck.setTimer, clearTimer: ck.clearTimer });
     expect(other.restore(snap)).toBe(true);
     expect(other.entry('k')).toMatchObject({ value: { deep: [1] }, seq: 1 });

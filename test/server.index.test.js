@@ -1,24 +1,33 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { WebSocket } from 'ws';
 import { PROTOCOL_VERSION } from '../src/net/protocol.js';
 
 /** The real server process (server/index.js) on a free port, for what only the entry file does: URLs, rooms and their lifetime. */
-let proc, base, port;
+let proc, base;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const freePort = () => new Promise(res => { const s = net.createServer().listen(0, () => { const { port: p } = s.address(); s.close(() => res(p)); }); });
 
-beforeAll(async () => {
-  port = await freePort();
-  base = `127.0.0.1:${port}`;
-  proc = spawn(process.execPath, ['server/index.js'], { env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', EMPTY_TTL_MS: '1500' }, stdio: ['ignore', 'pipe', 'pipe'] });
+/** Starts server/index.js with `env` on a free port; resolves with the process, its address and its output so far. */
+async function startServer(env) {
+  const p = await freePort();
+  const child = spawn(process.execPath, ['server/index.js'], { env: { ...process.env, PORT: String(p), HOST: '127.0.0.1', ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const out = [];
   await new Promise((res, rej) => {
-    proc.stdout.on('data', d => { if (String(d).includes('listening')) res(); });
-    proc.on('exit', code => rej(new Error(`server exited early (${code})`)));
+    child.stdout.on('data', d => { out.push(String(d)); if (String(d).includes('listening')) res(); });
+    child.on('exit', code => rej(new Error(`server exited early (${code})`)));
     setTimeout(() => rej(new Error('server did not start')), 8000);
   });
+  return { proc: child, port: p, base: `127.0.0.1:${p}`, out };
+}
+
+beforeAll(async () => {
+  ({ proc, base } = await startServer({ EMPTY_TTL_MS: '1500' }));
 });
 afterAll(() => { proc?.kill(); });
 
@@ -104,4 +113,32 @@ describe('the sync server process', () => {
     await sleep(2500);
     expect((await status()).back).toBeUndefined(); // empty for good: closed
   }, 15000);
+});
+
+describe('the sync server process, configured', () => {
+  let other, dir;
+  afterAll(() => { other?.proc.kill(); if (dir) fs.rmSync(dir, { recursive: true, force: true }); });
+
+  it('keeps /status behind STATUS_TOKEN and writes a state snapshot again after a failed write', async () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sync-state-'));
+    const stateDir = path.join(dir, 'state');
+    fs.writeFileSync(stateDir, 'a file where the directory should be'); // every write fails until it is removed
+    other = await startServer({ STATUS_TOKEN: 'sekrit', STATE_DIR: stateDir, PERSIST_MS: '200' });
+    const url = `http://${other.base}/status`;
+    expect((await fetch(url)).status).toBe(404);
+    expect((await fetch(url, { headers: { Authorization: 'Bearer wrong' } })).status).toBe(404);
+    expect((await fetch(url, { headers: { Authorization: 'Bearer sekrit' } })).status).toBe(200);
+
+    const ws = new WebSocket(`ws://${other.base}/ws/keep`);
+    await new Promise(r => ws.on('open', r));
+    ws.send(join('loft'));
+    await sleep(200);
+    ws.send(JSON.stringify({ t: 'op', key: 'k', value: 7 }));
+    await sleep(500);
+    expect(other.out.join('')).toMatch(/could not persist state/);
+    fs.rmSync(stateDir); // the volume is fixed
+    await sleep(600);
+    expect(JSON.parse(fs.readFileSync(path.join(stateDir, 'keep.json'), 'utf8')).state.k.value).toBe(7);
+    ws.close();
+  }, 10000);
 });

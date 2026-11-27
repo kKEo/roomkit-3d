@@ -10,6 +10,7 @@ services:
       TICK_HZ: ${TICK_HZ:-10}
       MAX_CLIENTS: ${MAX_CLIENTS:-200}
       STATE_DIR: /state                 # shared state survives a restart
+      STATUS_TOKEN: ${STATUS_TOKEN:-}   # bearer token for /status; empty = /status is not reachable through Caddy
     volumes:
       - sync-state:/state
   caddy:
